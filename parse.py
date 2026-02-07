@@ -15,6 +15,7 @@ from helper import clean_json_text
 config = config_parse()
 
 async def parse_file(client, file_path):
+    print(f"Paring file: {file_path}")
     file_obj = await client.files.create(file=file_path, purpose="parse")
     
     try:
@@ -38,10 +39,7 @@ async def parse_file(client, file_path):
             processing_options={
                 "ignore": {
                     "ignore_diagonal_text": True,
-                },
-                "cost_optimizer": {
-                    "enable": True
-                },
+                }
             },
 
             # Parsed content to include in the returned response
