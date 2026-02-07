@@ -129,6 +129,7 @@ def save_markdown(parsed_content, config, model, processor):
         caption = "\n\n".join(converted_texts)
 
         with open(output_file, "a", encoding="utf-8") as f:
+            f.write("\n\n\n\n")
             f.write(caption)
     # generate metadata from page 1
     first_page_image = parsed_content.images_content_metadata.images[0]

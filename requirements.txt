@@ -1,0 +1,5 @@
+llama_cloud
+mdutils
+transformers @ git+https://github.com/huggingface/transformers@dd360ad2364382e7ef3c19d1011cb0a4e9b418ff
+accelerate
+qwen-vl-utils
