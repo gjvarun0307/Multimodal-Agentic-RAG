@@ -153,7 +153,14 @@ async def parse_folder(config):
     file_folder = Path(config['input_folder'])
     pdf_files = list(file_folder.glob("*.pdf"))
 
-    tasks = [parse_file(client, pdf_file) for pdf_file in pdf_files]
+    # limit concurrent req
+    semaphore = asyncio.Semaphore(10)
+
+    async def parse_with_limit(client, pdf_file):
+        async with semaphore:
+            return await parse_file(client, pdf_file)
+
+    tasks = [parse_with_limit(client, pdf_file) for pdf_file in pdf_files]
 
     results = await asyncio.gather(*tasks)
     results = [r for r in results if r is not None]
