@@ -12,7 +12,6 @@ from llama_cloud import LlamaCloud, AsyncLlamaCloud
 from config import config_parse
 from helper import clean_json_text
 
-config = config_parse()
 
 async def parse_file(client, file_path):
     print(f"Paring file: {file_path}")
@@ -110,6 +109,7 @@ def save_markdown(parsed_content, config, model, processor):
     # save the parsed markdown
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(markdown_content)
+        f.write("\n\n###### Figure captions")
     
     # process images from the parsed output only figures skip pages
     for figure in parsed_content.images_content_metadata.images:
@@ -174,4 +174,5 @@ async def parse_folder(config):
         
 
 if __name__ == '__main__':
+    config = config_parse()
     asyncio.run(parse_folder(config))

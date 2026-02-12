@@ -21,3 +21,11 @@ def config_parse():
             "user": """Look at this image of the first page of a research paper. Extract the following details into a strict JSON object:\n\ntitle: The full title of the paper.\n\nauthors: A list of the author names.\n\nyear: The year of publication (search for dates near the top or bottom; if not found, estimate based on 'ArXiv' stamps or return 'Unknown').\n\ntopic: A one-phrase classification of the paper (e.g., 'Large Language Models', 'Vector Databases', 'Computer Vision').\n\nOutput only the JSON."""
         },
     }
+
+
+def config_database():
+    return {
+        "input_folder_path": "data/raw_pdfs_parsed",
+        "chunk_size": 1024,
+        "overlap_size": 128 
+    }
