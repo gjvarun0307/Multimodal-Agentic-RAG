@@ -19,6 +19,10 @@ def open_jsonl(path_to_jsonl):
     :param path_to_jsonl: path to jsonl file
     """
     with open(path_to_jsonl, 'r') as json_file:
-        json_list = list(json_file)
+        json_list = []
+        lines = json_file.readlines()
+    for line in lines:
+        line = json.loads(line)
+        json_list.append(line)
 
     return json_list

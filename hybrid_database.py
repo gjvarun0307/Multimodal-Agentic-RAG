@@ -2,7 +2,9 @@ from helper import open_jsonl
 from config import config_database
 
 from pathlib import Path
+from tqdm import tqdm
 import os
+import sys
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
 from langchain_milvus import Milvus
@@ -71,16 +73,32 @@ def data_preprocessing(config: dict):
     for input_path, metadata in input_data.items():
         with open(input_path, "r") as f:
             markdown_content = f.read()
-        
-        chunks.extend(split_data(markdown_content, config))
-
+        split_markdown_documents = split_data(markdown_content, config)
+        for doc in split_markdown_documents:
+            doc.metadata.update(metadata)
+        chunks.extend(split_markdown_documents)
+    
+    chunks_text = []
     # now that we have chunks of data we input it into database in batches
+    for chunk in chunks:
+        chunks_text.append(chunk.page_content)
     
     # get embedding model(BGE-M3)
     ef = BGEM3EmbeddingFunction(use_fp16=False, device="cuda")
     dense_dim = ef.dim["dense"]
     # Generate embeddings using BGE-M3 model
-    docs_embeddings = ef(chunks)
+    docs_embeddings = ef(chunks_text)
+
+    data_rows = []
+    # prep before insert to database
+    for i, doc in enumerate(chunks):
+        entity = {
+            "text": doc.page_content,
+            "dense_vector": docs_embeddings['dense'][i],
+            "sparse_vector": docs_embeddings['sparse'][i],
+            "metadata": doc.metadata,
+        }
+        data_rows.append(entity)
 
     # Connect to Milvus given URI
     connections.connect(uri="./milvus.db")
@@ -122,14 +140,23 @@ def data_preprocessing(config: dict):
     col.create_index("dense_vector", dense_index)
     col.load()
 
-    for i in range(0, len(chunks), 50):
-        batched_entities = [
-            chunks[i : i + 50],
-            docs_embeddings["sparse"][i : i + 50],
-            docs_embeddings["dense"][i : i + 50],
-        ]
-        col.insert(batched_entities)
+    batch_size = 50
+    for i in tqdm(range(0, len(data_rows), batch_size), desc="Inserting batches into database"):
+        batch = data_rows[i : i + batch_size]
+        try:
+            col.insert(batch)
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit(3)
+    
     print("Number of entities inserted:", col.num_entities)
+
+    query = input("Enter your search query: ")
+    print(query)
+
+    # Generate embeddings for the query
+    query_embeddings = ef([query])
+    
 
 
     
