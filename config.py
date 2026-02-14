@@ -1,10 +1,10 @@
 import os
 import json
 
-with open("api_keys.json") as f:
-    api_keys = json.load(f)
 
 def config_parse():
+    with open("api_keys.json") as f:
+        api_keys = json.load(f)
     return {
         "api_key": api_keys['llama_parse'],
         "input_folder": "data/test_pdfs",

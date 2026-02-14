@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from helper import open_jsonl
 from config import config_database
 
@@ -89,16 +90,13 @@ def data_preprocessing(config: dict):
     # Generate embeddings using BGE-M3 model
     docs_embeddings = ef(chunks_text)
 
-    data_rows = []
+    docs = []
+    docs_metadata = []
     # prep before insert to database
     for i, doc in enumerate(chunks):
-        entity = {
-            "text": doc.page_content,
-            "dense_vector": docs_embeddings['dense'][i],
-            "sparse_vector": docs_embeddings['sparse'][i],
-            "metadata": doc.metadata,
-        }
-        data_rows.append(entity)
+        docs.append(doc.page_content)
+        docs_metadata.append(doc.metadata)
+
 
     # Connect to Milvus given URI
     connections.connect(uri="./milvus.db")
@@ -140,25 +138,23 @@ def data_preprocessing(config: dict):
     col.create_index("dense_vector", dense_index)
     col.load()
 
-    batch_size = 50
-    for i in tqdm(range(0, len(data_rows), batch_size), desc="Inserting batches into database"):
-        batch = data_rows[i : i + batch_size]
-        try:
-            col.insert(batch)
-        except Exception as e:
-            print(f"Error: {e}")
-            sys.exit(3)
+    # Transform the sparse array into a list of {index: value} dicts
+    formatted_sparse = [
+        {int(k): float(v) for k, v in zip(row.indices, row.data)}
+        for row in docs_embeddings["sparse"].tocsr() 
+    ]
+
+    for i in range(0, len(docs), 50):
+        batched_entities = [
+            docs[i : i + 50],
+            docs_metadata[i : i + 50],
+            formatted_sparse[i : i + 50],
+            docs_embeddings["dense"][i : i + 50],
+        ]
+        col.insert(batched_entities)
     
     print("Number of entities inserted:", col.num_entities)
-
-    query = input("Enter your search query: ")
-    print(query)
-
-    # Generate embeddings for the query
-    query_embeddings = ef([query])
-    
-
-
+    return col
     
 if __name__ == "__main__":
     config = config_database()
