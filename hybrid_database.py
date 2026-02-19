@@ -9,7 +9,7 @@ import sys
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
 from langchain_milvus import Milvus
-from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection
+from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection, AnnSearchRequest, WeightedRanker
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
 # pip install "transformers<5.0.0" "FlagEmbedding>=1.2.0" --upgrade
@@ -154,7 +154,24 @@ def data_preprocessing(config: dict):
         col.insert(batched_entities)
     
     print("Number of entities inserted:", col.num_entities)
-    return col
+    return col, ef
+
+def hybrid_search(database, embedding_model, query, sparse_weight=1.0, dense_weight=1.0, limit=10):
+    query_embeddings = embedding_model([query])
+    dense_search_params = {"metric_type": "COSINE", "params": {}}
+    dense_req = AnnSearchRequest(
+        [query_embeddings["dense"][0]], "dense_vector", dense_search_params, limit=limit
+    )
+    sparse_search_params = {"metric_type": "IP", "params": {}}
+    sparse_req = AnnSearchRequest(
+        [query_embeddings["sparse"][0]], "sparse_vector", sparse_search_params, limit=limit
+    )
+    rerank = WeightedRanker(sparse_weight, dense_weight)
+    res = database.hybrid_search(
+        [sparse_req, dense_req], rerank=rerank, limit=limit, output_fields=["text"]
+    )[0]
+    docs = [{"text": hit.get("text"), "metadata": hit.get("metadata")} for hit in res]
+    return docs
     
 if __name__ == "__main__":
     config = config_database()

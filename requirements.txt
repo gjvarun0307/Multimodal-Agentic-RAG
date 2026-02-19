@@ -9,4 +9,7 @@ torchvision
 langchain-text-splitters
 pymilvus[model]
 pymilvus[milvus_lite]
-langchain-milvus
+
+# for langgraph
+langgraph
+langchain

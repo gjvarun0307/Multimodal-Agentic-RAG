@@ -26,3 +26,6 @@ def open_jsonl(path_to_jsonl):
         json_list.append(line)
 
     return json_list
+
+def get_models():
+    return 
