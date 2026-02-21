@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import sys
 
-from hybrid_database import hybrid_search, load_database_and_embedding
+from hybrid_database import load_database_and_embedding
 from FlagEmbedding import FlagLLMReranker
 from langchain_openai import ChatOpenAI
 
@@ -31,11 +31,12 @@ def open_jsonl(path_to_jsonl):
 
     return json_list
 
-def get_models():
-    database, embedding_model = load_database_and_embedding()
+def get_models(config):
+    
+    database, embedding_model = load_database_and_embedding(database_path=config["database_path"], device=config["device"])
     print("loaded datbase and embedding_model")
 
-    rerank_model = FlagLLMReranker('BAAI/bge-reranker-v2-gemma', use_fp16=True, devices="cuda")
+    rerank_model = FlagLLMReranker('BAAI/bge-reranker-v2-gemma', use_fp16=True, devices=config["device"])
     print("loaded rerank model")
 
     llm_model = ChatOpenAI(

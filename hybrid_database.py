@@ -174,10 +174,10 @@ def hybrid_search(database, embedding_model, query, sparse_weight=1.0, dense_wei
     docs = [{"text": hit.get("text"), "metadata": hit.get("metadata")} for hit in res]
     return docs
 
-def load_database_and_embedding():
-    embedding_model = BGEM3EmbeddingFunction(use_fp16=False, device="cuda")
+def load_database_and_embedding(database_path, device):
+    embedding_model = BGEM3EmbeddingFunction(use_fp16=False, device=device)
     # Connect to Milvus given URI
-    connections.connect(uri="./milvus.db")
+    connections.connect(uri=database_path)
     if not utility.has_collection("arag_project"):
         raise ValueError(f"Collection 'arag_project' does not exist!")
     

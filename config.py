@@ -35,5 +35,7 @@ def config_rag():
         api_keys = json.load(f)
     return {
         "device": "cuda",
-        "tavilly_api_key": api_keys["tavilly_web"]
+        "tavilly_api_key": api_keys["tavilly_web"],
+        "database_path": "./milvus.db",
+        
     }
