@@ -31,12 +31,9 @@ def config_database():
     }
 
 def config_rag():
+    with open("api_keys.json") as f:
+        api_keys = json.load(f)
     return {
         "device": "cuda",
-        # prompt for router
-        "prompt_router": {
-            "sys": """You are an expert routing assistant for a specialized AI Engineering architecture system. \nYour job is to route the user\'s question to the most efficient data source.\n\n[DATABASE KNOWLEDGE SCOPE]\nThe local \"vectorstore\" ONLY contains information on the following specific topics and research papers:\n- Transformer Architecture (Attention Is All You Need)\n- LLM Serving & Memory (vLLM, PagedAttention, FlashAttention)\n- Model Architectures (Llama 3 Herd of Models)\n- Fine-Tuning (LoRA)\n- Prompting Techniques (Chain-of-Thought)\n- Retrieval-Augmented Generation (Standard RAG, Self-RAG, CRAG, Adaptive-RAG, GraphRAG)\n- Vector Databases (Milvus)\n- Retrieval Math (HyDE, ColBERTv2)\n- Vision Models (LLaVA)\n- The Custom System README for this specific codebase.\n\n[ROUTING RULES]\n1. \"vectorstore\": Route here ONLY if the question is strictly related to the concepts or papers listed in the Knowledge Scope above.\n2. \"websearch\": Route here if the question is about general Machine Learning (e.g., Federated Learning, CNNs, SVMs), current events, or topics NOT listed in the Knowledge Scope. \n3. \"chitchat\": Route here if the question is a greeting, conversational filler, or requires no factual retrieval.\n\nAnalyze the user\'s question, provide a 1-sentence reasoning, and select the destination.""",
-            "user": """"""
-        },
-        
+        "tavilly_api_key": api_keys["tavilly_web"]
     }

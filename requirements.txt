@@ -13,3 +13,6 @@ pymilvus[milvus_lite]
 # for langgraph
 langgraph
 langchain
+langchain_openai
+flagembedding
+langchain_tavily

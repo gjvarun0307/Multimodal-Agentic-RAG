@@ -1,3 +1,4 @@
+%%shell
 #!/bin/bash
 
 # Vllm parameters
@@ -14,11 +15,10 @@ echo "Starting vLLM server with model: $MODEL on port: $PORT..."
 > "$LOG_FILE"
 
 nohup vllm serve "$MODEL" \
+    --enable-prefix-caching \
     --trust-remote-code \
     --dtype half \
-    --enable-reasoning \
     --reasoning-parser deepseek_r1 \
-    --enforce-eager \
     --max-model-len "$MAX_MODEL_LEN" \
     --max-num-batched-tokens "$MAX_BATCHED_TOKENS" \
     --gpu-memory-utilization "$GPU_MEM_UTIL" \

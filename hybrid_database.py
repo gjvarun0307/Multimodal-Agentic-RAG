@@ -9,8 +9,9 @@ import sys
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
 from langchain_milvus import Milvus
-from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection, AnnSearchRequest, WeightedRanker
+from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection, AnnSearchRequest, WeightedRanker, MilvusClient
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
+
 
 # pip install "transformers<5.0.0" "FlagEmbedding>=1.2.0" --upgrade
 
@@ -126,7 +127,7 @@ def data_preprocessing(config: dict):
     schema = CollectionSchema(fields)
 
     # Create collection
-    col_name = "arag_test"
+    col_name = "arag_project"
     if utility.has_collection(col_name):
         Collection(col_name).drop()
     col = Collection(col_name, schema, consistency_level="Bounded")
@@ -172,6 +173,19 @@ def hybrid_search(database, embedding_model, query, sparse_weight=1.0, dense_wei
     )[0]
     docs = [{"text": hit.get("text"), "metadata": hit.get("metadata")} for hit in res]
     return docs
+
+def load_database_and_embedding():
+    embedding_model = BGEM3EmbeddingFunction(use_fp16=False, device="cuda")
+    # Connect to Milvus given URI
+    connections.connect(uri="./milvus.db")
+    if not utility.has_collection("arag_project"):
+        raise ValueError(f"Collection 'arag_project' does not exist!")
+    
+    col = Collection("arag_project")
+    col.load()
+    print(f"Collection 'arag_project' loaded. Entities: {col.num_entities}")
+
+    return col, embedding_model
     
 if __name__ == "__main__":
     config = config_database()
