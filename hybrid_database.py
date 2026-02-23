@@ -8,7 +8,6 @@ import os
 import sys
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
-from langchain_milvus import Milvus
 from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection, AnnSearchRequest, WeightedRanker, MilvusClient
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
