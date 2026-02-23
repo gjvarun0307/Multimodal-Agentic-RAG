@@ -23,13 +23,6 @@ def config_parse():
     }
 
 
-def config_database():
-    return {
-        "input_folder_path": "data/raw_pdfs_parsed",
-        "chunk_size": 1024,
-        "overlap_size": 128 
-    }
-
 def config_rag():
     with open("api_keys.json") as f:
         api_keys = json.load(f)
@@ -37,5 +30,8 @@ def config_rag():
         "device": "cuda",
         "tavilly_api_key": api_keys["tavilly_web"],
         "database_path": "./milvus.db",
-        
+        "input_folder_path": "data/raw_pdfs_parsed",
+        "chunk_size": 1024,
+        "overlap_size": 128 
+
     }

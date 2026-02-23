@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from helper import open_jsonl
-from config import config_database
+from config import config_rag
 
 from pathlib import Path
 from tqdm import tqdm
@@ -187,5 +187,5 @@ def load_database_and_embedding(database_path, device):
     return col, embedding_model
     
 if __name__ == "__main__":
-    config = config_database()
+    config = config_rag()
     data_preprocessing(config)
