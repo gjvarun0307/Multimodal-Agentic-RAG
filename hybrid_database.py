@@ -164,7 +164,7 @@ def hybrid_search(database, embedding_model, query, sparse_weight=1.0, dense_wei
     )
     sparse_search_params = {"metric_type": "IP", "params": {}}
     sparse_req = AnnSearchRequest(
-        [query_embeddings["sparse"][0]], "sparse_vector", sparse_search_params, limit=limit
+        [query_embeddings["sparse"][[0]]], "sparse_vector", sparse_search_params, limit=limit
     )
     rerank = WeightedRanker(sparse_weight, dense_weight)
     res = database.hybrid_search(
