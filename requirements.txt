@@ -16,3 +16,4 @@ langchain
 langchain_openai
 flagembedding
 langchain_tavily
+streamlit

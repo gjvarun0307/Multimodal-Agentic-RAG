@@ -1,195 +1,483 @@
-import importlib
+import heapq
 import os
-import tempfile
-from pathlib import Path
-from typing import Any, Iterable, Protocol
+from typing import List
+from typing_extensions import TypedDict, Literal
 
 import streamlit as st
+from pydantic import BaseModel, Field
+
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_tavily import TavilySearch
+from langgraph.graph import END, START, StateGraph
+from FlagEmbedding import FlagLLMReranker
+
+from config import config_rag
+from hybrid_database import data_preprocessing, hybrid_search, load_database_and_embedding
 
 
-class RAGBackend(Protocol):
-    def ingest(self, file_paths: list[str]) -> str: ...
-    def answer(self, query: str, history: list[dict[str, str]], **kwargs: Any) -> str: ...
+MAX_CHAT_TURNS = 10
 
 
-class GenericBackendAdapter:
-    def __init__(self, target: Any):
-        self.target = target
-
-    def _call_first(self, names: Iterable[str], *args: Any, **kwargs: Any) -> Any:
-        for name in names:
-            fn = getattr(self.target, name, None)
-            if callable(fn):
-                return fn(*args, **kwargs)
-        raise AttributeError(f"No compatible method found in backend for candidates: {list(names)}")
-
-    def ingest(self, file_paths: list[str]) -> str:
-        result = self._call_first(
-            ["ingest", "index", "index_documents", "add_documents", "upload_files", "load_documents"],
-            file_paths,
-        )
-        return "Ingestion completed." if result is None else str(result)
-
-    def answer(self, query: str, history: list[dict[str, str]], **kwargs: Any) -> str:
-        try:
-            result = self._call_first(["answer", "query", "ask", "chat", "run"], query, history=history, **kwargs)
-        except TypeError:
-            result = self._call_first(["answer", "query", "ask", "chat", "run"], query, **kwargs)
-        return str(result)
+DOMAIN_TOPICS = [
+    "vLLM",
+    "Transformers",
+    "PagedAttention",
+    "GraphRAG",
+    "CRAG",
+    "Self-RAG",
+    "Adaptive-RAG",
+    "Milvus",
+    "HyDE",
+    "LoRA",
+    "LLaVA",
+    "FlashAttention",
+    "ColBERTv2",
+]
 
 
-class FallbackBackend:
-    def ingest(self, file_paths: list[str]) -> str:
-        return (
-            "No backend discovered. Set env var RAG_BACKEND_FACTORY='module:function' "
-            "or RAG_BACKEND_OBJECT='module:object' to connect your RAG pipeline."
-        )
-
-    def answer(self, query: str, history: list[dict[str, str]], **kwargs: Any) -> str:
-        return (
-            "Backend not connected yet.\n\n"
-            "Set one of:\n"
-            "1) RAG_BACKEND_FACTORY='your_module:create_backend'\n"
-            "2) RAG_BACKEND_OBJECT='your_module:backend_instance'"
-        )
+class RouteDecision(BaseModel):
+    reasoning: str = Field(..., description="Why this route best serves the user.")
+    is_in_domain: bool = Field(..., description="True only for topics clearly covered by the local research corpus.")
+    route: Literal["vectorstore", "websearch", "chitchat"] = Field(..., description="Routing destination.")
 
 
-def _load_from_reference(ref: str) -> Any:
-    module_name, symbol_name = ref.split(":", 1)
-    mod = importlib.import_module(module_name)
-    return getattr(mod, symbol_name)
+class RewrittenQuery(BaseModel):
+    reasoning: str = Field(..., description="How the query was transformed for retrieval.")
+    query: str = Field(..., description="Search-optimized rewrite of the question.")
 
 
-def discover_backend() -> RAGBackend:
-    factory_ref = os.getenv("RAG_BACKEND_FACTORY", "").strip()
-    object_ref = os.getenv("RAG_BACKEND_OBJECT", "").strip()
-
-    if factory_ref:
-        factory = _load_from_reference(factory_ref)
-        return GenericBackendAdapter(factory())
-
-    if object_ref:
-        obj = _load_from_reference(object_ref)
-        return GenericBackendAdapter(obj)
-
-    module_candidates = [
-        "backend",
-        "rag",
-        "rag_app",
-        "pipeline",
-        "main",
-        "src.backend",
-        "src.rag",
-        "src.pipeline",
-    ]
-    object_candidates = ["backend", "rag", "app", "pipeline"]
-    factory_candidates = ["get_backend", "create_backend", "build_backend", "make_backend"]
-    class_candidates = ["RAG", "RAGApp", "RAGApplication", "MultimodalRAG", "AgenticRAG"]
-
-    for module_name in module_candidates:
-        try:
-            mod = importlib.import_module(module_name)
-        except Exception:
-            continue
-
-        for fn_name in factory_candidates:
-            fn = getattr(mod, fn_name, None)
-            if callable(fn):
-                return GenericBackendAdapter(fn())
-
-        for cls_name in class_candidates:
-            cls = getattr(mod, cls_name, None)
-            if callable(cls):
-                try:
-                    return GenericBackendAdapter(cls())
-                except Exception:
-                    pass
-
-        for obj_name in object_candidates:
-            obj = getattr(mod, obj_name, None)
-            if obj is not None:
-                return GenericBackendAdapter(obj)
-
-    return FallbackBackend()
+class HallucinationScore(BaseModel):
+    reasoning: str = Field(..., description="Grounding analysis against supplied documents.")
+    is_grounded: bool = Field(..., description="True when every factual claim is supported by context.")
 
 
-@st.cache_resource
-def get_backend() -> RAGBackend:
-    return discover_backend()
+class RelevanceScore(BaseModel):
+    reasoning: str = Field(..., description="How well the answer addresses the exact user intent.")
+    is_relevant: bool = Field(..., description="True when answer directly and sufficiently resolves the question.")
 
 
-def _save_uploads(files: list[Any]) -> list[str]:
-    workspace = Path(st.session_state.setdefault("_upload_dir", tempfile.mkdtemp(prefix="mm-rag-")))
-    saved_paths: list[str] = []
-    for f in files:
-        dst = workspace / f.name
-        dst.write_bytes(f.getvalue())
-        saved_paths.append(str(dst))
-    return saved_paths
+class GraphState(TypedDict):
+    question: str
+    generation: str
+    documents: list
+    loop_count: int
+    gen_retries: int
+    chat_history: list
 
 
-def main() -> None:
-    st.set_page_config(page_title="Multimodal Agentic RAG", page_icon="🧠", layout="wide")
-    st.title("🧠 Multimodal Agentic RAG")
-    st.caption("Upload files, ingest, then chat with your RAG system.")
+@st.cache_resource(show_spinner=True)
+def load_runtime():
+    config = config_rag()
 
-    backend = get_backend()
+    try:
+        database, embedding_model = load_database_and_embedding(config["database_path"], config["device"])
+    except Exception:
+        database, embedding_model = data_preprocessing(config)
 
-    with st.sidebar:
-        st.subheader("Settings")
-        model = st.text_input("Model", value=os.getenv("RAG_MODEL", "default"))
-        top_k = st.slider("Top-K", 1, 20, 5)
-        temperature = st.slider("Temperature", 0.0, 1.5, 0.2, 0.05)
-        st.divider()
-        st.code(
-            "RAG_BACKEND_FACTORY=module:function\nRAG_BACKEND_OBJECT=module:object",
-            language="bash",
-        )
-
-    uploaded = st.file_uploader(
-        "Upload documents/images",
-        type=["pdf", "txt", "md", "docx", "png", "jpg", "jpeg", "csv", "json"],
-        accept_multiple_files=True,
+    rerank_model = FlagLLMReranker(
+        "BAAI/bge-reranker-v2-gemma",
+        use_fp16=False,
+        devices=config["device"],
     )
 
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        if st.button("Ingest uploaded files", use_container_width=True):
-            if not uploaded:
-                st.warning("Upload at least one file first.")
-            else:
-                with st.spinner("Ingesting..."):
-                    paths = _save_uploads(uploaded)
-                    msg = backend.ingest(paths)
-                st.success(msg)
+    llm_model = ChatOpenAI(
+        model_name="Qwen/Qwen3-8B-AWQ",
+        base_url="http://localhost:8000/v1",
+        api_key="token-abc123",
+        model_kwargs={
+            "extra_body": {
+                "guided_decoding_backend": "xgrammar"
+            }
+        },
+    )
 
-    with col2:
-        if st.button("Clear chat", use_container_width=True):
-            st.session_state["messages"] = []
-            st.rerun()
+    tavily_key = config.get("tavilly_api_key")
+    if tavily_key and not os.environ.get("TAVILY_API_KEY"):
+        os.environ["TAVILY_API_KEY"] = tavily_key
 
-    messages = st.session_state.setdefault("messages", [])
-    for m in messages:
-        with st.chat_message(m["role"]):
-            st.markdown(m["content"])
+    web_tool = None
+    if os.environ.get("TAVILY_API_KEY"):
+        try:
+            web_tool = TavilySearch(max_results=5, topic="general", include_images=False)
+        except Exception:
+            web_tool = None
 
-    if prompt := st.chat_input("Ask something about your uploaded content..."):
-        messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+    return config, database, embedding_model, rerank_model, llm_model, web_tool
 
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                answer = backend.answer(
-                    prompt,
-                    history=messages,
-                    model=model,
-                    top_k=top_k,
-                    temperature=temperature,
-                )
-            st.markdown(answer)
 
-        messages.append({"role": "assistant", "content": answer})
+def _safe_join_history(chat_history: List[str]) -> str:
+    return "\n".join(chat_history) if chat_history else "None"
+
+
+def _format_documents(documents: list) -> str:
+    if not documents:
+        return "No context available."
+
+    if isinstance(documents[0], dict):
+        return "\n\n".join([str(doc.get("text", "")) for doc in documents if doc.get("text")])
+
+    return "\n\n".join([str(doc) for doc in documents if str(doc).strip()])
+
+
+def _extract_web_results(docs: dict) -> list:
+    results = docs.get("results", []) if isinstance(docs, dict) else []
+    extracted = []
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        content = item.get("content") or item.get("snippet") or ""
+        if content:
+            extracted.append(content)
+    return extracted
+
+
+@st.cache_resource(show_spinner=True)
+def build_graph():
+    _, database, embedding_model, rerank_model, llm_model, web_tool = load_runtime()
+
+    router_node_prompt = ChatPromptTemplate(
+        [
+            (
+                "system",
+                "You are a strict query router for a specialized AI-research RAG system.\n"
+                "Decide the best route using only these options: vectorstore, websearch, chitchat.\n\n"
+                "Vectorstore scope (in-domain) is LIMITED to these paper themes/topics: "
+                + ", ".join(DOMAIN_TOPICS)
+                + ".\n\n"
+                "Routing policy:\n"
+                "1) Use vectorstore only when user intent clearly matches the in-domain topics.\n"
+                "2) Use websearch for out-of-domain AI/ML topics, live/current information, or when unsure.\n"
+                "3) Use chitchat for greetings, thanks, compliments, or casual conversation.\n"
+                "4) Be conservative: if uncertain, prefer websearch over vectorstore.\n"
+                "5) Use chat history to resolve references like 'that paper' or 'explain more'."
+            ),
+            ("human", "Chat History:\n{chat_history}\n\nCurrent Query:\n{question}"),
+        ],
+        input_variables=["question", "chat_history"],
+    )
+    router_node_llm = router_node_prompt | llm_model.with_structured_output(RouteDecision, method="json_schema", strict=True)
+
+    rewrite_node_prompt = ChatPromptTemplate(
+        [
+            (
+                "system",
+                "You optimize failed retrieval queries for dense+sparse semantic search.\n"
+                "Rewrite into a compact technical query that maximizes recall and precision.\n"
+                "Rules:\n"
+                "- Keep original intent unchanged.\n"
+                "- Remove filler words and conversational phrasing.\n"
+                "- Expand relevant acronyms if helpful (e.g., RAG -> Retrieval-Augmented Generation).\n"
+                "- Include core entities: model names, methods, mechanisms, and metrics when present.\n"
+                "- Return one best query only."
+            ),
+            ("human", "Original query:\n{question}"),
+        ],
+        input_variables=["question"],
+    )
+    rewrite_node_llm = rewrite_node_prompt | llm_model.with_structured_output(RewrittenQuery, method="json_schema", strict=True)
+
+    generate_node_prompt = ChatPromptTemplate(
+        [
+            (
+                "system",
+                "You are an expert AI research assistant. Answer using ONLY the provided context.\n"
+                "Quality requirements:\n"
+                "- Be correct, concise, and directly responsive to the question.\n"
+                "- Prefer bullet points for multi-part answers.\n"
+                "- Include short source cues (paper/topic names) when available.\n"
+                "- If context is insufficient, reply exactly: I cannot answer this based on the provided context.\n"
+                "- Do not invent facts, numbers, or citations."
+            ),
+            (
+                "human",
+                "Chat History:\n{chat_history}\n\nContext:\n{documents}\n\n"
+                "Question:\n{question}\n\n"
+                "Now produce the final answer."
+            ),
+        ],
+        input_variables=["documents", "question", "chat_history"],
+    )
+    generate_node_llm = generate_node_prompt | llm_model | StrOutputParser()
+
+    hallucination_check_node_prompt = ChatPromptTemplate(
+        [
+            (
+                "system",
+                "You are a strict factual-grounding judge.\n"
+                "Mark is_grounded=True only if every concrete claim in the answer is supported by the supplied context.\n"
+                "If any unsupported claim appears, set is_grounded=False."
+            ),
+            ("human", "Context:\n{documents}\n\nAnswer to evaluate:\n{generation}"),
+        ],
+        input_variables=["documents", "generation"],
+    )
+    hallucination_check_node_llm = hallucination_check_node_prompt | llm_model.with_structured_output(HallucinationScore, method="json_schema", strict=True)
+
+    relevance_check_node_prompt = ChatPromptTemplate(
+        [
+            (
+                "system",
+                "You are a strict relevance grader.\n"
+                "Set is_relevant=True only if the answer directly resolves the user's current question.\n"
+                "Fail answers that are generic summaries, evasive, or only partially responsive."
+            ),
+            ("human", "Question:\n{question}\n\nAnswer:\n{generation}"),
+        ],
+        input_variables=["question", "generation"],
+    )
+    relevance_check_node_llm = relevance_check_node_prompt | llm_model.with_structured_output(RelevanceScore, method="json_schema", strict=True)
+
+    chitchat_prompt = ChatPromptTemplate(
+        [
+            (
+                "system",
+                "You are a friendly assistant for a technical RAG app. "
+                "For greetings/small talk, respond briefly and naturally in 1-2 sentences."
+            ),
+            ("human", "Chat History:\n{chat_history}\n\nUser Message:\n{question}"),
+        ],
+        input_variables=["chat_history", "question"],
+    )
+    chitchat_llm = chitchat_prompt | llm_model | StrOutputParser()
+
+    def retrieve_and_rerank(state):
+        question = state["question"]
+        loop_count = state.get("loop_count", 0)
+        chat_history = state.get("chat_history", [])
+
+        raw_docs = hybrid_search(database, embedding_model, question, sparse_weight=0.7, dense_weight=1.0, limit=20)
+        if not raw_docs:
+            return {"documents": [], "question": question, "loop_count": loop_count, "chat_history": chat_history}
+
+        clean_docs = [doc for doc in raw_docs if isinstance(doc, dict) and doc.get("text")]
+        if not clean_docs:
+            return {"documents": [], "question": question, "loop_count": loop_count, "chat_history": chat_history}
+
+        question_and_docs = [[question, doc["text"]] for doc in clean_docs]
+        try:
+            scores = rerank_model.compute_score(question_and_docs, normalize=True, batch_size=4, max_length=1024)
+            filtered_pairs = [(doc, score) for doc, score in zip(clean_docs, scores) if score > 0.5]
+            reranked_docs = heapq.nlargest(5, filtered_pairs, key=lambda x: x[1])
+            final_documents = [doc for doc, _ in reranked_docs]
+        except Exception:
+            final_documents = clean_docs[:5]
+
+        return {"documents": final_documents, "question": question, "loop_count": loop_count, "chat_history": chat_history}
+
+    def generate(state):
+        question = state["question"]
+        documents = state.get("documents", [])
+        loop_count = state.get("loop_count", 0)
+        gen_retries = state.get("gen_retries", 0)
+        chat_history = state.get("chat_history", [])
+
+        formatted_docs = _format_documents(documents)
+
+        generation = generate_node_llm.invoke(
+            {
+                "question": question,
+                "documents": formatted_docs,
+                "chat_history": _safe_join_history(chat_history),
+            }
+        )
+
+        return {
+            "documents": documents,
+            "question": question,
+            "generation": generation,
+            "loop_count": loop_count,
+            "gen_retries": gen_retries + 1,
+            "chat_history": chat_history,
+        }
+
+    def rewrite_query(state):
+        question = state["question"]
+        documents = state.get("documents", [])
+        loop_count = state.get("loop_count", 0) + 1
+        chat_history = state.get("chat_history", [])
+
+        rewritten = rewrite_node_llm.invoke({"question": question}).query
+        return {
+            "documents": documents,
+            "question": rewritten,
+            "loop_count": loop_count,
+            "gen_retries": 0,
+            "chat_history": chat_history,
+        }
+
+    def web_search(state):
+        question = state["question"]
+        chat_history = state.get("chat_history", [])
+        loop_count = state.get("loop_count", 0)
+
+        if web_tool is None:
+            web_results = []
+        else:
+            try:
+                docs = web_tool.invoke({"query": question})
+                web_results = _extract_web_results(docs)
+            except Exception:
+                web_results = []
+
+        return {
+            "documents": web_results,
+            "question": question,
+            "loop_count": loop_count,
+            "gen_retries": 0,
+            "chat_history": chat_history,
+        }
+
+    def chitchat_node(state):
+        question = state["question"]
+        chat_history = state.get("chat_history", [])
+
+        generation = chitchat_llm.invoke(
+            {
+                "question": question,
+                "chat_history": _safe_join_history(chat_history),
+            }
+        )
+        return {"generation": generation, "question": question, "chat_history": chat_history}
+
+    def query_router(state):
+        question = state["question"]
+        chat_history = state.get("chat_history", [])
+        result = router_node_llm.invoke({"question": question, "chat_history": _safe_join_history(chat_history)})
+        return result.route if result.route in {"vectorstore", "websearch", "chitchat"} else "websearch"
+
+    def rewrite_router(state):
+        return "web_search" if state.get("loop_count", 0) > 3 else "retrieve"
+
+    def hallucinations_and_relevance_router(state):
+        question = state["question"]
+        documents = state.get("documents", [])
+        generation = state.get("generation", "")
+        gen_retries = state.get("gen_retries", 0)
+
+        if documents:
+            formatted_docs = _format_documents(documents)
+
+            grounded = hallucination_check_node_llm.invoke({"documents": formatted_docs, "generation": generation}).is_grounded
+            if not grounded:
+                return "rewrite_query" if gen_retries >= 2 else "generate"
+
+        relevant = relevance_check_node_llm.invoke({"question": question, "generation": generation}).is_relevant
+        if relevant:
+            return "all_pass"
+        return "rewrite_query" if gen_retries >= 2 else "generate"
+
+    def post_retrieve_router(state):
+        return "generate" if len(state.get("documents", [])) > 0 else "rewrite"
+
+    workflow = StateGraph(GraphState)
+    workflow.add_node("retrieve_and_rerank", retrieve_and_rerank)
+    workflow.add_node("generate", generate)
+    workflow.add_node("rewrite_query", rewrite_query)
+    workflow.add_node("web_search", web_search)
+    workflow.add_node("chitchat", chitchat_node)
+
+    workflow.add_conditional_edges(
+        START,
+        query_router,
+        {
+            "vectorstore": "retrieve_and_rerank",
+            "websearch": "web_search",
+            "chitchat": "chitchat",
+        },
+    )
+
+    workflow.add_conditional_edges(
+        "retrieve_and_rerank",
+        post_retrieve_router,
+        {
+            "generate": "generate",
+            "rewrite": "rewrite_query",
+        },
+    )
+
+    workflow.add_conditional_edges(
+        "rewrite_query",
+        rewrite_router,
+        {
+            "retrieve": "retrieve_and_rerank",
+            "web_search": "web_search",
+        },
+    )
+
+    workflow.add_edge("web_search", "generate")
+
+    workflow.add_conditional_edges(
+        "generate",
+        hallucinations_and_relevance_router,
+        {
+            "all_pass": END,
+            "generate": "generate",
+            "rewrite_query": "rewrite_query",
+        },
+    )
+
+    workflow.add_edge("chitchat", END)
+    return workflow.compile()
+
+
+def run_query(app_graph, question: str, chat_history: List[str]):
+    inputs = {
+        "question": question,
+        "chat_history": chat_history,
+        "loop_count": 0,
+        "gen_retries": 0,
+    }
+
+    final_output = None
+    try:
+        for output in app_graph.stream(inputs):
+            for _, value in output.items():
+                final_output = value
+    except Exception as e:
+        return f"I encountered an error processing your request: {e}"
+
+    if final_output and "generation" in final_output:
+        return final_output["generation"]
+    return "I encountered an error processing your request."
+
+
+def main():
+    st.set_page_config(page_title="Multimodal Agentic RAG", page_icon="🤖", layout="wide")
+    st.title("Multimodal Agentic RAG")
+    st.caption("Adaptive routing across vector search, web search, and conversational mode.")
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    if "rag_history" not in st.session_state:
+        st.session_state.rag_history = []
+
+    app_graph = build_graph()
+
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    user_input = st.chat_input("Ask a question about the RAG papers...")
+    if not user_input:
+        return
+
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            answer = run_query(app_graph, user_input, st.session_state.rag_history.copy())
+        st.markdown(answer)
+
+    st.session_state.messages.append({"role": "assistant", "content": answer})
+    st.session_state.rag_history.append(f"User: {user_input}")
+    st.session_state.rag_history.append(f"Assistant: {answer}")
+
+    if len(st.session_state.rag_history) > MAX_CHAT_TURNS * 2:
+        st.session_state.rag_history = st.session_state.rag_history[-(MAX_CHAT_TURNS * 2):]
 
 
 if __name__ == "__main__":
