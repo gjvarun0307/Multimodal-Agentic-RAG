@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from helper import open_jsonl
 from config import config_rag
 
@@ -185,6 +184,66 @@ def load_database_and_embedding(database_path, device):
     print(f"Collection 'arag_project' loaded. Entities: {col.num_entities}")
 
     return col, embedding_model
+
+
+def append_parsed_file_to_database(markdown_path, metadata, config, database, embedding_model, batch_size=50):
+    """
+    Parse a single markdown file into chunks and append embeddings to an existing collection.
+
+    :param markdown_path: Path to the markdown file created by parser.
+    :type markdown_path: str
+    :param metadata: Metadata dictionary associated with the markdown file.
+    :type metadata: dict
+    :param config: RAG configuration containing chunking options.
+    :type config: dict
+    :param database: Loaded Milvus collection.
+    :type database: Collection
+    :param embedding_model: BGE-M3 embedding model used for dense+sparse vectors.
+    :type embedding_model: BGEM3EmbeddingFunction
+    :param batch_size: Insert batch size.
+    :type batch_size: int
+    :return: Number of inserted chunks.
+    :rtype: int
+    """
+    markdown_path = Path(markdown_path)
+    if not markdown_path.exists():
+        raise FileNotFoundError(f"Markdown file not found: {markdown_path}")
+
+    with open(markdown_path, "r", encoding="utf-8") as f:
+        markdown_content = f.read()
+
+    split_markdown_documents = split_data(markdown_content, config)
+    if not split_markdown_documents:
+        return 0
+
+    for doc in split_markdown_documents:
+        if metadata:
+            doc.metadata.update(metadata)
+
+    docs = [doc.page_content for doc in split_markdown_documents if doc.page_content]
+    docs_metadata = [doc.metadata for doc in split_markdown_documents if doc.page_content]
+
+    if not docs:
+        return 0
+
+    docs_embeddings = embedding_model(docs)
+    formatted_sparse = [
+        {int(k): float(v) for k, v in zip(row.indices, row.data)}
+        for row in docs_embeddings["sparse"].tocsr()
+    ]
+
+    for i in range(0, len(docs), batch_size):
+        batched_entities = [
+            docs[i : i + batch_size],
+            docs_metadata[i : i + batch_size],
+            formatted_sparse[i : i + batch_size],
+            docs_embeddings["dense"][i : i + batch_size],
+        ]
+        database.insert(batched_entities)
+
+    database.flush()
+    database.load()
+    return len(docs)
     
 if __name__ == "__main__":
     config = config_rag()

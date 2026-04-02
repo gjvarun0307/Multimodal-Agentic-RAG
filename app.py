@@ -1,5 +1,6 @@
 import heapq
 import os
+from pathlib import Path
 from typing import List
 from typing_extensions import TypedDict, Literal
 
@@ -13,8 +14,9 @@ from langchain_tavily import TavilySearch
 from langgraph.graph import END, START, StateGraph
 from FlagEmbedding import FlagLLMReranker
 
-from config import config_rag
-from hybrid_database import data_preprocessing, hybrid_search, load_database_and_embedding
+from config import config_parse, config_rag
+from hybrid_database import append_parsed_file_to_database, data_preprocessing, hybrid_search, load_database_and_embedding
+from parse import parse_single_file
 
 
 MAX_CHAT_TURNS = 10
@@ -82,10 +84,13 @@ def load_runtime():
         devices=config["device"],
     )
 
+    llm_base_url = os.environ.get("VLLM_BASE_URL", "http://localhost:8000/v1")
+    llm_api_key = os.environ.get("VLLM_API_KEY", "token-abc123")
+
     llm_model = ChatOpenAI(
         model_name="Qwen/Qwen3-8B-AWQ",
-        base_url="http://localhost:8000/v1",
-        api_key="token-abc123",
+        base_url=llm_base_url,
+        api_key=llm_api_key,
         model_kwargs={
             "extra_body": {
                 "guided_decoding_backend": "xgrammar"
@@ -443,6 +448,39 @@ def run_query(app_graph, question: str, chat_history: List[str]):
     return "I encountered an error processing your request."
 
 
+def ingest_uploaded_pdf(uploaded_file, rag_config, database, embedding_model):
+    pdf_dir = Path("data/raw_pdfs")
+    pdf_dir.mkdir(parents=True, exist_ok=True)
+
+    safe_file_name = Path(uploaded_file.name).name
+    saved_pdf_path = pdf_dir / safe_file_name
+    with open(saved_pdf_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+
+    parse_config = config_parse()
+    parse_config["input_folder"] = str(pdf_dir)
+    parse_config["output_folder"] = rag_config["input_folder_path"]
+    parse_config["device"] = rag_config["device"]
+
+    artifact = parse_single_file(parse_config, str(saved_pdf_path))
+    if artifact is None:
+        raise RuntimeError("PDF parsing failed. Please check fail_logs.txt for details.")
+
+    inserted_chunks = append_parsed_file_to_database(
+        markdown_path=artifact["markdown_path"],
+        metadata=artifact.get("metadata", {}),
+        config=rag_config,
+        database=database,
+        embedding_model=embedding_model,
+    )
+
+    return {
+        "pdf_path": str(saved_pdf_path),
+        "markdown_path": artifact["markdown_path"],
+        "inserted_chunks": inserted_chunks,
+    }
+
+
 def main():
     st.set_page_config(page_title="Multimodal Agentic RAG", page_icon="🤖", layout="wide")
     st.title("Multimodal Agentic RAG")
@@ -452,6 +490,34 @@ def main():
         st.session_state.messages = []
     if "rag_history" not in st.session_state:
         st.session_state.rag_history = []
+    if "ingested_files" not in st.session_state:
+        st.session_state.ingested_files = []
+
+    rag_config, database, embedding_model, _, _, _ = load_runtime()
+
+    with st.sidebar:
+        st.subheader("Add PDF to Knowledge Base")
+        uploaded_pdf = st.file_uploader("Upload a PDF", type=["pdf"], accept_multiple_files=False)
+        if st.button("Parse and Add", use_container_width=True, disabled=uploaded_pdf is None):
+            with st.spinner("Parsing PDF and indexing into Milvus..."):
+                try:
+                    ingest_result = ingest_uploaded_pdf(uploaded_pdf, rag_config, database, embedding_model)
+                    st.session_state.ingested_files.append(
+                        {
+                            "pdf": Path(ingest_result["pdf_path"]).name,
+                            "chunks": ingest_result["inserted_chunks"],
+                        }
+                    )
+                    st.success(
+                        f"Added {Path(ingest_result['pdf_path']).name} with {ingest_result['inserted_chunks']} chunks to RAG context."
+                    )
+                except Exception as e:
+                    st.error(f"Failed to ingest PDF: {e}")
+
+        if st.session_state.ingested_files:
+            st.caption("Recently ingested")
+            for item in st.session_state.ingested_files[-5:][::-1]:
+                st.write(f"- {item['pdf']} ({item['chunks']} chunks)")
 
     app_graph = build_graph()
 

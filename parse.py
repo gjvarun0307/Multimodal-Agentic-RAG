@@ -7,7 +7,7 @@ import re
 from transformers import Qwen2_5_VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 from qwen_vl_utils import process_vision_info
 
-from llama_cloud import LlamaCloud, AsyncLlamaCloud
+from llama_cloud import AsyncLlamaCloud
 
 from config import config_parse
 from helper import clean_json_text
@@ -143,6 +143,11 @@ def save_markdown(parsed_content, config, model, processor):
     metadata_path = Path(config["output_folder"]) / "metadata.jsonl"
     with open(metadata_path, "a", encoding="utf-8") as f:
         f.write(json.dumps(metadata, ensure_ascii=False) + "\n")
+
+    return {
+        "markdown_path": str(output_file),
+        "metadata": metadata,
+    }
     
 
 async def parse_folder(config):
@@ -167,10 +172,33 @@ async def parse_folder(config):
     model, processor = load_model(config["device"])
 
     # write markdown
+    artifacts = []
     for result in results:
-        save_markdown(result, config, model, processor)
+        artifact = save_markdown(result, config, model, processor)
+        if artifact is not None:
+            artifacts.append(artifact)
     
-    return results
+    return results, artifacts
+
+def parse_single_file(config, file_path):
+    async def _run_single():
+        client = AsyncLlamaCloud(api_key=config["api_key"])
+        return await parse_file(client, file_path)
+
+    result = asyncio.run(_run_single())
+    if result is None:
+        return None
+
+    model, processor = load_model(config["device"])
+    artifact = save_markdown(result, config, model, processor)
+    if artifact is None:
+        return None
+
+    return {
+        "result": result,
+        "markdown_path": artifact["markdown_path"],
+        "metadata": artifact["metadata"],
+    }
         
 
 if __name__ == '__main__':
