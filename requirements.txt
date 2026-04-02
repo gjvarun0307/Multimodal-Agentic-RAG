@@ -2,6 +2,7 @@
 llama_cloud
 mdutils
 accelerate
+transformers==4.51.3
 qwen-vl-utils
 torchvision
 
@@ -14,6 +15,6 @@ pymilvus[milvus_lite]
 langgraph
 langchain
 langchain_openai
-flagembedding
+flagembedding==1.3.5
 langchain_tavily
 streamlit

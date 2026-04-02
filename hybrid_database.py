@@ -25,13 +25,16 @@ def prepare_input_data(data_folder_path: str) -> dict:
     """
     # prepare the input data path to metadata
     data_folder = Path(data_folder_path)
-    metadata_list = open_jsonl(data_folder / "metadata.jsonl")
+    data_folder.mkdir(parents=True, exist_ok=True)
+    metadata_path = data_folder / "metadata.jsonl"
+    metadata_list = open_jsonl(metadata_path) if metadata_path.exists() else []
 
     pdf_files = list((data_folder.glob("*.md")))
     pdf_files.sort(key=os.path.getmtime)
 
     input_data = dict()
-    for pdf_file, metadata in zip(pdf_files, metadata_list):
+    for idx, pdf_file in enumerate(pdf_files):
+        metadata = metadata_list[idx] if idx < len(metadata_list) and isinstance(metadata_list[idx], dict) else {}
         input_data[pdf_file] = metadata
 
     return input_data
@@ -84,10 +87,10 @@ def data_preprocessing(config: dict):
         chunks_text.append(chunk.page_content)
     
     # get embedding model(BGE-M3)
-    ef = BGEM3EmbeddingFunction(use_fp16=False, device="cuda")
+    ef = BGEM3EmbeddingFunction(use_fp16=False, device=config.get("device", "cuda"))
     dense_dim = ef.dim["dense"]
-    # Generate embeddings using BGE-M3 model
-    docs_embeddings = ef(chunks_text)
+    # Generate embeddings only when chunks are available
+    docs_embeddings = ef(chunks_text) if chunks_text else None
 
     docs = []
     docs_metadata = []
@@ -98,7 +101,7 @@ def data_preprocessing(config: dict):
 
 
     # Connect to Milvus given URI
-    connections.connect(uri="./milvus.db")
+    connections.connect(uri=config.get("database_path", "./milvus.db"))
 
     fields = [
         FieldSchema(
@@ -136,6 +139,10 @@ def data_preprocessing(config: dict):
     dense_index = {"index_type": "AUTOINDEX", "metric_type": "COSINE"}
     col.create_index("dense_vector", dense_index)
     col.load()
+
+    if not docs:
+        print(f"No markdown files found in {path_to_data_folder}. Created empty collection '{col_name}'.")
+        return col, ef
 
     # Transform the sparse array into a list of {index: value} dicts
     formatted_sparse = [

@@ -16,7 +16,7 @@ from FlagEmbedding import FlagLLMReranker
 
 from config import config_parse, config_rag
 from hybrid_database import append_parsed_file_to_database, data_preprocessing, hybrid_search, load_database_and_embedding
-from parse import parse_single_file
+from parse import parse_single_file, load_model
 
 
 MAX_CHAT_TURNS = 10
@@ -109,7 +109,15 @@ def load_runtime():
         except Exception:
             web_tool = None
 
-    return config, database, embedding_model, rerank_model, llm_model, web_tool
+    parse_model = None
+    parse_processor = None
+    if os.environ.get("PRELOAD_PARSE_VLM", "1") == "1":
+        try:
+            parse_model, parse_processor = load_model(config.get("device", "cuda"))
+        except Exception:
+            parse_model, parse_processor = None, None
+
+    return config, database, embedding_model, rerank_model, llm_model, web_tool, parse_model, parse_processor
 
 
 def _safe_join_history(chat_history: List[str]) -> str:
@@ -140,7 +148,7 @@ def _extract_web_results(docs: dict) -> list:
 
 @st.cache_resource(show_spinner=True)
 def build_graph():
-    _, database, embedding_model, rerank_model, llm_model, web_tool = load_runtime()
+    _, database, embedding_model, rerank_model, llm_model, web_tool, _, _ = load_runtime()
 
     router_node_prompt = ChatPromptTemplate(
         [
@@ -349,6 +357,22 @@ def build_graph():
     def query_router(state):
         question = state["question"]
         chat_history = state.get("chat_history", [])
+
+        # Uploaded-document intents should stay on vector retrieval so newly ingested PDFs are immediately queryable.
+        combined_text = f"{question}\n{_safe_join_history(chat_history)}".lower()
+        upload_markers = [
+            "uploaded pdf",
+            "uploaded file",
+            "this pdf",
+            "this file",
+            "my pdf",
+            "my file",
+            "document i uploaded",
+            "newly added",
+        ]
+        if any(marker in combined_text for marker in upload_markers):
+            return "vectorstore"
+
         result = router_node_llm.invoke({"question": question, "chat_history": _safe_join_history(chat_history)})
         return result.route if result.route in {"vectorstore", "websearch", "chitchat"} else "websearch"
 
@@ -448,7 +472,7 @@ def run_query(app_graph, question: str, chat_history: List[str]):
     return "I encountered an error processing your request."
 
 
-def ingest_uploaded_pdf(uploaded_file, rag_config, database, embedding_model):
+def ingest_uploaded_pdf(uploaded_file, rag_config, database, embedding_model, parse_model=None, parse_processor=None):
     pdf_dir = Path("data/raw_pdfs")
     pdf_dir.mkdir(parents=True, exist_ok=True)
 
@@ -461,8 +485,14 @@ def ingest_uploaded_pdf(uploaded_file, rag_config, database, embedding_model):
     parse_config["input_folder"] = str(pdf_dir)
     parse_config["output_folder"] = rag_config["input_folder_path"]
     parse_config["device"] = rag_config["device"]
+    Path(parse_config["output_folder"]).mkdir(parents=True, exist_ok=True)
 
-    artifact = parse_single_file(parse_config, str(saved_pdf_path))
+    artifact = parse_single_file(
+        parse_config,
+        str(saved_pdf_path),
+        model=parse_model,
+        processor=parse_processor,
+    )
     if artifact is None:
         raise RuntimeError("PDF parsing failed. Please check fail_logs.txt for details.")
 
@@ -493,7 +523,7 @@ def main():
     if "ingested_files" not in st.session_state:
         st.session_state.ingested_files = []
 
-    rag_config, database, embedding_model, _, _, _ = load_runtime()
+    rag_config, database, embedding_model, _, _, _, parse_model, parse_processor = load_runtime()
 
     with st.sidebar:
         st.subheader("Add PDF to Knowledge Base")
@@ -501,12 +531,22 @@ def main():
         if st.button("Parse and Add", use_container_width=True, disabled=uploaded_pdf is None):
             with st.spinner("Parsing PDF and indexing into Milvus..."):
                 try:
-                    ingest_result = ingest_uploaded_pdf(uploaded_pdf, rag_config, database, embedding_model)
+                    ingest_result = ingest_uploaded_pdf(
+                        uploaded_pdf,
+                        rag_config,
+                        database,
+                        embedding_model,
+                        parse_model=parse_model,
+                        parse_processor=parse_processor,
+                    )
                     st.session_state.ingested_files.append(
                         {
                             "pdf": Path(ingest_result["pdf_path"]).name,
                             "chunks": ingest_result["inserted_chunks"],
                         }
+                    )
+                    st.session_state.rag_history.append(
+                        f"System: New uploaded document indexed: {Path(ingest_result['pdf_path']).name}"
                     )
                     st.success(
                         f"Added {Path(ingest_result['pdf_path']).name} with {ingest_result['inserted_chunks']} chunks to RAG context."

@@ -180,7 +180,7 @@ async def parse_folder(config):
     
     return results, artifacts
 
-def parse_single_file(config, file_path):
+def parse_single_file(config, file_path, model=None, processor=None):
     async def _run_single():
         client = AsyncLlamaCloud(api_key=config["api_key"])
         return await parse_file(client, file_path)
@@ -189,7 +189,8 @@ def parse_single_file(config, file_path):
     if result is None:
         return None
 
-    model, processor = load_model(config["device"])
+    if model is None or processor is None:
+        model, processor = load_model(config["device"])
     artifact = save_markdown(result, config, model, processor)
     if artifact is None:
         return None
