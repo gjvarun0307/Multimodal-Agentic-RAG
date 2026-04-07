@@ -545,7 +545,7 @@ def main():
                             "chunks": ingest_result["inserted_chunks"],
                         }
                     )
-                    st.session_state.rag_history.append(
+                    # st.session_state.rag_history.append(
                         f"System: New uploaded document indexed: {Path(ingest_result['pdf_path']).name}"
                     )
                     st.success(

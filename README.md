@@ -1,10 +1,10 @@
-# 🤖 Multimodal Agentic RAG
+# Multimodal Agentic RAG
 
 An advanced **Retrieval-Augmented Generation (RAG)** system built with **LangGraph**, combining hybrid vector search, multimodal document parsing, and an agentic workflow with self-correction capabilities.
 
 ---
 
-## 📌 Overview
+## Overview
 
 This project implements a production-ready, agentic RAG pipeline that:
 
@@ -15,7 +15,10 @@ This project implements a production-ready, agentic RAG pipeline that:
 
 ---
 
-## 🏗️ Architecture
+
+![Architecture Diagram](./imgs/image.png)
+
+## Architecture
 
 ```
 User Query
@@ -82,7 +85,7 @@ Multimodal Agentic RAG/
 
 ---
 
-## ⚙️ Setup & Installation
+## Setup & Installation
 
 ### 1. Prerequisites
 
@@ -107,7 +110,7 @@ Create an `api_keys.json` file in the project root:
 }
 ```
 
-> ⚠️ `api_keys.json` is gitignored. Never commit it.
+> `api_keys.json` is gitignored. 
 
 ### 4. Start the vLLM Server
 
@@ -132,7 +135,7 @@ This will embed all documents using **BGE-M3** and store them in a local Milvus 
 
 ---
 
-## 🚀 Usage
+## Usage
 
 Open and run `graph_rag.ipynb`:
 
@@ -155,7 +158,7 @@ The agent will automatically:
 
 ---
 
-## 🧠 Knowledge Base
+## Knowledge Base
 
 The vectorstore contains **15 research papers** covering:
 
@@ -167,7 +170,7 @@ Queries outside these topics are automatically routed to **Tavily web search**.
 
 ---
 
-## 🔧 Key Components
+## Key Components
 
 ### Hybrid Search (`hybrid_database.py`)
 - Uses **BGE-M3** for both sparse (BM25-like) and dense embeddings
@@ -189,7 +192,7 @@ Queries outside these topics are automatically routed to **Tavily web search**.
 
 ---
 
-## 🛠️ Configuration (`config.py`)
+## Configuration (`config.py`)
 
 | Key | Description |
 |---|---|
@@ -202,7 +205,7 @@ Queries outside these topics are automatically routed to **Tavily web search**.
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 | Package | Purpose |
 |---|---|
@@ -217,7 +220,7 @@ Queries outside these topics are automatically routed to **Tavily web search**.
 
 ---
 
-## 🔮 Future Work
+## Future Work
 
 - Replace LlamaParse with **Docling** for a fully local, offline pipeline
 - Add a PDF upload pipeline for dynamic knowledge base expansion
@@ -226,6 +229,6 @@ Queries outside these topics are automatically routed to **Tavily web search**.
 
 ---
 
-## 📄 License
+## License
 
 This project is for research and educational purposes.
