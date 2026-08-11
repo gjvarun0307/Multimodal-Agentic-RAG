@@ -1,0 +1,2287 @@
+{
+  "chunk_size": 1024,
+  "config_hash": "ae3ba911b50d",
+  "corpus_content_hashes": {
+    "adaptive_rag": "66355937b02b4221e42b53ba336920145167a734afe84f817706fe0984dbfe7d",
+    "attention_is_all_you_need": "23fcdab0cb5333ea2194597262770fd9eac317b55d30e7da87744373cd9eef90",
+    "chain_of_thought_prompting": "7b73645b245cca24c3f45f6fd21463fa43f04807ae1be1f6929ca1aea1e350fc",
+    "colbertv2": "05af0b6299124ae253f1f2cedbc87df716cad38691108b473b7d47b6615a8f65",
+    "crag": "fef29a88875cf0879b4e6d8167a298ba743d153d271999124025a66b85b60f3c",
+    "flashattention": "1064c260e8c7bc2ee7ff1e7189b75976e5092a5373bdc5ae7ae4c5ea69bca3c8",
+    "graphrag": "6946b817b14a505b1dbb991dfece670c4db4a466a425212ca6a5a3e2d5d5d56c",
+    "hyde": "c883b2f1fd4e1a032527a079ef7779aec5445ec8fc52ef4af2e24f82f4b5d3f7",
+    "llama3": "3c2cf61f1de996226d3e087367ecacb82b79dd053b3b515bffc7226829ccd35e",
+    "llava": "d74b79237dae7552099adcf3a3168e65db6622bdaa7b3cf04ae996725d357612",
+    "lora": "d9c2847a4509c52b05eae19a0b6329e7662a7d1baf9f0f789f1896e391d3846f",
+    "milvus": "dd0bce2e7175b58238e3761f3c8c620480ebdd6ad3beaf05f4b0fff11376858f",
+    "rag_knowledge_intensive": "93900ca764b4583b8a3442459db8014f028b05f4438529fadaa3e62c429e87ab",
+    "self_rag": "eda908c57db9f780d5a0a5396dd5e53b28f49465c9e6031000fb943321511e62",
+    "vllm_paged_attention": "c156b548873dbbb65eb05fe1e8763936d061f9b9ac50f398a81484d576ce5d47"
+  },
+  "generated_at": "2026-08-12T00:59:47.958517+00:00",
+  "items": {
+    "gs_0001": {
+      "gold_chunk_ids_union": [
+        "vllm_paged_attention::0014::30a554b6"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "vllm_paged_attention",
+          "gold_chunk_ids": [
+            "vllm_paged_attention::0014::30a554b6"
+          ],
+          "passage_char_span": [
+            9697,
+            9887
+          ]
+        }
+      ]
+    },
+    "gs_0002": {
+      "gold_chunk_ids_union": [
+        "lora::0001::9c1c5929"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "lora",
+          "gold_chunk_ids": [
+            "lora::0001::9c1c5929"
+          ],
+          "passage_char_span": [
+            761,
+            1026
+          ]
+        }
+      ]
+    },
+    "gs_0003": {
+      "gold_chunk_ids_union": [
+        "flashattention::0001::d005d205",
+        "vllm_paged_attention::0014::30a554b6"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "vllm_paged_attention",
+          "gold_chunk_ids": [
+            "vllm_paged_attention::0014::30a554b6"
+          ],
+          "passage_char_span": [
+            9697,
+            9887
+          ]
+        },
+        {
+          "doc_id": "flashattention",
+          "gold_chunk_ids": [
+            "flashattention::0001::d005d205"
+          ],
+          "passage_char_span": [
+            946,
+            1133
+          ]
+        }
+      ]
+    },
+    "gs_0004": {
+      "gold_chunk_ids_union": [
+        "attention_is_all_you_need::0074::7622e791"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "attention_is_all_you_need",
+          "gold_chunk_ids": [
+            "attention_is_all_you_need::0074::7622e791"
+          ],
+          "passage_char_span": [
+            54274,
+            55193
+          ]
+        }
+      ]
+    },
+    "gs_0005": {
+      "gold_chunk_ids_union": [],
+      "gold_passages": []
+    },
+    "gs_0006": {
+      "gold_chunk_ids_union": [
+        "adaptive_rag::0002::037ed6fb"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "adaptive_rag",
+          "gold_chunk_ids": [
+            "adaptive_rag::0002::037ed6fb"
+          ],
+          "passage_char_span": [
+            1241,
+            1519
+          ]
+        }
+      ]
+    },
+    "gs_0007": {
+      "gold_chunk_ids_union": [
+        "adaptive_rag::0021::deb9b9f7"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "adaptive_rag",
+          "gold_chunk_ids": [
+            "adaptive_rag::0021::deb9b9f7"
+          ],
+          "passage_char_span": [
+            14197,
+            14403
+          ]
+        }
+      ]
+    },
+    "gs_0008": {
+      "gold_chunk_ids_union": [
+        "adaptive_rag::0025::1e64bd94"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "adaptive_rag",
+          "gold_chunk_ids": [
+            "adaptive_rag::0025::1e64bd94"
+          ],
+          "passage_char_span": [
+            16645,
+            16868
+          ]
+        }
+      ]
+    },
+    "gs_0009": {
+      "gold_chunk_ids_union": [
+        "adaptive_rag::0005::053dc6a8",
+        "adaptive_rag::0006::c07006b5"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "adaptive_rag",
+          "gold_chunk_ids": [
+            "adaptive_rag::0005::053dc6a8",
+            "adaptive_rag::0006::c07006b5"
+          ],
+          "passage_char_span": [
+            3848,
+            4312
+          ]
+        }
+      ]
+    },
+    "gs_0010": {
+      "gold_chunk_ids_union": [
+        "self_rag::0004::704fe5cb"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0004::704fe5cb"
+          ],
+          "passage_char_span": [
+            3308,
+            3473
+          ]
+        }
+      ]
+    },
+    "gs_0011": {
+      "gold_chunk_ids_union": [
+        "self_rag::0011::ab814438"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0011::ab814438"
+          ],
+          "passage_char_span": [
+            7636,
+            7915
+          ]
+        }
+      ]
+    },
+    "gs_0012": {
+      "gold_chunk_ids_union": [
+        "self_rag::0022::eff5c619"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0022::eff5c619"
+          ],
+          "passage_char_span": [
+            14935,
+            15894
+          ]
+        }
+      ]
+    },
+    "gs_0013": {
+      "gold_chunk_ids_union": [
+        "crag::0029::7545f3ba"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0029::7545f3ba"
+          ],
+          "passage_char_span": [
+            19728,
+            19973
+          ]
+        }
+      ]
+    },
+    "gs_0014": {
+      "gold_chunk_ids_union": [
+        "crag::0031::d4825081"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0031::d4825081"
+          ],
+          "passage_char_span": [
+            20646,
+            21214
+          ]
+        }
+      ]
+    },
+    "gs_0015": {
+      "gold_chunk_ids_union": [
+        "crag::0030::2c976e2c",
+        "self_rag::0022::eff5c619"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0030::2c976e2c"
+          ],
+          "passage_char_span": [
+            20052,
+            20368
+          ]
+        },
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0022::eff5c619"
+          ],
+          "passage_char_span": [
+            15415,
+            15574
+          ]
+        }
+      ]
+    },
+    "gs_0016": {
+      "gold_chunk_ids_union": [
+        "crag::0051::4e5d56cc"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0051::4e5d56cc"
+          ],
+          "passage_char_span": [
+            34603,
+            35142
+          ]
+        }
+      ]
+    },
+    "gs_0017": {
+      "gold_chunk_ids_union": [
+        "graphrag::0001::5d17d468"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "graphrag",
+          "gold_chunk_ids": [
+            "graphrag::0001::5d17d468"
+          ],
+          "passage_char_span": [
+            1553,
+            1934
+          ]
+        }
+      ]
+    },
+    "gs_0018": {
+      "gold_chunk_ids_union": [
+        "graphrag::0007::43fa44e4"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "graphrag",
+          "gold_chunk_ids": [
+            "graphrag::0007::43fa44e4"
+          ],
+          "passage_char_span": [
+            4905,
+            5205
+          ]
+        }
+      ]
+    },
+    "gs_0019": {
+      "gold_chunk_ids_union": [
+        "graphrag::0001::5d17d468"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "graphrag",
+          "gold_chunk_ids": [
+            "graphrag::0001::5d17d468"
+          ],
+          "passage_char_span": [
+            982,
+            1214
+          ]
+        }
+      ]
+    },
+    "gs_0020": {
+      "gold_chunk_ids_union": [
+        "colbertv2::0003::14206ede"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "colbertv2",
+          "gold_chunk_ids": [
+            "colbertv2::0003::14206ede"
+          ],
+          "passage_char_span": [
+            2225,
+            2413
+          ]
+        }
+      ]
+    },
+    "gs_0021": {
+      "gold_chunk_ids_union": [
+        "colbertv2::0006::fbf9256c"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "colbertv2",
+          "gold_chunk_ids": [
+            "colbertv2::0006::fbf9256c"
+          ],
+          "passage_char_span": [
+            4120,
+            4455
+          ]
+        }
+      ]
+    },
+    "gs_0022": {
+      "gold_chunk_ids_union": [
+        "colbertv2::0007::61a195d4"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "colbertv2",
+          "gold_chunk_ids": [
+            "colbertv2::0007::61a195d4"
+          ],
+          "passage_char_span": [
+            5004,
+            5248
+          ]
+        }
+      ]
+    },
+    "gs_0023": {
+      "gold_chunk_ids_union": [
+        "hyde::0001::5f3279b8"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "hyde",
+          "gold_chunk_ids": [
+            "hyde::0001::5f3279b8"
+          ],
+          "passage_char_span": [
+            762,
+            991
+          ]
+        }
+      ]
+    },
+    "gs_0024": {
+      "gold_chunk_ids_union": [
+        "hyde::0001::5f3279b8"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "hyde",
+          "gold_chunk_ids": [
+            "hyde::0001::5f3279b8"
+          ],
+          "passage_char_span": [
+            992,
+            1392
+          ]
+        }
+      ]
+    },
+    "gs_0025": {
+      "gold_chunk_ids_union": [
+        "milvus::0008::f79bcf0e"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "milvus",
+          "gold_chunk_ids": [
+            "milvus::0008::f79bcf0e"
+          ],
+          "passage_char_span": [
+            5100,
+            5331
+          ]
+        }
+      ]
+    },
+    "gs_0026": {
+      "gold_chunk_ids_union": [
+        "milvus::0009::936a9cbe"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "milvus",
+          "gold_chunk_ids": [
+            "milvus::0009::936a9cbe"
+          ],
+          "passage_char_span": [
+            5332,
+            5555
+          ]
+        }
+      ]
+    },
+    "gs_0027": {
+      "gold_chunk_ids_union": [
+        "milvus::0010::63bb3901"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "milvus",
+          "gold_chunk_ids": [
+            "milvus::0010::63bb3901"
+          ],
+          "passage_char_span": [
+            5557,
+            6866
+          ]
+        }
+      ]
+    },
+    "gs_0028": {
+      "gold_chunk_ids_union": [
+        "rag_knowledge_intensive::0013::a35f2dfb"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [
+            "rag_knowledge_intensive::0013::a35f2dfb"
+          ],
+          "passage_char_span": [
+            8724,
+            8914
+          ]
+        }
+      ]
+    },
+    "gs_0029": {
+      "gold_chunk_ids_union": [
+        "rag_knowledge_intensive::0003::23b13440"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [
+            "rag_knowledge_intensive::0003::23b13440"
+          ],
+          "passage_char_span": [
+            2666,
+            2922
+          ]
+        }
+      ]
+    },
+    "gs_0030": {
+      "gold_chunk_ids_union": [
+        "rag_knowledge_intensive::0031::656e63fa"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [
+            "rag_knowledge_intensive::0031::656e63fa"
+          ],
+          "passage_char_span": [
+            21660,
+            22451
+          ]
+        }
+      ]
+    },
+    "gs_0031": {
+      "gold_chunk_ids_union": [
+        "chain_of_thought_prompting::0009::ec338ec3"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "chain_of_thought_prompting",
+          "gold_chunk_ids": [
+            "chain_of_thought_prompting::0009::ec338ec3"
+          ],
+          "passage_char_span": [
+            7398,
+            7740
+          ]
+        }
+      ]
+    },
+    "gs_0032": {
+      "gold_chunk_ids_union": [
+        "chain_of_thought_prompting::0001::115e67cc"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "chain_of_thought_prompting",
+          "gold_chunk_ids": [
+            "chain_of_thought_prompting::0001::115e67cc"
+          ],
+          "passage_char_span": [
+            974,
+            1182
+          ]
+        }
+      ]
+    },
+    "gs_0033": {
+      "gold_chunk_ids_union": [
+        "chain_of_thought_prompting::0011::7db1c15c"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "chain_of_thought_prompting",
+          "gold_chunk_ids": [
+            "chain_of_thought_prompting::0011::7db1c15c"
+          ],
+          "passage_char_span": [
+            8762,
+            9115
+          ]
+        }
+      ]
+    },
+    "gs_0034": {
+      "gold_chunk_ids_union": [
+        "llama3::0006::cb42a85c"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llama3",
+          "gold_chunk_ids": [
+            "llama3::0006::cb42a85c"
+          ],
+          "passage_char_span": [
+            2780,
+            3106
+          ]
+        }
+      ]
+    },
+    "gs_0035": {
+      "gold_chunk_ids_union": [
+        "llama3::0001::22c9b747"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llama3",
+          "gold_chunk_ids": [
+            "llama3::0001::22c9b747"
+          ],
+          "passage_char_span": [
+            299,
+            509
+          ]
+        }
+      ]
+    },
+    "gs_0036": {
+      "gold_chunk_ids_union": [
+        "llama3::0007::20f5ead7"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llama3",
+          "gold_chunk_ids": [
+            "llama3::0007::20f5ead7"
+          ],
+          "passage_char_span": [
+            3441,
+            4568
+          ]
+        }
+      ]
+    },
+    "gs_0037": {
+      "gold_chunk_ids_union": [
+        "llava::0007::c49090ba"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llava",
+          "gold_chunk_ids": [
+            "llava::0007::c49090ba"
+          ],
+          "passage_char_span": [
+            4504,
+            4914
+          ]
+        }
+      ]
+    },
+    "gs_0038": {
+      "gold_chunk_ids_union": [
+        "llava::0002::6e3bd879"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llava",
+          "gold_chunk_ids": [
+            "llava::0002::6e3bd879"
+          ],
+          "passage_char_span": [
+            1202,
+            1426
+          ]
+        }
+      ]
+    },
+    "gs_0039": {
+      "gold_chunk_ids_union": [
+        "llava::0163::ec749b0c"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llava",
+          "gold_chunk_ids": [
+            "llava::0163::ec749b0c"
+          ],
+          "passage_char_span": [
+            121437,
+            121849
+          ]
+        }
+      ]
+    },
+    "gs_0040": {
+      "gold_chunk_ids_union": [
+        "adaptive_rag::0002::037ed6fb",
+        "self_rag::0004::704fe5cb"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "adaptive_rag",
+          "gold_chunk_ids": [
+            "adaptive_rag::0002::037ed6fb"
+          ],
+          "passage_char_span": [
+            1241,
+            1519
+          ]
+        },
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0004::704fe5cb"
+          ],
+          "passage_char_span": [
+            3308,
+            3473
+          ]
+        }
+      ]
+    },
+    "gs_0041": {
+      "gold_chunk_ids_union": [
+        "graphrag::0001::5d17d468",
+        "rag_knowledge_intensive::0003::23b13440"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "graphrag",
+          "gold_chunk_ids": [
+            "graphrag::0001::5d17d468"
+          ],
+          "passage_char_span": [
+            982,
+            1214
+          ]
+        },
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [
+            "rag_knowledge_intensive::0003::23b13440"
+          ],
+          "passage_char_span": [
+            2666,
+            2922
+          ]
+        }
+      ]
+    },
+    "gs_0042": {
+      "gold_chunk_ids_union": [
+        "adaptive_rag::0025::1e64bd94",
+        "rag_knowledge_intensive::0013::a35f2dfb"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "adaptive_rag",
+          "gold_chunk_ids": [
+            "adaptive_rag::0025::1e64bd94"
+          ],
+          "passage_char_span": [
+            16645,
+            16868
+          ]
+        },
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [
+            "rag_knowledge_intensive::0013::a35f2dfb"
+          ],
+          "passage_char_span": [
+            8724,
+            8914
+          ]
+        }
+      ]
+    },
+    "gs_0043": {
+      "gold_chunk_ids_union": [
+        "crag::0030::2c976e2c",
+        "graphrag::0001::5d17d468"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0030::2c976e2c"
+          ],
+          "passage_char_span": [
+            20052,
+            20368
+          ]
+        },
+        {
+          "doc_id": "graphrag",
+          "gold_chunk_ids": [
+            "graphrag::0001::5d17d468"
+          ],
+          "passage_char_span": [
+            1553,
+            1934
+          ]
+        }
+      ]
+    },
+    "gs_0044": {
+      "gold_chunk_ids_union": [
+        "colbertv2::0003::14206ede",
+        "hyde::0001::5f3279b8"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "hyde",
+          "gold_chunk_ids": [
+            "hyde::0001::5f3279b8"
+          ],
+          "passage_char_span": [
+            762,
+            991
+          ]
+        },
+        {
+          "doc_id": "colbertv2",
+          "gold_chunk_ids": [
+            "colbertv2::0003::14206ede"
+          ],
+          "passage_char_span": [
+            2225,
+            2413
+          ]
+        }
+      ]
+    },
+    "gs_0045": {
+      "gold_chunk_ids_union": [
+        "colbertv2::0006::fbf9256c",
+        "milvus::0009::936a9cbe"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "colbertv2",
+          "gold_chunk_ids": [
+            "colbertv2::0006::fbf9256c"
+          ],
+          "passage_char_span": [
+            4120,
+            4455
+          ]
+        },
+        {
+          "doc_id": "milvus",
+          "gold_chunk_ids": [
+            "milvus::0009::936a9cbe"
+          ],
+          "passage_char_span": [
+            5332,
+            5555
+          ]
+        }
+      ]
+    },
+    "gs_0046": {
+      "gold_chunk_ids_union": [
+        "lora::0001::9c1c5929",
+        "vllm_paged_attention::0014::30a554b6"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "lora",
+          "gold_chunk_ids": [
+            "lora::0001::9c1c5929"
+          ],
+          "passage_char_span": [
+            761,
+            1026
+          ]
+        },
+        {
+          "doc_id": "vllm_paged_attention",
+          "gold_chunk_ids": [
+            "vllm_paged_attention::0014::30a554b6"
+          ],
+          "passage_char_span": [
+            9697,
+            9887
+          ]
+        }
+      ]
+    },
+    "gs_0047": {
+      "gold_chunk_ids_union": [
+        "attention_is_all_you_need::0074::7622e791",
+        "flashattention::0001::d005d205"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "flashattention",
+          "gold_chunk_ids": [
+            "flashattention::0001::d005d205"
+          ],
+          "passage_char_span": [
+            946,
+            1133
+          ]
+        },
+        {
+          "doc_id": "attention_is_all_you_need",
+          "gold_chunk_ids": [
+            "attention_is_all_you_need::0074::7622e791"
+          ],
+          "passage_char_span": [
+            54274,
+            55193
+          ]
+        }
+      ]
+    },
+    "gs_0048": {
+      "gold_chunk_ids_union": [
+        "chain_of_thought_prompting::0009::ec338ec3",
+        "self_rag::0022::eff5c619"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "chain_of_thought_prompting",
+          "gold_chunk_ids": [
+            "chain_of_thought_prompting::0009::ec338ec3"
+          ],
+          "passage_char_span": [
+            7398,
+            7740
+          ]
+        },
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0022::eff5c619"
+          ],
+          "passage_char_span": [
+            14935,
+            15894
+          ]
+        }
+      ]
+    },
+    "gs_0049": {
+      "gold_chunk_ids_union": [
+        "llama3::0001::22c9b747",
+        "lora::0001::9c1c5929"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llama3",
+          "gold_chunk_ids": [
+            "llama3::0001::22c9b747"
+          ],
+          "passage_char_span": [
+            299,
+            509
+          ]
+        },
+        {
+          "doc_id": "lora",
+          "gold_chunk_ids": [
+            "lora::0001::9c1c5929"
+          ],
+          "passage_char_span": [
+            761,
+            1026
+          ]
+        }
+      ]
+    },
+    "gs_0050": {
+      "gold_chunk_ids_union": [
+        "milvus::0008::f79bcf0e",
+        "rag_knowledge_intensive::0003::23b13440"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "milvus",
+          "gold_chunk_ids": [
+            "milvus::0008::f79bcf0e"
+          ],
+          "passage_char_span": [
+            5100,
+            5331
+          ]
+        },
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [
+            "rag_knowledge_intensive::0003::23b13440"
+          ],
+          "passage_char_span": [
+            2666,
+            2922
+          ]
+        }
+      ]
+    },
+    "gs_0051": {
+      "gold_chunk_ids_union": [
+        "crag::0031::d4825081",
+        "hyde::0001::5f3279b8"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0031::d4825081"
+          ],
+          "passage_char_span": [
+            20646,
+            21214
+          ]
+        },
+        {
+          "doc_id": "hyde",
+          "gold_chunk_ids": [
+            "hyde::0001::5f3279b8"
+          ],
+          "passage_char_span": [
+            762,
+            991
+          ]
+        }
+      ]
+    },
+    "gs_0052": {
+      "gold_chunk_ids_union": [
+        "adaptive_rag::0021::deb9b9f7",
+        "crag::0029::7545f3ba"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "adaptive_rag",
+          "gold_chunk_ids": [
+            "adaptive_rag::0021::deb9b9f7"
+          ],
+          "passage_char_span": [
+            14197,
+            14403
+          ]
+        },
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0029::7545f3ba"
+          ],
+          "passage_char_span": [
+            19728,
+            19973
+          ]
+        }
+      ]
+    },
+    "gs_0053": {
+      "gold_chunk_ids_union": [
+        "crag::0029::7545f3ba",
+        "self_rag::0011::ab814438"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0011::ab814438"
+          ],
+          "passage_char_span": [
+            7636,
+            7915
+          ]
+        },
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0029::7545f3ba"
+          ],
+          "passage_char_span": [
+            19728,
+            19973
+          ]
+        }
+      ]
+    },
+    "gs_0054": {
+      "gold_chunk_ids_union": [
+        "crag::0029::7545f3ba",
+        "graphrag::0007::43fa44e4"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "graphrag",
+          "gold_chunk_ids": [
+            "graphrag::0007::43fa44e4"
+          ],
+          "passage_char_span": [
+            4905,
+            5205
+          ]
+        },
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0029::7545f3ba"
+          ],
+          "passage_char_span": [
+            19728,
+            19973
+          ]
+        }
+      ]
+    },
+    "gs_0055": {
+      "gold_chunk_ids_union": [
+        "colbertv2::0006::fbf9256c",
+        "vllm_paged_attention::0014::30a554b6"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "vllm_paged_attention",
+          "gold_chunk_ids": [
+            "vllm_paged_attention::0014::30a554b6"
+          ],
+          "passage_char_span": [
+            9697,
+            9887
+          ]
+        },
+        {
+          "doc_id": "colbertv2",
+          "gold_chunk_ids": [
+            "colbertv2::0006::fbf9256c"
+          ],
+          "passage_char_span": [
+            4120,
+            4455
+          ]
+        }
+      ]
+    },
+    "gs_0056": {
+      "gold_chunk_ids_union": [
+        "hyde::0001::5f3279b8",
+        "self_rag::0004::704fe5cb"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0004::704fe5cb"
+          ],
+          "passage_char_span": [
+            3308,
+            3473
+          ]
+        },
+        {
+          "doc_id": "hyde",
+          "gold_chunk_ids": [
+            "hyde::0001::5f3279b8"
+          ],
+          "passage_char_span": [
+            762,
+            991
+          ]
+        }
+      ]
+    },
+    "gs_0057": {
+      "gold_chunk_ids_union": [
+        "graphrag::0001::5d17d468",
+        "rag_knowledge_intensive::0003::23b13440"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [
+            "rag_knowledge_intensive::0003::23b13440"
+          ],
+          "passage_char_span": [
+            2666,
+            2922
+          ]
+        },
+        {
+          "doc_id": "graphrag",
+          "gold_chunk_ids": [
+            "graphrag::0001::5d17d468"
+          ],
+          "passage_char_span": [
+            1553,
+            1934
+          ]
+        }
+      ]
+    },
+    "gs_0058": {
+      "gold_chunk_ids_union": [
+        "attention_is_all_you_need::0074::7622e791",
+        "lora::0001::9c1c5929"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "lora",
+          "gold_chunk_ids": [
+            "lora::0001::9c1c5929"
+          ],
+          "passage_char_span": [
+            761,
+            1026
+          ]
+        },
+        {
+          "doc_id": "attention_is_all_you_need",
+          "gold_chunk_ids": [
+            "attention_is_all_you_need::0074::7622e791"
+          ],
+          "passage_char_span": [
+            54274,
+            55193
+          ]
+        }
+      ]
+    },
+    "gs_0059": {
+      "gold_chunk_ids_union": [
+        "colbertv2::0006::fbf9256c",
+        "milvus::0009::936a9cbe"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "milvus",
+          "gold_chunk_ids": [
+            "milvus::0009::936a9cbe"
+          ],
+          "passage_char_span": [
+            5332,
+            5555
+          ]
+        },
+        {
+          "doc_id": "colbertv2",
+          "gold_chunk_ids": [
+            "colbertv2::0006::fbf9256c"
+          ],
+          "passage_char_span": [
+            4120,
+            4455
+          ]
+        }
+      ]
+    },
+    "gs_0060": {
+      "gold_chunk_ids_union": [
+        "adaptive_rag::0002::037ed6fb",
+        "self_rag::0022::eff5c619"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0022::eff5c619"
+          ],
+          "passage_char_span": [
+            14935,
+            15894
+          ]
+        },
+        {
+          "doc_id": "adaptive_rag",
+          "gold_chunk_ids": [
+            "adaptive_rag::0002::037ed6fb"
+          ],
+          "passage_char_span": [
+            1241,
+            1519
+          ]
+        }
+      ]
+    },
+    "gs_0061": {
+      "gold_chunk_ids_union": [
+        "lora::0017::a157e464"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "lora",
+          "gold_chunk_ids": [
+            "lora::0017::a157e464"
+          ],
+          "passage_char_span": [
+            11903,
+            12469
+          ]
+        }
+      ]
+    },
+    "gs_0062": {
+      "gold_chunk_ids_union": [
+        "vllm_paged_attention::0074::3b223830"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "vllm_paged_attention",
+          "gold_chunk_ids": [
+            "vllm_paged_attention::0074::3b223830"
+          ],
+          "passage_char_span": [
+            52283,
+            52681
+          ]
+        }
+      ]
+    },
+    "gs_0063": {
+      "gold_chunk_ids_union": [
+        "flashattention::0044::0e629dad"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "flashattention",
+          "gold_chunk_ids": [
+            "flashattention::0044::0e629dad"
+          ],
+          "passage_char_span": [
+            31206,
+            31421
+          ]
+        }
+      ]
+    },
+    "gs_0064": {
+      "gold_chunk_ids_union": [
+        "hyde::0027::c5c944ca"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "hyde",
+          "gold_chunk_ids": [
+            "hyde::0027::c5c944ca"
+          ],
+          "passage_char_span": [
+            18613,
+            20032
+          ]
+        }
+      ]
+    },
+    "gs_0065": {
+      "gold_chunk_ids_union": [
+        "graphrag::0062::5b539d14"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "graphrag",
+          "gold_chunk_ids": [
+            "graphrag::0062::5b539d14"
+          ],
+          "passage_char_span": [
+            45154,
+            45843
+          ]
+        }
+      ]
+    },
+    "gs_0066": {
+      "gold_chunk_ids_union": [
+        "vllm_paged_attention::0001::d2dbad65"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "vllm_paged_attention",
+          "gold_chunk_ids": [
+            "vllm_paged_attention::0001::d2dbad65"
+          ],
+          "passage_char_span": [
+            1200,
+            1387
+          ]
+        }
+      ]
+    },
+    "gs_0067": {
+      "gold_chunk_ids_union": [
+        "vllm_paged_attention::0005::f02bcbd0"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "vllm_paged_attention",
+          "gold_chunk_ids": [
+            "vllm_paged_attention::0005::f02bcbd0"
+          ],
+          "passage_char_span": [
+            3104,
+            3431
+          ]
+        }
+      ]
+    },
+    "gs_0068": {
+      "gold_chunk_ids_union": [
+        "lora::0003::5828ddcb"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "lora",
+          "gold_chunk_ids": [
+            "lora::0003::5828ddcb"
+          ],
+          "passage_char_span": [
+            2040,
+            2408
+          ]
+        }
+      ]
+    },
+    "gs_0069": {
+      "gold_chunk_ids_union": [
+        "lora::0006::42446601"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "lora",
+          "gold_chunk_ids": [
+            "lora::0006::42446601"
+          ],
+          "passage_char_span": [
+            4492,
+            4710
+          ]
+        }
+      ]
+    },
+    "gs_0070": {
+      "gold_chunk_ids_union": [
+        "attention_is_all_you_need::0003::bc5ec598"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "attention_is_all_you_need",
+          "gold_chunk_ids": [
+            "attention_is_all_you_need::0003::bc5ec598"
+          ],
+          "passage_char_span": [
+            1706,
+            2029
+          ]
+        }
+      ]
+    },
+    "gs_0071": {
+      "gold_chunk_ids_union": [
+        "attention_is_all_you_need::0003::bc5ec598"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "attention_is_all_you_need",
+          "gold_chunk_ids": [
+            "attention_is_all_you_need::0003::bc5ec598"
+          ],
+          "passage_char_span": [
+            2030,
+            2440
+          ]
+        }
+      ]
+    },
+    "gs_0072": {
+      "gold_chunk_ids_union": [
+        "flashattention::0010::d9f167b3"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "flashattention",
+          "gold_chunk_ids": [
+            "flashattention::0010::d9f167b3"
+          ],
+          "passage_char_span": [
+            6626,
+            7052
+          ]
+        }
+      ]
+    },
+    "gs_0073": {
+      "gold_chunk_ids_union": [
+        "flashattention::0002::b0a54ca4"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "flashattention",
+          "gold_chunk_ids": [
+            "flashattention::0002::b0a54ca4"
+          ],
+          "passage_char_span": [
+            1736,
+            2142
+          ]
+        }
+      ]
+    },
+    "gs_0074": {
+      "gold_chunk_ids_union": [
+        "self_rag::0012::3ba0414c"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0012::3ba0414c"
+          ],
+          "passage_char_span": [
+            8370,
+            8860
+          ]
+        }
+      ]
+    },
+    "gs_0075": {
+      "gold_chunk_ids_union": [
+        "crag::0034::33dffbe2"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0034::33dffbe2"
+          ],
+          "passage_char_span": [
+            22414,
+            23037
+          ]
+        }
+      ]
+    },
+    "gs_0076": {
+      "gold_chunk_ids_union": [
+        "colbertv2::0010::e764aa18"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "colbertv2",
+          "gold_chunk_ids": [
+            "colbertv2::0010::e764aa18"
+          ],
+          "passage_char_span": [
+            6381,
+            6790
+          ]
+        }
+      ]
+    },
+    "gs_0077": {
+      "gold_chunk_ids_union": [
+        "rag_knowledge_intensive::0001::2e2105d2"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [
+            "rag_knowledge_intensive::0001::2e2105d2"
+          ],
+          "passage_char_span": [
+            1416,
+            1612
+          ]
+        }
+      ]
+    },
+    "gs_0078": {
+      "gold_chunk_ids_union": [
+        "adaptive_rag::0022::bbc4abb7"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "adaptive_rag",
+          "gold_chunk_ids": [
+            "adaptive_rag::0022::bbc4abb7"
+          ],
+          "passage_char_span": [
+            15281,
+            15677
+          ]
+        }
+      ]
+    },
+    "gs_0079": {
+      "gold_chunk_ids_union": [
+        "chain_of_thought_prompting::0007::6aa6f83f"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "chain_of_thought_prompting",
+          "gold_chunk_ids": [
+            "chain_of_thought_prompting::0007::6aa6f83f"
+          ],
+          "passage_char_span": [
+            5385,
+            5766
+          ]
+        }
+      ]
+    },
+    "gs_0080": {
+      "gold_chunk_ids_union": [
+        "llama3::0021::1ad7066b"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llama3",
+          "gold_chunk_ids": [
+            "llama3::0021::1ad7066b"
+          ],
+          "passage_char_span": [
+            14399,
+            14772
+          ]
+        }
+      ]
+    },
+    "gs_0081": {
+      "gold_chunk_ids_union": [
+        "milvus::0012::8870a4ad"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "milvus",
+          "gold_chunk_ids": [
+            "milvus::0012::8870a4ad"
+          ],
+          "passage_char_span": [
+            7628,
+            7871
+          ]
+        }
+      ]
+    },
+    "gs_0082": {
+      "gold_chunk_ids_union": [
+        "llava::0025::89867845",
+        "llava::0026::ca0307ea"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llava",
+          "gold_chunk_ids": [
+            "llava::0025::89867845",
+            "llava::0026::ca0307ea"
+          ],
+          "passage_char_span": [
+            19257,
+            19632
+          ]
+        }
+      ]
+    },
+    "gs_0083": {
+      "gold_chunk_ids_union": [
+        "llava::0027::d8b93461"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llava",
+          "gold_chunk_ids": [
+            "llava::0027::d8b93461"
+          ],
+          "passage_char_span": [
+            19671,
+            19934
+          ]
+        }
+      ]
+    },
+    "gs_0084": {
+      "gold_chunk_ids_union": [
+        "attention_is_all_you_need::0040::4d382b8b"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "attention_is_all_you_need",
+          "gold_chunk_ids": [
+            "attention_is_all_you_need::0040::4d382b8b"
+          ],
+          "passage_char_span": [
+            25390,
+            27057
+          ]
+        }
+      ]
+    },
+    "gs_0085": {
+      "gold_chunk_ids_union": [
+        "crag::0042::bcbc397a"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0042::bcbc397a"
+          ],
+          "passage_char_span": [
+            29200,
+            29814
+          ]
+        }
+      ]
+    },
+    "gs_0086": {
+      "gold_chunk_ids_union": [],
+      "gold_passages": [
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [],
+          "passage_char_span": [
+            22637,
+            23428
+          ]
+        }
+      ]
+    },
+    "gs_0087": {
+      "gold_chunk_ids_union": [
+        "rag_knowledge_intensive::0033::af301d01"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [
+            "rag_knowledge_intensive::0033::af301d01"
+          ],
+          "passage_char_span": [
+            23481,
+            23678
+          ]
+        }
+      ]
+    },
+    "gs_0088": {
+      "gold_chunk_ids_union": [
+        "attention_is_all_you_need::0074::7622e791",
+        "llava::0007::c49090ba"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llava",
+          "gold_chunk_ids": [
+            "llava::0007::c49090ba"
+          ],
+          "passage_char_span": [
+            4504,
+            4914
+          ]
+        },
+        {
+          "doc_id": "attention_is_all_you_need",
+          "gold_chunk_ids": [
+            "attention_is_all_you_need::0074::7622e791"
+          ],
+          "passage_char_span": [
+            54274,
+            55193
+          ]
+        }
+      ]
+    },
+    "gs_0089": {
+      "gold_chunk_ids_union": [
+        "chain_of_thought_prompting::0007::6aa6f83f",
+        "llama3::0021::1ad7066b"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "chain_of_thought_prompting",
+          "gold_chunk_ids": [
+            "chain_of_thought_prompting::0007::6aa6f83f"
+          ],
+          "passage_char_span": [
+            5385,
+            5766
+          ]
+        },
+        {
+          "doc_id": "llama3",
+          "gold_chunk_ids": [
+            "llama3::0021::1ad7066b"
+          ],
+          "passage_char_span": [
+            14399,
+            14772
+          ]
+        }
+      ]
+    },
+    "gs_0090": {
+      "gold_chunk_ids_union": [
+        "hyde::0001::5f3279b8",
+        "milvus::0009::936a9cbe"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "hyde",
+          "gold_chunk_ids": [
+            "hyde::0001::5f3279b8"
+          ],
+          "passage_char_span": [
+            992,
+            1392
+          ]
+        },
+        {
+          "doc_id": "milvus",
+          "gold_chunk_ids": [
+            "milvus::0009::936a9cbe"
+          ],
+          "passage_char_span": [
+            5332,
+            5555
+          ]
+        }
+      ]
+    },
+    "gs_0091": {
+      "gold_chunk_ids_union": [
+        "crag::0030::2c976e2c",
+        "rag_knowledge_intensive::0033::af301d01"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [
+            "rag_knowledge_intensive::0033::af301d01"
+          ],
+          "passage_char_span": [
+            23481,
+            23678
+          ]
+        },
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0030::2c976e2c"
+          ],
+          "passage_char_span": [
+            20052,
+            20368
+          ]
+        }
+      ]
+    },
+    "gs_0092": {
+      "gold_chunk_ids_union": [
+        "milvus::0010::63bb3901",
+        "vllm_paged_attention::0074::3b223830"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "milvus",
+          "gold_chunk_ids": [
+            "milvus::0010::63bb3901"
+          ],
+          "passage_char_span": [
+            5557,
+            6866
+          ]
+        },
+        {
+          "doc_id": "vllm_paged_attention",
+          "gold_chunk_ids": [
+            "vllm_paged_attention::0074::3b223830"
+          ],
+          "passage_char_span": [
+            52230,
+            52681
+          ]
+        }
+      ]
+    },
+    "gs_0093": {
+      "gold_chunk_ids_union": [
+        "llava::0025::89867845",
+        "llava::0026::ca0307ea",
+        "lora::0001::9c1c5929"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llava",
+          "gold_chunk_ids": [
+            "llava::0025::89867845",
+            "llava::0026::ca0307ea"
+          ],
+          "passage_char_span": [
+            19257,
+            19632
+          ]
+        },
+        {
+          "doc_id": "lora",
+          "gold_chunk_ids": [
+            "lora::0001::9c1c5929"
+          ],
+          "passage_char_span": [
+            761,
+            1026
+          ]
+        }
+      ]
+    },
+    "gs_0094": {
+      "gold_chunk_ids_union": [
+        "hyde::0001::5f3279b8",
+        "self_rag::0022::eff5c619"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "hyde",
+          "gold_chunk_ids": [
+            "hyde::0001::5f3279b8"
+          ],
+          "passage_char_span": [
+            992,
+            1392
+          ]
+        },
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0022::eff5c619"
+          ],
+          "passage_char_span": [
+            14935,
+            15894
+          ]
+        }
+      ]
+    },
+    "gs_0095": {
+      "gold_chunk_ids_union": [
+        "llama3::0006::cb42a85c",
+        "vllm_paged_attention::0074::3b223830"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "vllm_paged_attention",
+          "gold_chunk_ids": [
+            "vllm_paged_attention::0074::3b223830"
+          ],
+          "passage_char_span": [
+            52230,
+            52681
+          ]
+        },
+        {
+          "doc_id": "llama3",
+          "gold_chunk_ids": [
+            "llama3::0006::cb42a85c"
+          ],
+          "passage_char_span": [
+            2780,
+            3106
+          ]
+        }
+      ]
+    },
+    "gs_0096": {
+      "gold_chunk_ids_union": [
+        "colbertv2::0003::14206ede",
+        "flashattention::0001::d005d205"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "flashattention",
+          "gold_chunk_ids": [
+            "flashattention::0001::d005d205"
+          ],
+          "passage_char_span": [
+            946,
+            1133
+          ]
+        },
+        {
+          "doc_id": "colbertv2",
+          "gold_chunk_ids": [
+            "colbertv2::0003::14206ede"
+          ],
+          "passage_char_span": [
+            2225,
+            2413
+          ]
+        }
+      ]
+    },
+    "gs_0097": {
+      "gold_chunk_ids_union": [
+        "flashattention::0046::efc14981"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "flashattention",
+          "gold_chunk_ids": [
+            "flashattention::0046::efc14981"
+          ],
+          "passage_char_span": [
+            32273,
+            32992
+          ]
+        }
+      ]
+    },
+    "gs_0098": {
+      "gold_chunk_ids_union": [
+        "hyde::0035::e689f628"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "hyde",
+          "gold_chunk_ids": [
+            "hyde::0035::e689f628"
+          ],
+          "passage_char_span": [
+            26212,
+            26874
+          ]
+        }
+      ]
+    },
+    "gs_0099": {
+      "gold_chunk_ids_union": [
+        "self_rag::0053::30e809a4"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0053::30e809a4"
+          ],
+          "passage_char_span": [
+            35071,
+            35346
+          ]
+        }
+      ]
+    },
+    "gs_0100": {
+      "gold_chunk_ids_union": [
+        "vllm_paged_attention::0015::b3b29fce"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "vllm_paged_attention",
+          "gold_chunk_ids": [
+            "vllm_paged_attention::0015::b3b29fce"
+          ],
+          "passage_char_span": [
+            10058,
+            10328
+          ]
+        }
+      ]
+    },
+    "gs_0101": {
+      "gold_chunk_ids_union": [
+        "graphrag::0002::395777ad"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "graphrag",
+          "gold_chunk_ids": [
+            "graphrag::0002::395777ad"
+          ],
+          "passage_char_span": [
+            1935,
+            2178
+          ]
+        }
+      ]
+    },
+    "gs_0102": {
+      "gold_chunk_ids_union": [
+        "colbertv2::0006::fbf9256c"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "colbertv2",
+          "gold_chunk_ids": [
+            "colbertv2::0006::fbf9256c"
+          ],
+          "passage_char_span": [
+            3892,
+            4118
+          ]
+        }
+      ]
+    },
+    "gs_0103": {
+      "gold_chunk_ids_union": [
+        "crag::0002::f5951910"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "crag",
+          "gold_chunk_ids": [
+            "crag::0002::f5951910"
+          ],
+          "passage_char_span": [
+            1610,
+            1696
+          ]
+        }
+      ]
+    },
+    "gs_0104": {
+      "gold_chunk_ids_union": [
+        "llama3::0001::22c9b747"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "llama3",
+          "gold_chunk_ids": [
+            "llama3::0001::22c9b747"
+          ],
+          "passage_char_span": [
+            861,
+            1135
+          ]
+        }
+      ]
+    },
+    "gs_0105": {
+      "gold_chunk_ids_union": [
+        "milvus::0003::5f1bfab0"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "milvus",
+          "gold_chunk_ids": [
+            "milvus::0003::5f1bfab0"
+          ],
+          "passage_char_span": [
+            2125,
+            2314
+          ]
+        }
+      ]
+    },
+    "gs_0106": {
+      "gold_chunk_ids_union": [
+        "graphrag::0009::d9e760c1"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "graphrag",
+          "gold_chunk_ids": [
+            "graphrag::0009::d9e760c1"
+          ],
+          "passage_char_span": [
+            5989,
+            6319
+          ]
+        }
+      ]
+    },
+    "gs_0107": {
+      "gold_chunk_ids_union": [
+        "chain_of_thought_prompting::0045::8faba130"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "chain_of_thought_prompting",
+          "gold_chunk_ids": [
+            "chain_of_thought_prompting::0045::8faba130"
+          ],
+          "passage_char_span": [
+            36835,
+            37744
+          ]
+        }
+      ]
+    },
+    "gs_0108": {
+      "gold_chunk_ids_union": [
+        "adaptive_rag::0066::dd3220d8"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "adaptive_rag",
+          "gold_chunk_ids": [
+            "adaptive_rag::0066::dd3220d8"
+          ],
+          "passage_char_span": [
+            46417,
+            47726
+          ]
+        }
+      ]
+    },
+    "gs_0109": {
+      "gold_chunk_ids_union": [
+        "self_rag::0136::1fc1607f"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "self_rag",
+          "gold_chunk_ids": [
+            "self_rag::0136::1fc1607f"
+          ],
+          "passage_char_span": [
+            91600,
+            91795
+          ]
+        }
+      ]
+    },
+    "gs_0110": {
+      "gold_chunk_ids_union": [
+        "rag_knowledge_intensive::0046::8f5f280b"
+      ],
+      "gold_passages": [
+        {
+          "doc_id": "rag_knowledge_intensive",
+          "gold_chunk_ids": [
+            "rag_knowledge_intensive::0046::8f5f280b"
+          ],
+          "passage_char_span": [
+            33607,
+            33907
+          ]
+        }
+      ]
+    }
+  },
+  "n_chunks_total": 2694,
+  "n_chunks_unresolved": 44,
+  "n_gold_passages": 141,
+  "n_items": 110,
+  "overlap_size": 128,
+  "resolver_version": 1,
+  "unresolved_chunk_ids": [
+    "adaptive_rag::0134::6df3540e",
+    "attention_is_all_you_need::0046::e08e8fc9",
+    "attention_is_all_you_need::0051::ee0515ea",
+    "chain_of_thought_prompting::0021::a33bf925",
+    "chain_of_thought_prompting::0061::9d3678af",
+    "chain_of_thought_prompting::0149::f3c043bf",
+    "chain_of_thought_prompting::0235::41abb9db",
+    "colbertv2::0123::c6b6ff9b",
+    "colbertv2::0152::6ffcb8bb",
+    "flashattention::0123::6af3092d",
+    "flashattention::0151::c9034cbb",
+    "graphrag::0039::c4340f8b",
+    "graphrag::0058::45dfdb14",
+    "graphrag::0074::47b09a5a",
+    "graphrag::0142::31199735",
+    "graphrag::0170::65936a04",
+    "llama3::0017::861f9dbc",
+    "llama3::0018::bbf37edb",
+    "llama3::0136::205f0f7c",
+    "llama3::0137::cf4b7388",
+    "llama3::0173::fc003d7e",
+    "llama3::0174::5afb7497",
+    "llama3::0184::47f55368",
+    "llama3::0185::19ed3692",
+    "llama3::0186::6b05b502",
+    "llama3::0212::f75787e8",
+    "llama3::0470::98306d5e",
+    "llama3::0471::9c300ecb",
+    "llava::0037::3c854bb6",
+    "llava::0061::3003972d",
+    "llava::0067::e3539a7e",
+    "llava::0108::927b0d77",
+    "llava::0130::2c5788d5",
+    "llava::0132::3eba6bd3",
+    "llava::0166::fd484fa1",
+    "llava::0167::946f386b",
+    "llava::0168::bbc69a4c",
+    "llava::0169::c2e05c45",
+    "llava::0172::e4e92258",
+    "llava::0173::d051f185",
+    "lora::0054::7444cb7e",
+    "milvus::0118::33b01be9",
+    "milvus::0119::2d8ac042",
+    "vllm_paged_attention::0086::d9b4a52c"
+  ]
+}
