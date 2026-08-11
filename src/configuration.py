@@ -6,7 +6,7 @@ Loads configuration from environment variables, JSON files, and provides sane de
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import torch
 from langchain_anthropic import ChatAnthropic
@@ -89,6 +89,7 @@ class Config:
             # Model configuration
             "embedding_model": "BAAI/bge-m3",
             "reranker_model": "BAAI/bge-reranker-v2-gemma",
+            "use_fp16": False,
             "llm_provider": "",  # anthropic | openai | groq | openrouter | nvidia_nim -- set via Setup page
             "llm_model": "",
             "llm_api_key": "",
@@ -156,6 +157,7 @@ class Config:
             # Models
             "EMBEDDING_MODEL": "embedding_model",
             "RERANKER_MODEL": "reranker_model",
+            "USE_FP16": ("use_fp16", lambda x: x.lower() == "true"),
             "LLM_PROVIDER": "llm_provider",
             "LLM_MODEL": "llm_model",
             "LLM_API_KEY": "llm_api_key",
@@ -289,10 +291,17 @@ Output only the JSON."""
     }
 
 
-def config_rag() -> Dict[str, Any]:
-    """Backward compatibility function for existing code."""
+def config_rag(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Build the config dict consumed by the retrieval/generation pipeline.
+
+    Precedence: Config defaults -> api_keys.json -> env vars (all resolved
+    inside the Config singleton via _load_configuration()) -> `overrides`,
+    applied last on top of the resolved dict. `overrides` lets a caller (the
+    eval harness, an ablation runner) construct a fully config-driven run
+    without touching env vars or api_keys.json.
+    """
     c = get_config()
-    return {
+    resolved = {
         "device": c.get("device"),
         "tavilly_api_key": c.get("tavilly_web"),
         "database_path": c.get("database_path"),
@@ -303,4 +312,20 @@ def config_rag() -> Dict[str, Any]:
         "llm_provider": c.get("llm_provider"),
         "llm_model": c.get("llm_model"),
         "llm_api_key": c.get("llm_api_key"),
+        "search_limit": c.get("search_limit"),
+        "reranker_top_k": c.get("reranker_top_k"),
+        "sparse_weight": c.get("sparse_weight"),
+        "dense_weight": c.get("dense_weight"),
+        "reranker_score_threshold": c.get("reranker_score_threshold"),
+        "reranker_model": c.get("reranker_model"),
+        "use_fp16": c.get("use_fp16"),
+        "max_gen_retries": c.get("max_gen_retries"),
+        "max_rewrites": c.get("max_rewrites"),
+        "max_chat_turns": c.get("max_chat_turns"),
+        "insert_batch_size": c.get("insert_batch_size"),
+        "web_search_max_results": c.get("web_search_max_results"),
+        "web_search_topic": c.get("web_search_topic"),
     }
+    if overrides:
+        resolved.update(overrides)
+    return resolved

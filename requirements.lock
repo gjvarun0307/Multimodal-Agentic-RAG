@@ -36,6 +36,7 @@ httpx==0.28.1
 huggingface_hub==0.36.2
 identify==2.6.19
 idna==3.18
+iniconfig==2.3.0
 ir_datasets==0.6.3
 itsdangerous==2.2.0
 Jinja2==3.1.6
@@ -79,6 +80,7 @@ pandas==3.0.5
 peft==0.20.0
 pillow==12.3.0
 platformdirs==4.11.2
+pluggy==1.6.0
 pre_commit==4.6.2
 propcache==0.5.2
 protobuf==7.35.1
@@ -87,8 +89,10 @@ pyarrow==24.0.0
 pydantic==2.13.4
 pydantic_core==2.46.4
 pydeck==0.9.3
+Pygments==2.20.0
 pymilvus==3.0.1
 pymilvus.model==0.3.2
+pytest==9.1.1
 python-dateutil==2.9.0.post0
 python-discovery==1.5.1
 python-dotenv==1.2.2

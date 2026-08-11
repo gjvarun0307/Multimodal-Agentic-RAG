@@ -19,8 +19,6 @@ from hybrid_database import append_parsed_file_to_database, data_preprocessing, 
 from parse import parse_single_file, load_model
 
 
-MAX_CHAT_TURNS = 10
-
 
 DOMAIN_TOPICS = [
     "vLLM",

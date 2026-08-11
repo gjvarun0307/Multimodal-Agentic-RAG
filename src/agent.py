@@ -510,7 +510,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model):
             return "websearch"  # Default to websearch on error
 
     def rewrite_router(state):
-        max_rewrites = config_rag().get("max_rewrite_attempts", 3)
+        max_rewrites = config_rag().get("max_rewrites", 3)
         loop_count = state.get("loop_count", 0)
         if loop_count <= max_rewrites:
             logger.debug(f"Rewrite loop count: {loop_count}, max: {max_rewrites}, decision: retrieve")
