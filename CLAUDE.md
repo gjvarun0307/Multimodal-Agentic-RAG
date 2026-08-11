@@ -21,72 +21,57 @@ deployment, or reproducibility (`PROJECT_SPEC.md` §2.1). Off-topic ideas go in
 
 ## Phase state
 
-**Current phase: PHASE 0 — Unblock. Not started.** No task below is checked off yet;
-this repo is exactly the pre-upgrade state the spec's audit describes (verified by
-re-reading the code on 2026-08-11, see "Audit confirmed" below).
+**Phase 0 — Unblock: COMPLETE (2026-08-11).** All 16 checklist items landed, one commit
+each, in dependency order (M1 pre-flight through M13 acceptance pass). Every acceptance
+criterion in `PROJECT_SPEC.md` §7 (Phase 0 section) was verified for real — not just
+reasoned through — including a genuine fresh-clone-and-`pip install -r requirements.lock`
+reproducibility check in a scratch directory.
 
-Phases are dependency-ordered — do not start Phase 1 before Phase 0's acceptance
-criteria are met (`PROJECT_SPEC.md` §7, Phase 0 section). Full phase list: 0 Unblock →
-1 Golden set → 2 Metrics harness → 3 Noise floor → 4 Eval-as-CI → 5 Deploy &
-observability → 6 Ablations & failure taxonomy → 7 README rewrite.
+**Phase 1 — Golden evaluation set is next.** Read `PROJECT_SPEC.md` §7 (Phase 1 section)
+before starting; do not begin until re-confirming the acceptance criteria below still
+hold (re-run `pytest` and `ruff check .` fresh if any time has passed).
 
-### Git history — resolved: reseeded
+Full phase list: 0 Unblock (done) → 1 Golden set → 2 Metrics harness → 3 Noise floor →
+4 Eval-as-CI → 5 Deploy & observability → 6 Ablations & failure taxonomy → 7 README rewrite.
 
-`PROJECT_SPEC.md` Phase 0 task 1 ("a clean first commit beats preserved history") was
-followed literally: this commit is a fresh orphan history for `main` — one clean
-initial commit containing the full pre-upgrade working tree (code, docs, this file),
-old commit-by-commit history discarded from `main` going forward. Approved explicitly
-by the user, destructive-and-fine.
+### Git history
 
-- The old 28-commits-ahead-of-`origin/main` history is **not deleted from disk** —
-  it's preserved under the local branch `archive/pre-reseed-2026-08-11` (pointing at
-  the old tip, `cfa8773`) as a recovery net, but `main` no longer contains it and no
-  future work should merge from it.
+- Phase 0 task 1 ("a clean first commit beats preserved history") was followed
+  literally before Phase 0 work began: `main`'s history was reseeded to a fresh orphan
+  commit. The old 28-commits-ahead-of-`origin/main` history is preserved on the local
+  branch `archive/pre-reseed-2026-08-11` (tip `cfa8773`) as a recovery net; `main`
+  doesn't contain it.
+- During Phase 0 (licensing review, see below), `artifacts/parsed_md/*.md` — committed
+  in the metadata-regeneration commit — was removed from `main`'s history entirely via
+  `git filter-repo --refs main` (not just untracked going forward), since several
+  papers' licenses don't clearly permit redistributing full text. Scoped to `main` only
+  (`--refs` implies `--partial`, which skips `origin` remote changes and other refs);
+  `archive/pre-reseed-2026-08-11` and `origin` were verified untouched. A temporary
+  safety branch was created before the rewrite, verified, then deleted with
+  `git gc --prune=now` after confirming the rewrite succeeded.
 - `origin` (`github.com/gjvarun0307/Multimodal-Agentic-RAG.git`) still has the **old**
-  history — reseeding was local-only. Pushing this new history to `origin/main`
-  requires a force-push, which was **not done** and needs separate explicit
-  confirmation before it happens (force-pushing a public remote is its own
-  destructive action, distinct from the local reseed).
+  (pre-reseed) history — none of the above has been pushed. Local `main` and
+  `origin/main` share zero common ancestry (`git merge-base` returns nothing). Pushing
+  requires a force-push, which needs separate explicit confirmation before it happens.
 
-## Audit confirmed (2026-08-11)
+### Corpus text is not committed
 
-Re-read every file `PROJECT_SPEC.md` §5 cites. All findings check out against the code
-as it exists right now — this is not stale from when the spec was written:
+Neither `data/raw_pdfs/*.pdf` nor `artifacts/parsed_md/*.md` is tracked by git — see
+`artifacts/SOURCES.md` for the full per-paper license audit (7 of 15 papers are CC BY
+4.0 / CC0 and would have been fine to commit; the other 8 either only carry arXiv's
+default non-exclusive-to-arXiv license or an ACM notice requiring permission for
+server-posting, so all 15 were excluded uniformly rather than split by license).
+`artifacts/metadata.jsonl` and `artifacts/corpus_seed.csv` (bibliographic metadata +
+content hashes, no substantial text) stay committed.
 
-- Line counts match spec's module map exactly: `app.py` 242, `agent.py` 705,
-  `hybrid_database.py` 291, `parse.py` 218, `configuration.py` 305.
-- Corpus: 15 PDFs in `data/raw_pdfs/`, 15 `.md` in `data/raw_pdfs_parsed/`, 15 lines in
-  `metadata.jsonl` — counts align today, but §5.1's point stands: alignment is by
-  **mtime-sort zipped against line order**, not a real key, so it is one re-parse away
-  from silent misalignment.
-- `metadata.jsonl` confirmed schema-less: each line is only
-  `{paper_name|title, authors, year, topic}`, no `doc_id`, no source filename, no hash.
-- `hybrid_database.py:29` (`prepare_input_data`) confirmed: `pdf_files.sort(key=os.path.getmtime)`
-  then positional zip against `metadata_list[idx]`.
-- `hybrid_database.py:116`: `auto_id=True` confirmed — chunk IDs are not deterministic.
-- `logging_utils.py`: parent logger `multimodal_rag` set to `INFO` in `setup_logger()`;
-  `get_logger()` returns children with no explicit level (`NOTSET`), which inherit the
-  effective `INFO` — every `logger.debug(...)` call across the codebase is confirmed
-  silently dropped.
-- `agent.py:694` `create_agent()` confirmed unreferenced anywhere else in the repo —
-  dead code, per spec §5.4 slated for deletion (not deprecation).
-- `configuration.py:292` `config_rag()` confirmed to return only 10 keys
-  (`device`, `tavilly_api_key`, `database_path`, `input_folder_path`, `chunk_size`,
-  `overlap_size`, `domain_topics`, `llm_provider`, `llm_model`, `llm_api_key`); every
-  other tunable named in spec §5.5 (`search_limit`, `reranker_top_k`, `sparse_weight`,
-  `dense_weight`, score threshold, `max_gen_retries`, etc.) is hardcoded at call sites.
-- No `tests/`, `pyproject.toml`, `.pre-commit-config.yaml`, `src/`, `eval/`,
-  `.github/workflows/`, or `docs/` directories exist yet — Phase 0 creates all of them.
-- `requirements.txt` has exactly two pinned deps (`transformers==4.51.3`,
-  `flagembedding==1.3.5`); everything else unpinned, no `requirements.lock`.
-- Repo hygiene already partly done by prior commits: no stray `=1.3.3` file, no
-  `README_old.md`, no `graph_rag.ipynb`/`collab_run/` — these were removed in
-  `cfa8773` (chore: remove obsolete docs/notebook and stray repo clutter), so spec
-  §Known-issue-6 / Phase-0-task-1's cleanup portion is already satisfied.
-- `api_keys.json` and `milvus.db/` are both present locally but correctly **not**
-  tracked by git (confirmed via `git ls-files`) and both covered by `.gitignore`.
-  `PROJECT_SPEC.md`'s untracked-file warning does not currently apply — keep verifying
-  this on every commit, since Phase 0 touches `.gitignore`-adjacent config a lot.
+**Practical effect:** a fresh clone has no corpus on disk. `tests/test_metadata_alignment.py`,
+`tests/test_chunk_id_determinism.py`, and `tests/test_smoke.py` detect this and `skip`
+(not fail) with a clear reason — verified directly by temporarily moving
+`artifacts/parsed_md/` aside and confirming all 13 corpus-dependent tests report
+`SKIPPED`. To run them, the corpus must exist locally first: `data/raw_pdfs/*.pdf` +
+`artifacts/parsed_md/*.md` (today: re-run `parse.py`'s pipeline against locally-held
+PDFs; a `deploy/fetch_corpus.py` that re-downloads from arXiv is listed in the target
+tree but not yet built — Phase 5 territory).
 
 ## Non-goals (do not implement, park in `docs/BACKLOG.md`)
 
@@ -115,91 +100,114 @@ deployed feature), and CPU-viable reranking (deploy target has no GPU).
 15. Silent fallbacks are forbidden — disabled reranker, skipped model, rate limit, cache miss: all loud, logged, surfaced in results.
 16. Negative results get published — a component that doesn't earn its cost is a finding, not an embarrassment.
 
-## Phase 0 — Unblock: task checklist
+## Phase 0 — Unblock: task checklist (COMPLETE)
 
-Full detail and rationale in `PROJECT_SPEC.md` §5 and §7 (Phase 0). Copied here as the
-actionable list; check items off in this file as they land, one commit per item where
-practical.
+Full detail and rationale in `PROJECT_SPEC.md` §5 and §7 (Phase 0). One commit per item,
+in this order:
 
-- [ ] **Decide the git-history question above** before anything else touches `.git`
-- [ ] Repo hygiene: audit imports vs `requirements.txt`, strip unused deps, verify `.gitignore`
-- [ ] Fix `logging_utils.py` level mismatch; add `LOG_LEVEL` env var (default `INFO`)
-- [ ] Regenerate `metadata.jsonl` from scratch (§5.1): hand-assign 15 `doc_id` slugs,
-      verify PDF↔MD correspondence by hand, hand-correct VLM-generated title/author/year,
-      add `content_sha256`. Author `artifacts/corpus_seed.csv`, write `deploy/build_metadata.py`.
-- [ ] Delete the mtime-sort/positional-zip in `hybrid_database.py:29-37`; replace with a `doc_id`-keyed dict join; raise on any unmatched entry
-- [ ] Migrate Milvus schema to `auto_id=False` + deterministic VARCHAR chunk IDs
-      (`{doc_id}::{chunk_index:04d}::{content_sha8}`, §5.2); new collection name `arag_project_v2`
-- [ ] Create `src/runtime.py` → `get_runtime()`; migrate `app.py`/`agent.py` onto it; delete `create_agent()` (`agent.py:694`) outright
-- [ ] Promote every hardcoded tunable into `Config`/`config_rag()` with documented precedence (defaults → `api_keys.json` → env → explicit override)
-- [ ] Plumb `retrieved_chunk_ids` (pre-rerank) and `reranked_chunk_ids` (post-rerank, post-threshold) through `GraphState`
-- [ ] Set chunk-level `doc_id` metadata; keep `source_file` one release for the active-document filter, then plan its removal
-- [ ] Verify stateless headless graph invocation — no `st.session_state` dependency, no cross-query residue (§5.6)
-- [ ] Add a CPU-viable reranker option (`bge-reranker-v2-m3` or `bge-reranker-base`); CPU fallback must be loud/logged, never silent (currently hard-skipped — §5.4.2 in spec's §4.2 item 2)
-- [ ] Add `ruff`, `pytest`, `pre-commit`, `pyproject.toml`
-- [ ] Pin `requirements.txt` exactly; generate `requirements.lock`; record Python version
-- [ ] Add vLLM as a config-only `LLM_PROVIDERS` entry (§4A) — no runtime coupling
-- [ ] Create `src/api.py` (FastAPI): `/query` (full trace), `/health`, `/metrics`, `/trace/{id}` — both adapters call `get_runtime()` in-process
-- [ ] Check per-paper licenses; write `artifacts/SOURCES.md`; decide committed-vs-fetched per `.md`
+- [x] **Decide the git-history question** — reseeded (see Git history above)
+- [x] Repo hygiene: audit imports vs `requirements.txt`, strip unused deps, verify `.gitignore`
+- [x] Fix `logging_utils.py` level mismatch; add `LOG_LEVEL` env var (default `INFO`) — verified live: default drops `.debug()`, `LOG_LEVEL=DEBUG` shows it
+- [x] Regenerate `metadata.jsonl` from scratch (§5.1): 15 hand-assigned `doc_id` slugs,
+      PDF↔MD correspondence verified (filenames already 1:1 by stem), titles/authors/
+      years read directly from each PDF (not the old VLM captions — corrected 2/15
+      placeholder rows), `content_sha256` added. `artifacts/corpus_seed.csv` +
+      `deploy/build_metadata.py` written.
+- [x] Delete the mtime-sort/positional-zip in `hybrid_database.py`; replaced with a `doc_id`-keyed dict join on `metadata.jsonl`'s `source_md` field; raises on any unmatched entry
+- [x] Migrate Milvus schema to `auto_id=False` + deterministic VARCHAR chunk IDs
+      (`{doc_id}::{chunk_index:04d}::{content_sha8}`); new collection `arag_project_v2` — rebuilt for real against all 15 papers, 2,694 entities (matches spec's own audited count)
+- [x] Create `src/runtime.py` → `get_runtime()`; migrated `app.py`/`agent.py` onto it; deleted `get_models()`/`create_agent()` outright (confirmed dead)
+- [x] Promote every hardcoded tunable into `Config`/`config_rag()` — 10 keys → 22, precedence `defaults → api_keys.json → env → explicit override` (the last via `config_rag(overrides=...)`, new)
+- [x] Plumb `retrieved_chunk_ids` (pre-rerank) and `reranked_chunk_ids` (post-rerank, post-threshold) through `GraphState` — verified live through multiple graph iterations including a correction-loop firing
+- [x] Set chunk-level `doc_id` metadata; kept `source_file` for this release
+- [x] Verify stateless headless graph invocation — confirmed no `st.session_state`/mutable-global coupling in `agent.py`
+- [x] Add a CPU-viable reranker option (`bge-reranker-v2-m3`, now the default); CPU fallback loud/logged via shared `build_reranker()`, never silent — downloaded and verified live on this CPU machine
+- [x] Add `ruff`, `pytest`, `pre-commit`, `pyproject.toml`
+- [x] Pin `requirements.txt` exactly; generate `requirements.lock`; Python 3.13.2 recorded
+- [x] Add vLLM as a config-only `LLM_PROVIDERS` entry — `base_url` is a runtime override (`vllm_base_url`), not fixed, since it's an ephemeral tunnel URL
+- [x] Create `src/api.py` (FastAPI): `/query` (full trace: route, both chunk ID lists, correction signal, per-stage latency), `/health`, `/metrics`, `/trace/{id}` (404 until Phase 5) — verified live via `uvicorn`, real query against the live collection
+- [x] Check per-paper licenses (arXiv HTML `license` field, read directly per paper); wrote `artifacts/SOURCES.md`; decided uniformly not-committed rather than split by license
 
-**Acceptance criteria for closing Phase 0** are the checklist in `PROJECT_SPEC.md` §7
-(Phase 0 section) — `pytest` passes with a headless end-to-end smoke query, `ruff check .`
-clean, metadata validator clean with full bijection, double-build chunk-ID determinism
-test passes, config-only runtime construction, fresh-clone reproducibility from
-`requirements.lock`.
+**Acceptance criteria** (`PROJECT_SPEC.md` §7, Phase 0 section) — all verified for real:
+- [x] `pytest` passes (32 tests when corpus present; 18 pass + 13 skip cleanly on a fresh clone), including a headless end-to-end smoke query (`tests/test_smoke.py`, real LLM call)
+- [x] `ruff check .` clean
+- [x] Metadata validator clean, full bijection, mtime-shuffle invariance confirmed by direct simulation
+- [x] Double-build chunk-ID determinism test passes (`tests/test_chunk_id_determinism.py`)
+- [x] Config-only runtime construction (`config_rag(overrides=...)` → `get_runtime(config)`)
+- [x] Fresh-clone reproducibility from `requirements.lock` — actually done: cloned locally into a scratch dir, fresh venv, `pip install -r requirements.lock`, `ruff check .` clean, 18/31 tests pass and 13 skip cleanly (no corpus/credentials shipped, by design)
 
-## Target directory structure (post-Phase-0)
+## Target directory structure
 
-See `PROJECT_SPEC.md` §6 for the complete tree (`src/`, `eval/`, `deploy/`, `artifacts/`,
-`observability/`, `tests/`, `docs/`, `.github/workflows/`). Do not partially adopt it —
-e.g. don't create `src/runtime.py` while leaving `agent.py`/`hybrid_database.py` at repo
-root; the module map in §3.1 vs. §6 is the "as-is" vs. "target" pair to reconcile in one
-pass per file, not piecemeal.
+See `PROJECT_SPEC.md` §6 for the complete target tree. Achieved as of Phase 0:
+`src/` (`runtime.py`, `api.py`, `agent.py`, `hybrid_database.py`, `parse.py`,
+`configuration.py`, `helper.py`, `logging_utils.py`), `deploy/build_metadata.py`,
+`artifacts/` (`corpus_seed.csv`, `metadata.jsonl`, `SOURCES.md`, `parsed_md/` —
+git-ignored, local-only), `tests/`, `pyproject.toml`, `.pre-commit-config.yaml`,
+`requirements.lock`. Not yet built (later phases): `eval/`, `configs/`,
+`observability/`, `docs/` (besides this file), `.github/workflows/`,
+`deploy/build_ingest_artifacts.py`, `deploy/fetch_corpus.py`, `deploy/record_demo_traces.py`,
+`openapi.json`.
 
-## Current architecture (as-is, pre-Phase-0)
+## Current architecture (post-Phase-0)
 
 Condensed from `PROJECT_SPEC.md` §3 — read that section for the full node inventory and
-stack table.
+stack table. This section describes what's real as of Phase 0's close; update it again
+at the end of each subsequent phase rather than letting it drift.
 
-- **Modules (repo root, not yet under `src/`):** `app.py` (Streamlit + `load_runtime()`),
-  `agent.py` (`GraphState` + graph nodes + `build_agent_graph()`, plus dead
-  `create_agent()`), `hybrid_database.py` (Milvus schema/search/rebuild),
-  `parse.py` (LlamaParse + Qwen2.5-VL captioning), `configuration.py` (`Config`
-  singleton, `LLM_PROVIDERS`, `build_llm_client()`), `config.py` (back-compat shim),
-  `helper.py`, `logging_utils.py`, `pages/1_Setup.py` (BYOK dashboard).
+- **Modules, all under `src/`:** `runtime.py` (`Runtime` dataclass + `get_runtime()` —
+  the single construction path for database/embedding_model/rerank_model/llm),
+  `api.py` (FastAPI: `/query`, `/health`, `/metrics`, `/trace/{id}`), `agent.py`
+  (`GraphState` + graph nodes + `build_agent_graph()` + `run_query_with_state()`),
+  `hybrid_database.py` (Milvus schema/search/rebuild, `build_chunks()` for pure
+  chunk-ID-assignment), `parse.py` (LlamaParse + Qwen2.5-VL captioning, ingest-only),
+  `configuration.py` (`Config` singleton, `LLM_PROVIDERS`, `build_llm_client()`,
+  `build_reranker()`), `helper.py`, `logging_utils.py`. `app.py` (Streamlit) and
+  `pages/1_Setup.py` (BYOK dashboard) stay at repo root. `config.py` shim deleted.
 - **Graph:** `query_router` → `chitchat_node` / `web_search` / `retrieve_and_rerank`;
-  no-docs path → `rewrite_query` (capped at 3) → `web_search` (or `generate` directly
-  if scoped to an active uploaded document); `generate` → hallucination/relevance
-  grading → `END` / regenerate / `rewrite_query`.
-- **Known structural gap (§5.4):** `agent.py:get_models()` and `app.py:load_runtime()`
-  independently construct `database`/`embedding_model`/`rerank_model` — only the LLM
-  client is unified via `build_llm_client()`. This already caused one fix (CPU reranker
-  skip) to land in one path and silently miss the other. `src/runtime.py` in Phase 0
-  closes this permanently — don't fix one side and call it done.
-- **Corpus:** 15 papers (LLM serving/architecture, RAG methodology, ConvNeXt), frozen
-  for the duration of the upgrade (invariant 2 above).
+  no-docs path → `rewrite_query` (capped at `max_rewrites`, now config-driven) →
+  `web_search`; `generate` → hallucination/relevance grading → `END` / regenerate /
+  `rewrite_query`. Upload-driven active-document scoping (`active_document`/
+  `scope_to_active_document` in `GraphState`) still exists in the graph but nothing
+  sets it anymore (see Uploads below) — vestigial, not removed, since it's general
+  architecture rather than upload-specific code.
+- **Structural gap closed:** `get_models()`/`create_agent()` (duplicated model
+  construction) deleted outright. `build_reranker()` and `get_runtime()` are the only
+  paths that construct the reranker/database/embedding-model/LLM client; `app.py` and
+  `src/api.py` both call `get_runtime()` in-process (invariant 14).
+- **Uploads:** rejected. Corpus is frozen for this upgrade (invariant 2); `app.py`'s
+  upload UI (file uploader, `ingest_uploaded_pdf()`, VLM preload) was removed rather
+  than given a `doc_id`-assignment scheme. `hybrid_database.py`'s
+  `append_parsed_file_to_database()` and `parse.py`'s `parse_single_file()` are
+  unreachable now but left in place (legitimate library functions, not broken code).
+- **Corpus:** 15 papers, frozen for the duration of the upgrade (invariant 2). Not
+  committed to git (see Corpus text is not committed, above) — 2,694 chunks total when
+  built, matching `PROJECT_SPEC.md`'s own audited count exactly.
 
 ## Commands
 
-Current (pre-Phase-0, still root-level):
 ```bash
-pip install -r requirements.txt
-python parse.py              # data/test_pdfs/*.pdf -> data/test_pdf_parsed/*.md + metadata.jsonl
-python hybrid_database.py    # (re)build ./milvus.db — DESTRUCTIVE, drops + recreates the collection
-streamlit run app.py
-```
+# setup
+pip install -r requirements.lock      # exact reproducibility (or requirements.txt for direct deps only)
 
-Target (post-Phase-0, see `PROJECT_SPEC.md` §9 for the full list):
-```bash
-pytest
+# dev
+pytest                                # 32 tests when corpus present; skips corpus-dependent ones otherwise
 ruff check . && ruff format .
-python -m eval.harness --config configs/default.yaml --split full
-python -m eval.harness --config configs/default.yaml --split fast --retrieval-only
-python -m eval.noise_floor --runs 5
+
+# corpus / metadata (requires data/raw_pdfs/*.pdf + artifacts/parsed_md/*.md locally)
 python deploy/build_metadata.py --seed artifacts/corpus_seed.csv --out artifacts/metadata.jsonl
+python -m src.hybrid_database          # (re)build ./milvus.db -- DESTRUCTIVE, drops + recreates arag_project_v2
+
+# serve
 uvicorn src.api:app --reload --port 8000
 streamlit run app.py
 ```
+
+Not yet available (later phases — see `PROJECT_SPEC.md` §9 for the full target list):
+`python -m eval.harness`, `python -m eval.noise_floor`, `python -m eval.ablations`,
+`python -m eval.failure_taxonomy`, `python -m eval.resolve_passages`,
+`python -m eval.validate_golden`, `python -m eval.tavily_cache`,
+`python deploy/fetch_corpus.py`, `python deploy/build_ingest_artifacts.py`,
+`python deploy/record_demo_traces.py`.
 
 ## Working agreements for this upgrade
 
@@ -209,10 +217,13 @@ streamlit run app.py
 - **Config-only ablations, no exceptions** (invariant 10) — if implementing an ablation
   row requires editing code rather than a config value, the config promotion work
   (Phase 0 task) is incomplete; fix that instead of hand-editing for one run.
-- **Say when something is unverified.** This repo has had a running pattern (see prior
-  commits' "Not run end-to-end" notes) of fixes landing without live execution because
-  the working environment lacks deps/GPU/API keys. Keep doing that — state plainly what
-  was read/reasoned vs. what was actually run, per the spec's "provably works" goal.
-- Never commit `api_keys.json`, `milvus.db`, `logs/`, `fail_logs.txt`, or any real key/secret.
+- **Say when something is unverified, and verify for real when you can.** Phase 0 set
+  the pattern: every milestone that could be run locally (model downloads, live LLM
+  calls, a real `uvicorn`/`streamlit run` launch, a fresh-clone reproducibility check)
+  was actually run, not just reasoned through — state plainly which is which per the
+  spec's "provably works" goal.
+- Never commit `api_keys.json`, `milvus.db`, `logs/`, `fail_logs.txt`, corpus text
+  (`data/`, `artifacts/parsed_md/`), or any real key/secret.
 - Prefer `git add <path>` over `git add -A`; check `git status` before staging.
 - Message format: short imperative subject (`feat:`/`fix:`/`refactor:`/`docs:`/`chore:`), body explaining why when not obvious from the diff.
+- Pause for user confirmation between phase milestones before proceeding to the next one — established during Phase 0, keep doing it.
