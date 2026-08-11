@@ -34,6 +34,14 @@ LLM_PROVIDERS = {
     "groq": {"base_url": "https://api.groq.com/openai/v1", "default_model": "openai/gpt-oss-20b"},
     "openrouter": {"base_url": "https://openrouter.ai/api/v1", "default_model": "anthropic/claude-haiku-4.5"},
     "nvidia_nim": {"base_url": "https://integrate.api.nvidia.com/v1", "default_model": "meta/llama-3.1-8b-instruct"},
+    # A measurement instrument, not a deployed feature (PROJECT_SPEC.md §4A):
+    # local vLLM + xgrammar guided decoding, benchmarked against hosted
+    # tool-calling for structured-output reliability. Not always-on --
+    # launched on Colab/Kaggle for ablation runs behind a tunnel, so
+    # base_url is a runtime override (vllm_base_url in config), not a
+    # fixed value here. default_model is a placeholder like the others;
+    # actual model is whatever's loaded on the running vLLM server.
+    "vllm": {"base_url": None, "default_model": "meta-llama/Llama-3.1-8B-Instruct"},
 }
 
 
@@ -107,9 +115,11 @@ class Config:
             # default (loudly) if that's configured without CUDA available.
             "reranker_model": CPU_VIABLE_RERANKER_DEFAULT,
             "use_fp16": False,
-            "llm_provider": "",  # anthropic | openai | groq | openrouter | nvidia_nim -- set via Setup page
+            "llm_provider": "",  # anthropic | openai | groq | openrouter | nvidia_nim | vllm -- set via Setup page
             "llm_model": "",
             "llm_api_key": "",
+            # Only consulted when llm_provider == "vllm" -- see LLM_PROVIDERS.
+            "vllm_base_url": "http://localhost:8000/v1",
             "vision_model": "Qwen/Qwen2.5-VL-7B-Instruct",
 
             # Parsing configuration
@@ -179,6 +189,7 @@ class Config:
             "LLM_PROVIDER": "llm_provider",
             "LLM_MODEL": "llm_model",
             "LLM_API_KEY": "llm_api_key",
+            "VLLM_BASE_URL": "vllm_base_url",
             "VISION_MODEL": "vision_model",
 
             # Parsing
@@ -264,7 +275,11 @@ def build_llm_client(config: Dict[str, Any]):
     api_key = config.get("llm_api_key", "")
     if provider == "anthropic":
         return ChatAnthropic(model=model, api_key=api_key)
-    return ChatOpenAI(model=model, base_url=LLM_PROVIDERS[provider]["base_url"], api_key=api_key)
+    # vllm's base_url is a runtime override, not a fixed value in
+    # LLM_PROVIDERS -- it's whatever tunnel URL that ablation run's vLLM
+    # server is exposed on (see LLM_PROVIDERS["vllm"] docstring comment).
+    base_url = config.get("vllm_base_url") if provider == "vllm" else LLM_PROVIDERS[provider]["base_url"]
+    return ChatOpenAI(model=model, base_url=base_url, api_key=api_key)
 
 
 def build_reranker(config: Dict[str, Any]):
@@ -375,6 +390,7 @@ def config_rag(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         "llm_provider": c.get("llm_provider"),
         "llm_model": c.get("llm_model"),
         "llm_api_key": c.get("llm_api_key"),
+        "vllm_base_url": c.get("vllm_base_url"),
         "search_limit": c.get("search_limit"),
         "reranker_top_k": c.get("reranker_top_k"),
         "sparse_weight": c.get("sparse_weight"),
