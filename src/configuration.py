@@ -70,7 +70,7 @@ class Config:
 
             # Database configuration
             "database_path": "./milvus.db",
-            "input_folder_path": "data/raw_pdfs_parsed",
+            "input_folder_path": "artifacts/parsed_md",
 
             # Text processing configuration
             "chunk_size": 1024,
@@ -256,7 +256,7 @@ def config_parse() -> Dict[str, Any]:
     return {
         "api_key": c.get("llama_parse"),
         "input_folder": "data/raw_pdfs",
-        "output_folder": "data/raw_pdfs_parsed",
+        "output_folder": "artifacts/parsed_md",
         "device": c.get("device"),
         "prompt_imgcap": {
             "sys": "You are an expert Data Scientist and Technical Researcher. Your job is to analyze scientific figures, charts, and diagrams and extract structured data.",
