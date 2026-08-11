@@ -28,6 +28,17 @@ COLLECTION_NAME = "arag_project_v2"
 # document, not the chunk, and stay out of per-chunk metadata.
 CHUNK_METADATA_FIELDS = ("title", "authors", "year", "topic", "arxiv_id")
 
+# Hoisted out of split_data() so eval/resolve_passages.py can import the same
+# source of truth instead of duplicating it -- a header config drift between
+# the two would silently break gold-chunk-id resolution (never seen a paper
+# use ###### in their sections; it's reserved for VLM figure/table captions).
+MARKDOWN_HEADERS_TO_SPLIT_ON = [
+    ("#", "Title"),
+    ("##", "Section"),
+    ("###", "Subsection"),
+    ("######", "Caption"),
+]
+
 
 def chunk_content_sha8(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:8]
@@ -50,9 +61,7 @@ def prepare_input_data(data_folder_path: str, metadata_path: str) -> dict:
 
     metadata_file = Path(metadata_path)
     if not metadata_file.exists():
-        raise FileNotFoundError(
-            f"metadata.jsonl not found at {metadata_file}. Run deploy/build_metadata.py first."
-        )
+        raise FileNotFoundError(f"metadata.jsonl not found at {metadata_file}. Run deploy/build_metadata.py first.")
     metadata_records = open_jsonl(metadata_file)
 
     md_files_by_name = {p.name: p for p in data_folder.glob("*.md")}
@@ -78,17 +87,7 @@ def prepare_input_data(data_folder_path: str, metadata_path: str) -> dict:
     return input_data
 
 def split_data(markdown_document: str, config: dict):
-    # never seen a paper use ###### in their sections
-    headers_to_split_on = [
-        ("#", "Title"),
-        ("##", "Section"),
-        ("###", "Subsection"),
-        ("######", "Caption"),
-    ]
-
-    markdown_splitter = MarkdownHeaderTextSplitter(
-        headers_to_split_on=headers_to_split_on, strip_headers=True
-    )
+    markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=MARKDOWN_HEADERS_TO_SPLIT_ON, strip_headers=True)
     md_header_splits = markdown_splitter.split_text(markdown_document)
     # return md_header_splits
 
@@ -305,8 +304,7 @@ def append_parsed_file_to_database(markdown_path, metadata, config, database, em
 
     docs_embeddings = embedding_model(docs)
     formatted_sparse = [
-        {int(k): float(v) for k, v in zip(row.indices, row.data)}
-        for row in docs_embeddings["sparse"].tocsr()
+        {int(k): float(v) for k, v in zip(row.indices, row.data)} for row in docs_embeddings["sparse"].tocsr()
     ]
 
     for i in range(0, len(docs), batch_size):

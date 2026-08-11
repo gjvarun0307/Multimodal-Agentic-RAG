@@ -151,3 +151,7 @@ Thumbs.db
 # Project specific
 .env.local
 config/secrets/
+
+# Derived cache: reproducible from eval/golden/*.jsonl + the corpus via
+# `python -m eval.resolve_passages`. Not ground truth, never hand-edited.
+eval/golden/resolved/
