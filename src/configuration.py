@@ -71,6 +71,7 @@ class Config:
             # Database configuration
             "database_path": "./milvus.db",
             "input_folder_path": "artifacts/parsed_md",
+            "metadata_path": "artifacts/metadata.jsonl",
 
             # Text processing configuration
             "chunk_size": 1024,
@@ -139,6 +140,7 @@ class Config:
             # Database
             "DATABASE_PATH": "database_path",
             "INPUT_FOLDER_PATH": "input_folder_path",
+            "METADATA_PATH": "metadata_path",
 
             # Text processing
             "CHUNK_SIZE": ("chunk_size", int),
@@ -306,6 +308,7 @@ def config_rag(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         "tavilly_api_key": c.get("tavilly_web"),
         "database_path": c.get("database_path"),
         "input_folder_path": c.get("input_folder_path"),
+        "metadata_path": c.get("metadata_path"),
         "chunk_size": c.get("chunk_size"),
         "overlap_size": c.get("overlap_size"),
         "domain_topics": c.get("domain_topics", []),
