@@ -1,20 +1,20 @@
 # for parsing
-llama_cloud
-mdutils
-accelerate
+llama_cloud==2.13.0
+accelerate==1.14.0
 transformers==4.51.3
-qwen-vl-utils
-torchvision
+qwen-vl-utils==0.0.14
+torch==2.13.0
+torchvision==0.28.0
 
 # for database
-langchain-text-splitters
-pymilvus[model]
-pymilvus[milvus_lite]
+langchain-text-splitters==1.1.2
+pymilvus[model,milvus_lite]==3.0.1
 
 # for langgraph
 langgraph
 langchain
 langchain_openai
 flagembedding==1.3.5
-langchain_tavily
-streamlit
+langchain_tavily==0.2.18
+streamlit==1.61.0
+pydantic==2.13.4
