@@ -8,11 +8,23 @@ Milvus) so the double-build comparison is fast and has no side effects.
 """
 
 import re
+from pathlib import Path
+
+import pytest
 
 from src.configuration import config_rag
 from src.hybrid_database import build_chunks
 
 CHUNK_ID_PATTERN = re.compile(r"^[a-z0-9_]+::\d{4}::[0-9a-f]{8}$")
+
+_PARSED_MD_DIR = Path(__file__).resolve().parent.parent / "artifacts" / "parsed_md"
+
+# Corpus text isn't committed (see artifacts/SOURCES.md) -- skip rather
+# than fail confusingly on a fresh clone or CI without the ingest step.
+pytestmark = pytest.mark.skipif(
+    not _PARSED_MD_DIR.exists() or not any(_PARSED_MD_DIR.glob("*.md")),
+    reason=f"{_PARSED_MD_DIR} not populated -- run the ingest pipeline first (see artifacts/SOURCES.md)",
+)
 
 
 def test_double_build_produces_identical_chunk_ids():

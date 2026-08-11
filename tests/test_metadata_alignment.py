@@ -15,6 +15,8 @@ import shutil
 import time
 from pathlib import Path
 
+import pytest
+
 from deploy.build_metadata import build_metadata
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -22,6 +24,15 @@ METADATA_PATH = REPO_ROOT / "artifacts" / "metadata.jsonl"
 PARSED_MD_DIR = REPO_ROOT / "artifacts" / "parsed_md"
 SEED_PATH = REPO_ROOT / "artifacts" / "corpus_seed.csv"
 DOC_ID_PATTERN = re.compile(r"^[a-z0-9_]+$")
+
+# Corpus text isn't committed (license terms vary per paper -- see
+# artifacts/SOURCES.md); it's regenerated locally from data/raw_pdfs/ via
+# the parse pipeline. A fresh clone or CI without that ingest step won't
+# have it -- skip rather than fail confusingly.
+pytestmark = pytest.mark.skipif(
+    not PARSED_MD_DIR.exists() or not any(PARSED_MD_DIR.glob("*.md")),
+    reason=f"{PARSED_MD_DIR} not populated -- run the ingest pipeline first (see artifacts/SOURCES.md)",
+)
 
 
 def _load_records():

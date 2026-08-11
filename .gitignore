@@ -6,6 +6,13 @@ milvus.db/
 logs/
 fail_logs.txt
 
+# Corpus text: not committed, regenerated locally from data/raw_pdfs/ via
+# the parse pipeline. Licenses vary per paper (see artifacts/SOURCES.md);
+# several don't clearly permit redistributing full text in a public repo.
+# artifacts/metadata.jsonl and corpus_seed.csv (bibliographic metadata +
+# content hashes only, no substantial text) stay committed.
+artifacts/parsed_md/
+
 # release at end
 collab_run
 
