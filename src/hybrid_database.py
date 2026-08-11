@@ -235,7 +235,7 @@ def hybrid_search(database, embedding_model, query, sparse_weight=1.0, dense_wei
     res = database.hybrid_search(
         [sparse_req, dense_req], rerank=rerank, limit=limit, output_fields=["text"]
     )[0]
-    docs = [{"text": hit.get("text"), "metadata": hit.get("metadata")} for hit in res]
+    docs = [{"id": hit.id, "text": hit.get("text"), "metadata": hit.get("metadata")} for hit in res]
     return docs
 
 def load_database_and_embedding(database_path, device):

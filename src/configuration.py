@@ -12,7 +12,19 @@ import torch
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
 
+from .logging_utils import get_logger
+
+logger = get_logger(__name__)
+
 API_KEYS_PATH = Path(__file__).resolve().parent.parent / "api_keys.json"
+
+# LLM-style rerankers (multi-billion-parameter decoder models) need
+# FlagLLMReranker and are CUDA-only in practice. CrossEncoder-style
+# rerankers -- including this project's CPU-viable default -- use
+# FlagReranker instead. Keep v2-gemma selectable (it's config-driven) so
+# it can still be benchmarked on GPU as an ablation row.
+LLM_STYLE_RERANKERS = {"BAAI/bge-reranker-v2-gemma", "BAAI/bge-reranker-v2-minicpm-layerwise"}
+CPU_VIABLE_RERANKER_DEFAULT = "BAAI/bge-reranker-v2-m3"
 
 # Default model IDs are prefilled, editable placeholders for the Setup dashboard,
 # not verified/hardcoded requirements -- check your provider's current model list.
@@ -89,7 +101,11 @@ class Config:
 
             # Model configuration
             "embedding_model": "BAAI/bge-m3",
-            "reranker_model": "BAAI/bge-reranker-v2-gemma",
+            # CPU-viable by default (deploy target has no GPU). Set to
+            # "BAAI/bge-reranker-v2-gemma" to benchmark the GPU-only LLM-style
+            # reranker as an ablation -- build_reranker() falls back to this
+            # default (loudly) if that's configured without CUDA available.
+            "reranker_model": CPU_VIABLE_RERANKER_DEFAULT,
             "use_fp16": False,
             "llm_provider": "",  # anthropic | openai | groq | openrouter | nvidia_nim -- set via Setup page
             "llm_model": "",
@@ -249,6 +265,50 @@ def build_llm_client(config: Dict[str, Any]):
     if provider == "anthropic":
         return ChatAnthropic(model=model, api_key=api_key)
     return ChatOpenAI(model=model, base_url=LLM_PROVIDERS[provider]["base_url"], api_key=api_key)
+
+
+def build_reranker(config: Dict[str, Any]):
+    """Construct the configured reranker. Single shared entry point for
+    both app.py and agent.py -- the duplicated CPU-skip logic they used to
+    each carry independently is exactly what let one CPU-reranker fix land
+    in one path and silently miss the other (see PROJECT_SPEC.md §5.4).
+
+    If an LLM-style reranker (CUDA-only in practice) is configured without
+    CUDA available, falls back to the CPU-viable default -- loudly logged,
+    per invariant 15 (silent fallbacks are forbidden). If loading fails
+    outright for any reason, returns None -- also always logged loudly,
+    never silent. Callers must not re-implement this fallback logic
+    themselves; call this function.
+    """
+    from FlagEmbedding import FlagLLMReranker, FlagReranker
+
+    reranker_model = config.get("reranker_model") or CPU_VIABLE_RERANKER_DEFAULT
+    device = config.get("device", "cpu")
+    use_fp16 = config.get("use_fp16", False)
+
+    if reranker_model in LLM_STYLE_RERANKERS and device != "cuda":
+        logger.warning(
+            f"Configured reranker {reranker_model!r} is LLM-style and CUDA-only in practice, "
+            f"but device={device!r}. Falling back to CPU-viable default "
+            f"{CPU_VIABLE_RERANKER_DEFAULT!r} instead of silently disabling reranking."
+        )
+        reranker_model = CPU_VIABLE_RERANKER_DEFAULT
+
+    is_llm_style = reranker_model in LLM_STYLE_RERANKERS
+    reranker_cls = FlagLLMReranker if is_llm_style else FlagReranker
+    reranker_cls_label = "FlagLLMReranker" if is_llm_style else "FlagReranker"
+
+    try:
+        rerank_model = reranker_cls(reranker_model, use_fp16=use_fp16, devices=device)
+        logger.info(f"Loaded reranker {reranker_model!r} via {reranker_cls_label} on device={device!r}")
+        return rerank_model
+    except Exception as e:
+        logger.error(
+            f"Failed to load reranker {reranker_model!r}: {e}. Reranking disabled for this "
+            "run -- falling back to raw hybrid-search ranking. This must be treated as a "
+            "measurement caveat, not ignored."
+        )
+        return None
 
 
 # Backward compatibility functions

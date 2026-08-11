@@ -9,14 +9,13 @@ import heapq
 import os
 from typing import List, Literal, Optional, TypedDict
 
-from FlagEmbedding import FlagLLMReranker
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_tavily import TavilySearch
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
-from .configuration import build_llm_client, config_rag
+from .configuration import build_llm_client, build_reranker, config_rag
 from .hybrid_database import hybrid_search, load_or_create_database
 from .logging_utils import get_logger
 
@@ -71,6 +70,8 @@ class GraphState(TypedDict):
         chat_history: list of previous messages
         active_document: filename of the most recently uploaded document this session, if any
         scope_to_active_document: whether this turn should be retrieved/routed against active_document only
+        retrieved_chunk_ids: chunk IDs from hybrid search, pre-rerank
+        reranked_chunk_ids: chunk IDs post-rerank, post-threshold (what generate() actually saw)
     """
     question: str
     generation: str
@@ -80,6 +81,8 @@ class GraphState(TypedDict):
     chat_history: List
     active_document: Optional[str]
     scope_to_active_document: bool
+    retrieved_chunk_ids: List[str]
+    reranked_chunk_ids: List[str]
 
 
 def get_models(config):
@@ -96,16 +99,7 @@ def get_models(config):
     database, embedding_model = load_or_create_database(config)
     logger.info("Loaded database and embedding model")
 
-    if config["device"] == "cpu":
-        rerank_model = None
-        logger.info("No CUDA device detected -- skipping reranker, using raw hybrid-search ranking")
-    else:
-        rerank_model = FlagLLMReranker(
-            config.get("reranker_model", "BAAI/bge-reranker-v2-gemma"),
-            use_fp16=config.get("use_fp16", False),
-            devices=config["device"]
-        )
-        logger.info("Loaded rerank model")
+    rerank_model = build_reranker(config)
 
     llm_model = build_llm_client(config)
     logger.info(f"Loaded LLM model: {config.get('llm_provider')}/{config.get('llm_model')}")
@@ -331,9 +325,18 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model):
             else:
                 raise
 
+        retrieved_chunk_ids = [doc.get("id") for doc in raw_docs]
+
         if not raw_docs:
             logger.warning("No documents found in database.")
-            return {"documents": [], "question": question, "loop_count": loop_count, "chat_history": chat_history}
+            return {
+                "documents": [],
+                "question": question,
+                "loop_count": loop_count,
+                "chat_history": chat_history,
+                "retrieved_chunk_ids": [],
+                "reranked_chunk_ids": [],
+            }
 
         if rerank_model is None:
             keep_top_k = config.get("reranker_top_k", 5)
@@ -359,7 +362,16 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model):
                 final_documents = raw_docs[:keep_top_k]
                 logger.warning(f"Using fallback: taking first {keep_top_k} documents")
 
-        return {"documents": final_documents, "question": question, "loop_count": loop_count, "chat_history": chat_history}
+        reranked_chunk_ids = [doc.get("id") for doc in final_documents]
+
+        return {
+            "documents": final_documents,
+            "question": question,
+            "loop_count": loop_count,
+            "chat_history": chat_history,
+            "retrieved_chunk_ids": retrieved_chunk_ids,
+            "reranked_chunk_ids": reranked_chunk_ids,
+        }
 
     def generate(state):
         """
@@ -672,6 +684,8 @@ def run_query(app_graph, question: str, chat_history: List[str], active_document
         "gen_retries": 0,
         "active_document": active_document,
         "scope_to_active_document": scope_to_active_document,
+        "retrieved_chunk_ids": [],
+        "reranked_chunk_ids": [],
     }
 
     final_output = None
