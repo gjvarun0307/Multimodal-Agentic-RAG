@@ -16,9 +16,9 @@ from langchain_tavily import TavilySearch
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
-from config import build_llm_client, config_rag
-from hybrid_database import hybrid_search, load_or_create_database
-from logging_utils import get_logger
+from .configuration import build_llm_client, config_rag
+from .hybrid_database import hybrid_search, load_or_create_database
+from .logging_utils import get_logger
 
 # Set up logger
 logger = get_logger(__name__)

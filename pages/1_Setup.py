@@ -2,7 +2,7 @@ import json
 
 import streamlit as st
 
-from configuration import (
+from src.configuration import (
     API_KEYS_PATH,
     LLM_PROVIDERS,
     build_llm_client,

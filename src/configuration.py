@@ -12,7 +12,7 @@ import torch
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
 
-API_KEYS_PATH = Path(__file__).resolve().parent / "api_keys.json"
+API_KEYS_PATH = Path(__file__).resolve().parent.parent / "api_keys.json"
 
 # Default model IDs are prefilled, editable placeholders for the Setup dashboard,
 # not verified/hardcoded requirements -- check your provider's current model list.

@@ -14,8 +14,8 @@ from pymilvus import (
 )
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
-from config import config_rag
-from helper import open_jsonl
+from .configuration import config_rag
+from .helper import open_jsonl
 
 
 # pip install "transformers<5.0.0" "FlagEmbedding>=1.2.0" --upgrade
