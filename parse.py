@@ -1,13 +1,10 @@
-from pathlib import Path
 import asyncio
-import httpx
 import json
-import re
-
-from transformers import Qwen2_5_VLForConditionalGeneration, AutoTokenizer, AutoProcessor
-from qwen_vl_utils import process_vision_info
+from pathlib import Path
 
 from llama_cloud import AsyncLlamaCloud
+from qwen_vl_utils import process_vision_info
+from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
 
 from config import config_parse
 from helper import clean_json_text

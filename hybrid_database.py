@@ -1,14 +1,21 @@
-from helper import open_jsonl
-from config import config_rag
-
-from pathlib import Path
-from tqdm import tqdm
 import os
-import sys
+from pathlib import Path
 
-from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
-from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection, AnnSearchRequest, WeightedRanker, MilvusClient
+from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
+from pymilvus import (
+    AnnSearchRequest,
+    Collection,
+    CollectionSchema,
+    DataType,
+    FieldSchema,
+    WeightedRanker,
+    connections,
+    utility,
+)
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
+
+from config import config_rag
+from helper import open_jsonl
 
 
 # pip install "transformers<5.0.0" "FlagEmbedding>=1.2.0" --upgrade

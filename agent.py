@@ -5,20 +5,19 @@ This module contains the core LangGraph agent implementation extracted from the 
 It provides a modular, reusable agent implementation for the RAG system.
 """
 
-import os
 import heapq
-import logging
-from typing import List, TypedDict, Annotated, Optional, Literal
-from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage
-from langchain_core.prompts import ChatPromptTemplate
+import os
+from typing import List, Literal, Optional, TypedDict
+
+from FlagEmbedding import FlagLLMReranker
 from langchain_core.output_parsers import StrOutputParser
-from langgraph.graph import END, StateGraph, START
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_tavily import TavilySearch
+from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
-from config import config_rag, build_llm_client
+from config import build_llm_client, config_rag
 from hybrid_database import hybrid_search, load_or_create_database
-from FlagEmbedding import FlagLLMReranker
 from logging_utils import get_logger
 
 # Set up logger

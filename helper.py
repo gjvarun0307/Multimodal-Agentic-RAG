@@ -1,7 +1,6 @@
-import re
 import json
-from pathlib import Path
-import sys
+import re
+
 
 # json cleaning for parse json from model
 def clean_json_text(text):
@@ -15,7 +14,7 @@ def clean_json_text(text):
 def open_jsonl(path_to_jsonl):
     """
     opens jsonl files and return list of json
-    
+
     :param path_to_jsonl: path to jsonl file
     """
     with open(path_to_jsonl, 'r') as json_file:

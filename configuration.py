@@ -3,14 +3,14 @@ Centralized configuration management for the Multimodal Agentic RAG system.
 Loads configuration from environment variables, JSON files, and provides sane defaults.
 """
 
-import os
 import json
-from typing import Dict, Any, Optional
+import os
 from pathlib import Path
+from typing import Any, Dict
 
 import torch
-from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 
 API_KEYS_PATH = Path(__file__).resolve().parent / "api_keys.json"
 
@@ -253,8 +253,8 @@ def config_parse() -> Dict[str, Any]:
     c = get_config()
     return {
         "api_key": c.get("llama_parse"),
-        "input_folder": "data/test_pdfs",  # Keeping original for backward compatibility
-        "output_folder": "data/test_pdf_parsed",  # Keeping original for backward compatibility
+        "input_folder": "data/raw_pdfs",
+        "output_folder": "data/raw_pdfs_parsed",
         "device": c.get("device"),
         "prompt_imgcap": {
             "sys": "You are an expert Data Scientist and Technical Researcher. Your job is to analyze scientific figures, charts, and diagrams and extract structured data.",
