@@ -4,18 +4,22 @@ Provides consistent logging across the application.
 """
 
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Optional
 
 
-def setup_logger(name: str = "multimodal_rag", level: int = logging.INFO) -> logging.Logger:
+def setup_logger(name: str = "multimodal_rag", level: Optional[int] = None) -> logging.Logger:
     """
     Set up a logger with consistent formatting.
 
     Args:
         name: Logger name
-        level: Logging level
+        level: Logging level. Defaults to the LOG_LEVEL env var (falling back
+            to INFO). Child loggers obtained via get_logger() have no level of
+            their own and inherit this effective level, so this is the single
+            knob that controls debug visibility across the whole app.
 
     Returns:
         Configured logger instance
@@ -25,6 +29,9 @@ def setup_logger(name: str = "multimodal_rag", level: int = logging.INFO) -> log
     # Avoid adding handlers multiple times
     if logger.handlers:
         return logger
+
+    if level is None:
+        level = getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO)
 
     logger.setLevel(level)
 
