@@ -15,8 +15,8 @@ from langchain_tavily import TavilySearch
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
-from .configuration import build_llm_client, build_reranker, config_rag
-from .hybrid_database import hybrid_search, load_or_create_database
+from .configuration import config_rag
+from .hybrid_database import hybrid_search
 from .logging_utils import get_logger
 
 # Set up logger
@@ -83,28 +83,6 @@ class GraphState(TypedDict):
     scope_to_active_document: bool
     retrieved_chunk_ids: List[str]
     reranked_chunk_ids: List[str]
-
-
-def get_models(config):
-    """
-    Initialize and return all required models and databases.
-
-    Args:
-        config: Configuration dictionary from config_rag()
-
-    Returns:
-        tuple: (database, embedding_model, rerank_model, llm_model)
-    """
-    logger.info("Initializing models and databases")
-    database, embedding_model = load_or_create_database(config)
-    logger.info("Loaded database and embedding model")
-
-    rerank_model = build_reranker(config)
-
-    llm_model = build_llm_client(config)
-    logger.info(f"Loaded LLM model: {config.get('llm_provider')}/{config.get('llm_model')}")
-    logger.info("All models loaded!!")
-    return database, embedding_model, rerank_model, llm_model
 
 
 def build_agent_graph(database, embedding_model, rerank_model, llm_model):
@@ -702,18 +680,3 @@ def run_query(app_graph, question: str, chat_history: List[str], active_document
         return final_output["generation"]
     logger.warning("No generation produced from agent graph")
     return "I encountered an error processing your request."
-
-
-def create_agent():
-    """
-    Factory function to create and initialize the complete agent.
-
-    Returns:
-        tuple: (app_graph, config) where app_graph is the compiled agent and config is the configuration
-    """
-    logger.info("Creating agent")
-    config = config_rag()
-    database, embedding_model, rerank_model, llm_model = get_models(config)
-    app_graph = build_agent_graph(database, embedding_model, rerank_model, llm_model)
-    logger.info("Agent created successfully")
-    return app_graph, config

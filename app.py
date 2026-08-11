@@ -532,8 +532,8 @@ def main():
                     ingest_result = ingest_uploaded_pdf(
                         uploaded_pdf,
                         rag_config,
-                        database,
-                        embedding_model,
+                        runtime.database,
+                        runtime.embedding_model,
                         parse_model=parse_model,
                         parse_processor=parse_processor,
                     )
