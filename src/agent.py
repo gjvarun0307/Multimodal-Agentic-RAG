@@ -7,6 +7,7 @@ It provides a modular, reusable agent implementation for the RAG system.
 
 import heapq
 import os
+import time
 from typing import List, Literal, Optional, TypedDict
 
 from langchain_core.output_parsers import StrOutputParser
@@ -638,9 +639,17 @@ def _references_active_document(question: str, chat_history: List[str]) -> bool:
     return any(marker in combined_text for marker in _ACTIVE_DOCUMENT_MARKERS)
 
 
-def run_query(app_graph, question: str, chat_history: List[str], active_document: Optional[str] = None):
+def run_query_with_state(app_graph, question: str, chat_history: List[str], active_document: Optional[str] = None):
     """
-    Execute a query through the agent graph.
+    Execute a query through the agent graph, returning the full final
+    GraphState and a small trace_info dict (node execution sequence +
+    per-node-name latency) alongside the answer -- not just the answer
+    string. Used by src/api.py to build a full /query trace (route
+    decision, both chunk ID lists, correction signal, per-stage timing).
+
+    node_sequence[0] is the route decision: query_router is a conditional-
+    edge selector, not a node, so its choice isn't itself written into
+    GraphState -- but it's exactly what determines which node runs first.
 
     Args:
         app_graph: Compiled StateGraph agent
@@ -651,7 +660,7 @@ def run_query(app_graph, question: str, chat_history: List[str], active_document
             retrieval/routing to that document specifically
 
     Returns:
-        str: Generated response from the agent
+        tuple: (answer: str, final_state: dict, trace_info: dict)
     """
     logger.info(f"Processing query: {question[:100]}...")
     scope_to_active_document = bool(active_document) and _references_active_document(question, chat_history)
@@ -666,17 +675,48 @@ def run_query(app_graph, question: str, chat_history: List[str], active_document
         "reranked_chunk_ids": [],
     }
 
-    final_output = None
+    final_state = dict(inputs)
+    node_sequence: list[str] = []
+    stage_latencies_ms: dict[str, float] = {}
+
     try:
-        for output in app_graph.stream(inputs):
-            for _, value in output.items():
-                final_output = value
+        step_start = time.time()
+        for step in app_graph.stream(inputs):
+            for node_name, node_output in step.items():
+                elapsed_ms = (time.time() - step_start) * 1000
+                node_sequence.append(node_name)
+                stage_latencies_ms[node_name] = stage_latencies_ms.get(node_name, 0.0) + elapsed_ms
+                final_state.update(node_output)
+                step_start = time.time()
     except Exception as e:
         logger.error(f"Error processing query through agent graph: {e}")
-        return f"I encountered an error processing your request: {e}"
+        final_state["generation"] = f"I encountered an error processing your request: {e}"
+        return final_state["generation"], final_state, {"node_sequence": node_sequence, "stage_latencies_ms": stage_latencies_ms}
 
-    if final_output and "generation" in final_output:
+    if "generation" in final_state:
         logger.info("Successfully generated response")
-        return final_output["generation"]
-    logger.warning("No generation produced from agent graph")
-    return "I encountered an error processing your request."
+    else:
+        logger.warning("No generation produced from agent graph")
+        final_state["generation"] = "I encountered an error processing your request."
+
+    trace_info = {"node_sequence": node_sequence, "stage_latencies_ms": stage_latencies_ms}
+    return final_state["generation"], final_state, trace_info
+
+
+def run_query(app_graph, question: str, chat_history: List[str], active_document: Optional[str] = None) -> str:
+    """
+    Execute a query through the agent graph.
+
+    Args:
+        app_graph: Compiled StateGraph agent
+        question: User question string
+        chat_history: List of previous chat messages
+        active_document: filename of the most recently uploaded document this
+            session, if any -- used to decide whether to scope this turn's
+            retrieval/routing to that document specifically
+
+    Returns:
+        str: Generated response from the agent
+    """
+    answer, _, _ = run_query_with_state(app_graph, question, chat_history, active_document)
+    return answer

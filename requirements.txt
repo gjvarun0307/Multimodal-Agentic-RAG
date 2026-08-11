@@ -18,3 +18,7 @@ flagembedding==1.3.5
 langchain_tavily==0.2.18
 streamlit==1.61.0
 pydantic==2.13.4
+
+# for the FastAPI service (src/api.py)
+fastapi==0.141.1
+uvicorn==0.52.1
