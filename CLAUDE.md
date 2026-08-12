@@ -21,68 +21,44 @@ deployment, or reproducibility (`PROJECT_SPEC.md` §2.1). Off-topic ideas go in
 
 ## Phase state
 
-**Phase 0 (Unblock) is complete. Phase 1 (golden evaluation set) is in progress.**
-Full detail in `PROJECT_SPEC.md` §7 Phase 1 and §5.2.1 (passage resolution mechanics);
-this section is the working checklist, not a restatement.
+**Phase 0 (Unblock) and Phase 1 (golden evaluation set) are complete. Phase 2
+(metrics harness) is next.** Full detail in `PROJECT_SPEC.md` §7 Phase 2; this
+section is the working checklist, not a restatement.
 
-Full phase list: 0 Unblock (done) → **1 Golden set (in progress)** → 2 Metrics harness →
+Full phase list: 0 Unblock (done) → 1 Golden set (done) → **2 Metrics harness (next)** →
 3 Noise floor → 4 Eval-as-CI → 5 Deploy & observability → 6 Ablations & failure taxonomy →
 7 README rewrite.
 
-### Phase 1 — composition target (n≈180, spec §7)
+### Phase 1 outcome (closed 2026-08-11)
 
-| Category | n | `expected_route` |
-|---|---|---|
-| `single_hop` | 54 | vectorstore |
-| `multi_hop` | 34 | vectorstore |
-| `table_figure` | 27 | vectorstore |
-| `unanswerable_refuse` | 31 | refuse |
-| `ambiguous` | 18 | vectorstore |
-| `adversarial` | 9 | vectorstore |
-| `unanswerable_websearch` | 4 | websearch |
-| `chitchat` | 4 | chitchat |
+`eval/golden/golden_set.jsonl` (145 items) + `eval/golden/dev_split.jsonl` (30 items),
+175 total, all `verified_by: "human"`, all `version: 1`. Composition within ±1pp of
+every target share in spec §7. Dev split stratified proportionally (largest-remainder
+apportionment) from the five largest buckets only — single_hop/multi_hop/table_figure/
+unanswerable_refuse/ambiguous — with adversarial/unanswerable_websearch/chitchat (≤9
+items each) excluded entirely and kept fully in `golden_set.jsonl`. Fixed seed `20260811`,
+carve script not committed (one-off; rerunning would need re-verification against the
+now-frozen split, not a repeatable pipeline step). `python -m eval.validate_golden
+--require-verified` is fully clean: 14 PASS, 0 FAIL, 0 WARN, 0 SKIP, including passage
+resolution at chunk_size 512/1024/2048 (169/169 gold passages resolve; ~1.6-2.2%
+unresolved-chunk canary, unchanged since Checkpoint 1, all non-prose junk — VLM "blank
+image" caption repeats and empty table cells, not gold-passage-adjacent).
 
-Plus a disjoint ~30-item `dev_split.jsonl` holdout (never tune against the main set —
-invariant 6).
+**Known finding for Phase 6 (not a Phase 1 blocker):** most VLM figure captions in this
+corpus are low quality (repeated "Blank Image" captions, mislabeled diagrams). Only 2
+`table_figure` items use genuine VLM captions; the rest lean on real embedded data
+tables. Worth a negative-results writeup under invariant 16.
 
-### Phase 1 — division of labor (agreed 2026-08-11)
-
-- **Claude drafts, user verifies** — not full autonomous authorship. Every item traces
-  to real source text; nothing is fabricated then rubber-stamped.
-- **Claude:** `eval/golden/` scaffolding, `SCHEMA.md`, `resolve_passages.py` (passage →
-  char span → chunk ID, must work at chunk_size 512/1024/2048), `validate_golden.py`;
-  drafts all buckets (generated: single_hop/multi_hop/table_figure; hand-authored:
-  unanswerable/ambiguous/adversarial/websearch/chitchat) by reading source `.md` directly;
-  runs resolver/validator to a clean state; proposes the dev-split holdout.
-  Runs `eval/validate_golden.py` and `resolve_passages.py` as it goes, not just once at
-  the end.
-- **User:** full read-through of the unanswerable_refuse / ambiguous / adversarial /
-  unanswerable_websearch / chitchat buckets (66 items) — these "don't generate well"
-  per spec and refusal accuracy is the hallucination guard, so this pass is not
-  optional. Spot-checks the 115 generated items (a few papers' worth + anything Claude
-  flags as uncertain) rather than reviewing all of them line by line. Gives the final
-  go/no-go before freeze + commit (invariant 2: corpus/golden-set changes after freeze
-  are a version bump, not an edit).
-
-### Phase 1 — acceptance criteria (spec §7, gates move to Phase 2)
-
-- [ ] 150+ items, buckets within ±3% of target share
-- [ ] Every paper represented
-- [ ] 100% hand-verified (per division of labor above)
-- [ ] Every `gold_passages` entry resolves to exactly one span in its source `.md`
-- [ ] Resolver produces chunk IDs for chunk_size 512 / 1024 / 2048 without error
-- [ ] Dev split disjoint from main set
-- [ ] `eval/golden/SCHEMA.md` documents every field
-
-### Phase 1 — mechanics to hold to
+### Phase 1 — mechanics that carry forward (spec §5.2.1, still load-bearing)
 
 - `gold_passages` is the only ground truth (verbatim text + `doc_id`); chunk IDs are
-  *never* stored in the golden set, only derived at eval time (invariant 4, spec §5.2.1).
+  *never* stored in the golden set, only derived at eval time (invariant 4).
 - A `passage_text` that isn't unique in its source `.md` is a hard error — extend the
   passage, don't pick the first match.
 - `gold_answer` is empty string for `unanswerable_refuse` items.
 - `gold_doc_ids` is diagnostics only, never a gating metric (near-ceiling at 15 docs).
 - Cache resolved chunk IDs per config in `eval/golden/resolved/<config_hash>.json`.
+- Post-freeze edits to either file are a `version` bump, not a silent edit (invariant 2).
 
 ## Non-goals (do not implement, park in `docs/BACKLOG.md`)
 
@@ -172,11 +148,15 @@ python -m src.hybrid_database          # (re)build ./milvus.db -- DESTRUCTIVE, d
 # serve
 uvicorn src.api:app --reload --port 8000
 streamlit run app.py
+
+# eval (golden set; requires corpus locally, see below)
+python -m eval.resolve_passages         # writes eval/golden/resolved/<config_hash>.json
+python -m eval.validate_golden --require-verified
 ```
 
 Not yet available (later phases — see `PROJECT_SPEC.md` §9 for the full target list):
-`eval/` commands, `deploy/fetch_corpus.py`, `deploy/build_ingest_artifacts.py`,
-`deploy/record_demo_traces.py`.
+`eval/run_eval.py` and `eval/metrics/` (Phase 2), `deploy/fetch_corpus.py`,
+`deploy/build_ingest_artifacts.py`, `deploy/record_demo_traces.py`.
 
 ## Working agreements for this upgrade
 
