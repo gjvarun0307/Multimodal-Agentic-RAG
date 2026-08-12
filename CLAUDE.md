@@ -68,11 +68,11 @@ Not yet present, first-time builds for Phase 2: `eval/harness.py`,
 ### Phase 2 — build progress (updated incrementally, not a phase close)
 
 Landed so far: `configs/default.yaml`, `eval/metrics/retrieval.py`,
-`eval/metrics/router.py`, `eval/tavily_cache.py`. Still open: `eval/judge.py`,
-`eval/metrics/generation.py`, `eval/metrics/structured.py`,
-`eval/metrics/system.py`, `eval/harness.py`, judge calibration (40-item
-hand-label + κ), then a full run. Two upstream additions made along the way,
-both additive (no existing caller broke, full suite + ruff verified clean
+`eval/metrics/router.py`, `eval/metrics/structured.py`,
+`eval/metrics/system.py`, `eval/tavily_cache.py`. Still open: `eval/judge.py`,
+`eval/metrics/generation.py`, `eval/harness.py`, judge calibration (40-item
+hand-label + κ), then a full run. Three upstream additions made along the way,
+all additive (no existing caller broke, full suite + ruff verified clean
 after each):
 
 - **`GraphState["retrieved_chunk_scores"]`** (`src/agent.py`) — reranker
@@ -108,6 +108,33 @@ after each):
   purposes only (`EXPECTED_ROUTE_FOR_ROUTER` in that module); actual
   refusal behavior is `eval/metrics/generation.py`'s `refusal_accuracy`,
   not router's job. This is the one place that mapping lives.
+- `eval/metrics/structured.py`: `with_structured_output()` gives no signal
+  about how often it actually succeeds. Solved with `InstrumentingLLM`, a
+  wrapper substituted for `llm_model` in `build_agent_graph(llm_model=...)`
+  (no `src/agent.py` change needed — `llm_model` was already a constructor
+  parameter). It forces `include_raw=True` on the 4 structured-output call
+  sites so parse failures surface as data instead of exceptions, does one
+  measurement-only retry to get a real `retry_rate`, then re-raises to
+  match what the real (uninstrumented) call would have raised — every
+  existing try/except fallback path in `src/agent.py` behaves identically
+  either way. `silent_coercion_rate` is honestly a best-effort heuristic
+  (raw tool-call arg type vs. parsed field type) and returns `None`, not a
+  fake precise number, whenever it can't be checked — flagged as a known
+  measurement limitation in the module docstring per invariant 16, not
+  something to silently over-claim later.
+- `eval/metrics/system.py`: per-stage latency is only as granular as
+  `trace_info["stage_latencies_ms"]` already is today — per LangGraph node
+  (`retrieve_and_rerank`, `generate`, ...), not the finer embed/retrieve/
+  rerank/route/generate/correct split the spec's Phase 5 OTLP tracing
+  targets (§5). `retrieve_and_rerank` bundles embed+retrieve+rerank into
+  one number; `query_router`'s own decision time folds into whichever node
+  runs first, since it's a conditional edge, not a node. Documented as a
+  known Phase 2 → Phase 5 gap in the module docstring, not fixed here —
+  fixing it means adding real per-stage spans, which is explicitly Phase 5
+  scope. Also: `correction_fire_rate`/`mean_retries` are trace-only
+  (computable now); `correction_improve_rate`/`degrade_rate` need a
+  judge-scored correctness delta per item and return `None` until
+  `eval.harness` wires `eval/metrics/generation.py`'s judge output in.
 
 ### Phase 1 outcome (closed 2026-08-11)
 
