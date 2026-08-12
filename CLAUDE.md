@@ -67,13 +67,12 @@ Not yet present, first-time builds for Phase 2: `eval/harness.py`,
 
 ### Phase 2 — build progress (updated incrementally, not a phase close)
 
-Landed so far: `configs/default.yaml`, `eval/metrics/retrieval.py`,
-`eval/metrics/router.py`, `eval/metrics/structured.py`,
-`eval/metrics/system.py`, `eval/tavily_cache.py`. Still open: `eval/judge.py`,
-`eval/metrics/generation.py`, `eval/harness.py`, judge calibration (40-item
-hand-label + κ), then a full run. Three upstream additions made along the way,
-all additive (no existing caller broke, full suite + ruff verified clean
-after each):
+Landed so far: `configs/default.yaml`, all 5 `eval/metrics/*.py`,
+`eval/tavily_cache.py`, `eval/judge.py`. Still open: `eval/harness.py`
+(wires everything above into one `run_eval(config)`), judge calibration
+(40-item hand-label + κ — needs the user), then a full run (needs live API
+budget). Four upstream additions made along the way, all additive (no
+existing caller broke, full suite + ruff verified clean after each):
 
 - **`GraphState["retrieved_chunk_scores"]`** (`src/agent.py`) — reranker
   score per `retrieved_chunk_ids` entry, pre-threshold, aligned by position;
@@ -135,6 +134,24 @@ after each):
   (computable now); `correction_improve_rate`/`degrade_rate` need a
   judge-scored correctness delta per item and return `None` until
   `eval.harness` wires `eval/metrics/generation.py`'s judge output in.
+- **`config_rag()` gained `judge_api_key`** (`src/configuration.py`,
+  `JUDGE_API_KEY` env var) — deliberately separate from `llm_api_key` so
+  the judge (`eval/judge.py`, pinned to Groq, invariant 11) never
+  accidentally shares credentials with the generation model under test,
+  even when that model is also Groq-hosted. Set it in `api_keys.json` as
+  `"judge_api_key": "..."` before running anything that grades generation
+  quality — not yet set locally, so `eval.judge.build_judge_llm()` will
+  raise `JudgeConfigError` until it is.
+- `eval/judge.py` grades one item at a time (faithfulness, correctness,
+  refusal, citation precision) via 4 separate structured-output judge
+  calls; `eval/metrics/generation.py` only aggregates already-graded
+  results into rates, it never calls the judge itself — same
+  grade/aggregate split as `structured.py`+`router.py`. All 4 judge
+  prompts carry `JUDGE_VERSION` (`"v1"`, kept in sync with
+  `configs/default.yaml`'s `judge_version`) — bump both together on any
+  prompt wording change, never separately (invariant 11). Unverified with
+  a real Groq call yet — all tests use fake judge clients; task #14
+  (judge calibration) is the first real validation.
 
 ### Phase 1 outcome (closed 2026-08-11)
 

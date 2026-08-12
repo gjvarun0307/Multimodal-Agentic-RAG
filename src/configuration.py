@@ -84,6 +84,11 @@ class Config:
             # API Keys (will be overridden by api_keys.json or env vars)
             "llama_parse": "",
             "tavilly_web": "",
+            # Judge's own Groq key, deliberately separate from llm_api_key
+            # (PROJECT_SPEC.md invariant 11: the judge must be independent
+            # of the generation model under test, even when that model is
+            # also Groq-hosted -- see eval/judge.py).
+            "judge_api_key": "",
 
             # Device configuration
             "device": "cuda" if torch.cuda.is_available() else "cpu",  # auto-detected; override via DEVICE env var
@@ -159,6 +164,7 @@ class Config:
             # API Keys
             "LLAMA_PARSE_API_KEY": "llama_parse",
             "TAVILY_API_KEY": "tavilly_web",
+            "JUDGE_API_KEY": "judge_api_key",
 
             # Device
             "DEVICE": "device",
@@ -381,6 +387,7 @@ def config_rag(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     resolved = {
         "device": c.get("device"),
         "tavilly_api_key": c.get("tavilly_web"),
+        "judge_api_key": c.get("judge_api_key"),
         "database_path": c.get("database_path"),
         "input_folder_path": c.get("input_folder_path"),
         "metadata_path": c.get("metadata_path"),
