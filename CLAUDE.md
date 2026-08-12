@@ -194,4 +194,10 @@ Not yet available (later phases — see `PROJECT_SPEC.md` §9 for the full targe
   (`data/`, `artifacts/parsed_md/`), or any real key/secret.
 - Prefer `git add <path>` over `git add -A`; check `git status` before staging.
 - Message format: short imperative subject (`feat:`/`fix:`/`refactor:`/`docs:`/`chore:`), body explaining why when not obvious from the diff.
+- **Commit messages describe the change, not the internal planning mechanics used to get
+  there** — no "checkpoint N" language, no references to an in-session plan's own
+  checkpoint numbering. Squash/merge intermediate in-progress commits into one commit
+  per logical unit of work when the user asks for it (confirmed 2026-08-11: multiple
+  golden-set authoring commits were reset and re-committed as a single
+  `eval/golden/golden_set.jsonl` commit once fully human-verified).
 - Pause for user confirmation between phase milestones before proceeding to the next one.
