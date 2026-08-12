@@ -75,6 +75,7 @@ class QueryResponse(BaseModel):
     route_decision: Optional[str] = None
     node_sequence: list[str] = []
     retrieved_chunk_ids: list[str] = []
+    retrieved_chunk_scores: list[float] = []
     reranked_chunk_ids: list[str] = []
     correction_fired: bool = False
     fallback_events: list[str] = []
@@ -105,6 +106,7 @@ def query(request: QueryRequest) -> QueryResponse:
         route_decision=node_sequence[0] if node_sequence else None,
         node_sequence=node_sequence,
         retrieved_chunk_ids=final_state.get("retrieved_chunk_ids", []),
+        retrieved_chunk_scores=final_state.get("retrieved_chunk_scores", []),
         reranked_chunk_ids=final_state.get("reranked_chunk_ids", []),
         correction_fired=correction_fired,
         fallback_events=trace_info.get("fallback_events", []),

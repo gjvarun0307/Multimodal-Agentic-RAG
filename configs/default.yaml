@@ -1,0 +1,44 @@
+# Phase 2 baseline eval config.
+#
+# Loaded by eval/harness.py and passed straight through as the `overrides`
+# dict to src.configuration.config_rag(overrides=...) -- the same
+# config-only construction mechanism ablations use (invariant 10). Secrets
+# (llm_provider / llm_model / llm_api_key / tavilly_api_key) are NEVER put
+# here: config_rag() already resolves those from api_keys.json / env before
+# this file's overrides are applied on top, so this file only carries
+# non-secret tunables plus provenance fields for the results JSON schema
+# (PROJECT_SPEC.md §7 Phase 2, "Results schema").
+
+# --- provenance fields, copied verbatim into every results JSON ---
+golden_set_version: 1
+tavily_fixture_version: "v1"
+backend: "byok-hosted"          # byok-hosted | vllm-xgrammar -- see PROJECT_SPEC.md §4A
+
+# Judge is pinned to Groq and independent of the generation model
+# (invariant 11). Placeholder until eval/judge.py lands (task #7) and fixes
+# the exact judge_model/judge_version pairing -- update both together, never
+# just one, since a judge prompt or model change invalidates comparability.
+judge_model: "groq/openai/gpt-oss-20b"
+judge_version: "v1"
+
+# Value actually served in production (src/configuration.py _get_defaults);
+# recorded here so the eval override below is never silently divergent from
+# what real users get.
+serving_search_limit: 20
+
+# --- config_rag(overrides=...) passthrough ---
+overrides:
+  # Deliberately >= 50 during eval, above the serving_search_limit above,
+  # so Stage 1 (pre-rerank) recall@10/20/50 has headroom to measure --
+  # post-rerank it can never exceed reranker_top_k regardless (PROJECT_SPEC.md
+  # §7 Phase 2, "Set search_limit >= 50 during eval").
+  search_limit: 50
+  reranker_top_k: 5
+  reranker_score_threshold: 0.5
+  reranker_model: "BAAI/bge-reranker-v2-m3"   # CPU-viable default; ablation rows override this
+  chunk_size: 1024
+  overlap_size: 128
+  sparse_weight: 0.7
+  dense_weight: 1.0
+  max_gen_retries: 2
+  max_rewrites: 3

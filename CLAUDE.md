@@ -22,12 +22,92 @@ deployment, or reproducibility (`PROJECT_SPEC.md` §2.1). Off-topic ideas go in
 ## Phase state
 
 **Phase 0 (Unblock) and Phase 1 (golden evaluation set) are complete. Phase 2
-(metrics harness) is next.** Full detail in `PROJECT_SPEC.md` §7 Phase 2; this
-section is the working checklist, not a restatement.
+(metrics harness) is starting now.** Full detail in `PROJECT_SPEC.md` §7 Phase 2
+(lines ~956–1084); this section is the working checklist, not a restatement.
 
-Full phase list: 0 Unblock (done) → 1 Golden set (done) → **2 Metrics harness (next)** →
-3 Noise floor → 4 Eval-as-CI → 5 Deploy & observability → 6 Ablations & failure taxonomy →
-7 README rewrite.
+Full phase list: 0 Unblock (done) → 1 Golden set (done) → **2 Metrics harness (in
+progress)** → 3 Noise floor → 4 Eval-as-CI → 5 Deploy & observability →
+6 Ablations & failure taxonomy → 7 README rewrite.
+
+### Phase 2 — what's already in place (verified against code, 2026-08-12)
+
+Phase 0 plumbing that Phase 2 builds directly on top of, confirmed present:
+
+- `src/agent.py:run_query_with_state(app_graph, question, chat_history)` →
+  `(answer, final_state, trace_info)`. `trace_info["node_sequence"][0]` is the
+  route decision; `trace_info["stage_latencies_ms"]` is per-node wall time;
+  `trace_info["fallback_events"]` carries loud-fallback tags (invariant 15).
+  `final_state["retrieved_chunk_ids"]` / `["reranked_chunk_ids"]` are the two
+  ID lists Stage 1/Stage 2 retrieval metrics need (spec §5.7, §Phase 2 table).
+- `src/runtime.py:get_runtime(config)` — single construction point; the harness
+  should call this, never build models itself.
+- `src/configuration.py:config_rag(overrides={...})` — every tunable Phase 2
+  needs is already a config field: `search_limit`, `reranker_top_k`,
+  `sparse_weight`, `dense_weight`, `reranker_score_threshold`, `chunk_size`,
+  `max_gen_retries`, `vllm_base_url`. No config-promotion work left to do.
+- Four structured-output nodes confirmed in `src/agent.py`: `RouteDecision`
+  (router), `RewrittenQuery` (rewrite_query), `HallucinationScore` and
+  `RelevanceScore` (hallucinations_and_relevance_router) — all via
+  `llm_model.with_structured_output(...)`. This is the complete node set
+  `eval/metrics/structured.py` must instrument (spec §4A.1 / §Phase 2).
+  `with_structured_output` gives no built-in validity/retry signal — the
+  harness has to wrap these calls itself to observe schema violations,
+  retries, and silent coercion; nothing upstream provides this for free.
+- `TavilySearch` (via `langchain_tavily`) is the live web-search call inside
+  `web_search` node — `eval/tavily_cache.py` needs to intercept at this call
+  site (`TAVILY_API_KEY` config key already resolves through `config_rag`).
+- `LLM_PROVIDERS["groq"]` already has a `base_url` + `default_model` entry —
+  the judge (invariant 11) can reuse this provider entry as-is; still needs a
+  pinned model + prompt version choice, not just "groq" generically.
+
+Not yet present, first-time builds for Phase 2: `eval/harness.py`,
+`eval/metrics/` (all 5 files), `eval/judge.py`, `eval/tavily_cache.py`,
+`configs/default.yaml`, `eval/results/` (gitignored), `eval/baselines/main.json`
+(actually a Phase 4 artifact, not Phase 2 — don't build it early).
+
+### Phase 2 — build progress (updated incrementally, not a phase close)
+
+Landed so far: `configs/default.yaml`, `eval/metrics/retrieval.py`,
+`eval/metrics/router.py`, `eval/tavily_cache.py`. Still open: `eval/judge.py`,
+`eval/metrics/generation.py`, `eval/metrics/structured.py`,
+`eval/metrics/system.py`, `eval/harness.py`, judge calibration (40-item
+hand-label + κ), then a full run. Two upstream additions made along the way,
+both additive (no existing caller broke, full suite + ruff verified clean
+after each):
+
+- **`GraphState["retrieved_chunk_scores"]`** (`src/agent.py`) — reranker
+  score per `retrieved_chunk_ids` entry, pre-threshold, aligned by position;
+  `[]` whenever no reranker ran (no reranker configured, or the
+  `rerank_fallback` path fired). Without this, `threshold_loss` (spec §7
+  Phase 2 retrieval metric) can't be computed without re-running the
+  reranker inside eval — the pipeline already discards per-candidate scores
+  once it filters to `final_documents`. Threaded through
+  `run_query_with_state()`'s stateless init and `/query`'s `QueryResponse`
+  in `src/api.py` too, matching a field the spec's own Tier 1 demo trace
+  JSON (§4C) already expected (`"reranker_scores": [...]`).
+- **`build_agent_graph(..., web_search_tool=None)`** (`src/agent.py`) — optional
+  override for the web-search tool, same constructor-injection pattern
+  already used for `database`/`embedding_model`/`rerank_model`/`llm_model`.
+  `eval/tavily_cache.py`'s `build_tavily_tool(config)` supplies a
+  replay-or-record wrapper here; `web_search()` itself is unchanged. Real
+  `TavilySearch` still gets built exactly as before when the override is
+  omitted (`app.py`/`src/api.py`'s existing calls need no changes).
+- `eval/tavily_cache.py`: `TAVILY_MODE` env var (`replay` default / `live`),
+  fixture at `eval/fixtures/tavily_v1.json`, keyed by sha256 of
+  `(query, max_results, topic)`. Replay miss raises `TavilyCacheMissError`
+  loudly (invariant 15) — never falls through to a live call. Not yet
+  recorded for real (needs a live `TAVILY_API_KEY` run of
+  `python -m eval.tavily_cache --record` against the 4
+  `unanswerable_websearch` golden items) — `eval/harness.py` will hit
+  `TavilyCacheMissError` on those items until that one-time recording pass
+  runs.
+- `eval/metrics/router.py`: `expected_route: "refuse"` (unanswerable_refuse
+  items) has no router edge to compare against — `query_router` only ever
+  picks vectorstore/websearch/chitchat. Resolved by treating "refuse"
+  items' correct router target as `vectorstore` for `router_accuracy`
+  purposes only (`EXPECTED_ROUTE_FOR_ROUTER` in that module); actual
+  refusal behavior is `eval/metrics/generation.py`'s `refusal_accuracy`,
+  not router's job. This is the one place that mapping lives.
 
 ### Phase 1 outcome (closed 2026-08-11)
 
@@ -106,8 +186,8 @@ deployed feature), and CPU-viable reranking (deploy target has no GPU).
   `hybrid_database.py`, `parse.py`, `configuration.py`, `helper.py`, `logging_utils.py`);
   `app.py`/`pages/1_Setup.py` stay at repo root.
 - **Uploads are rejected** — corpus is frozen, so `app.py` has no upload UI.
-  `agent.py`'s active-document-scoping fields/logic still exist in the graph but
-  nothing sets them anymore.
+  `agent.py`'s active-document-scoping fields/logic (never set by any caller)
+  were removed outright rather than left as dead code.
 
 ## Implementation notes for later phases
 
@@ -155,7 +235,7 @@ python -m eval.validate_golden --require-verified
 ```
 
 Not yet available (later phases — see `PROJECT_SPEC.md` §9 for the full target list):
-`eval/run_eval.py` and `eval/metrics/` (Phase 2), `deploy/fetch_corpus.py`,
+`eval/harness.py` and `eval/metrics/` (Phase 2, in progress), `deploy/fetch_corpus.py`,
 `deploy/build_ingest_artifacts.py`, `deploy/record_demo_traces.py`.
 
 ## Working agreements for this upgrade

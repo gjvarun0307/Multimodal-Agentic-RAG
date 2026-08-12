@@ -71,6 +71,13 @@ class GraphState(TypedDict):
         gen_retries: number of generates for hallucinations
         chat_history: list of previous messages
         retrieved_chunk_ids: chunk IDs from hybrid search, pre-rerank
+        retrieved_chunk_scores: reranker score per retrieved_chunk_ids entry (same
+            order/length), pre-threshold -- lets eval/metrics/retrieval.py compute
+            threshold_loss (a gold chunk the reranker scored above other kept
+            chunks but the score threshold still dropped) without re-running the
+            reranker. Empty list whenever no per-candidate score exists (no
+            reranker configured, or the rerank_fallback path fired) -- never
+            partially populated.
         reranked_chunk_ids: chunk IDs post-rerank, post-threshold (what generate() actually saw)
         fallback_events: tags appended by node-level except blocks when a silent
             fallback would otherwise occur (e.g. "rerank_fallback") -- invariant 15
@@ -85,11 +92,12 @@ class GraphState(TypedDict):
     gen_retries: int
     chat_history: List
     retrieved_chunk_ids: List[str]
+    retrieved_chunk_scores: List[float]
     reranked_chunk_ids: List[str]
     fallback_events: Annotated[List[str], operator.add]
 
 
-def build_agent_graph(database, embedding_model, rerank_model, llm_model, config: Optional[dict] = None):
+def build_agent_graph(database, embedding_model, rerank_model, llm_model, config: Optional[dict] = None, web_search_tool=None):
     """
     Build and compile the LangGraph agent.
 
@@ -98,6 +106,15 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         embedding_model: BGE-M3 embedding model
         rerank_model: BGE reranker model
         llm_model: chat model client for the configured LLM provider
+        web_search_tool: optional override for the web-search tool, anything
+            with a `.invoke({"query": ...}) -> dict` matching TavilySearch's
+            response shape. When omitted, the real TavilySearch is built as
+            before. eval.tavily_cache.build_tavily_tool() supplies a
+            replay/record wrapper here so the eval harness never makes a
+            live Tavily call outside an explicit recording pass
+            (PROJECT_SPEC.md invariant 12) -- this parameter is the only
+            injection point the harness needs; web_search() itself is
+            unchanged.
 
     Returns:
         Compiled StateGraph ready for use
@@ -106,18 +123,21 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
 
     cfg = config or config_rag()
 
-    # Initialize web search tool. Key must go through api_wrapper --
-    # TavilySearch itself has no api_key field (extra="ignore" on its
-    # pydantic model silently drops one), so passing api_key= directly
-    # is a no-op and it falls back to reading TAVILY_API_KEY from the
-    # process env instead of cfg.
-    web_tool = TavilySearch(
-        api_wrapper=TavilySearchAPIWrapper(tavily_api_key=cfg["tavilly_api_key"]),
-        max_results=cfg.get("web_search_max_results", 5),
-        topic=cfg.get("web_search_topic", "general"),
-        include_images=False
-    )
-    logger.info("Initialized web search tool")
+    if web_search_tool is not None:
+        web_tool = web_search_tool
+        logger.info("Using injected web search tool (%s)", type(web_tool).__name__)
+    else:
+        # Key must go through api_wrapper -- TavilySearch itself has no
+        # api_key field (extra="ignore" on its pydantic model silently
+        # drops one), so passing api_key= directly is a no-op and it falls
+        # back to reading TAVILY_API_KEY from the process env instead of cfg.
+        web_tool = TavilySearch(
+            api_wrapper=TavilySearchAPIWrapper(tavily_api_key=cfg["tavilly_api_key"]),
+            max_results=cfg.get("web_search_max_results", 5),
+            topic=cfg.get("web_search_topic", "general"),
+            include_images=False
+        )
+        logger.info("Initialized web search tool")
 
     # Router node prompt
     domain_topics = cfg.get("domain_topics", [])
@@ -300,10 +320,12 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
                 "loop_count": loop_count,
                 "chat_history": chat_history,
                 "retrieved_chunk_ids": [],
+                "retrieved_chunk_scores": [],
                 "reranked_chunk_ids": [],
             }
 
         fallback_tag = None
+        retrieved_chunk_scores: list = []
         if rerank_model is None:
             keep_top_k = config.get("reranker_top_k", 5)
             final_documents = raw_docs[:keep_top_k]
@@ -319,6 +341,10 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
                 reranked_docs = heapq.nlargest(keep_top_k, filtered_pairs, key=lambda x: x[1])
 
                 final_documents = [doc for doc, _ in reranked_docs]
+                # Aligned with retrieved_chunk_ids (raw_docs order), pre-threshold --
+                # this is what makes threshold_loss computable in eval without
+                # re-running the reranker (see GraphState docstring).
+                retrieved_chunk_scores = [float(s) for s in scores]
 
                 logger.info(f"Milvus found {len(raw_docs)} docs. Reranker kept {len(final_documents)} docs > {score_threshold} score.")
             except Exception as e:
@@ -337,6 +363,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
             "loop_count": loop_count,
             "chat_history": chat_history,
             "retrieved_chunk_ids": retrieved_chunk_ids,
+            "retrieved_chunk_scores": retrieved_chunk_scores,
             "reranked_chunk_ids": reranked_chunk_ids,
         }
         if fallback_tag:
@@ -639,6 +666,7 @@ def run_query_with_state(app_graph, question: str, chat_history: List[str]):
         "loop_count": 0,
         "gen_retries": 0,
         "retrieved_chunk_ids": [],
+        "retrieved_chunk_scores": [],
         "reranked_chunk_ids": [],
         "fallback_events": [],
     }
