@@ -44,7 +44,7 @@ pytestmark = pytest.mark.skipif(
 
 def test_end_to_end_headless_query():
     runtime = get_runtime()
-    graph = build_agent_graph(runtime.database, runtime.embedding_model, runtime.rerank_model, runtime.llm)
+    graph = build_agent_graph(runtime.database, runtime.embedding_model, runtime.rerank_model, runtime.llm, runtime.config)
 
     answer, final_state, trace_info = run_query_with_state(graph, "What is LoRA?", [])
 

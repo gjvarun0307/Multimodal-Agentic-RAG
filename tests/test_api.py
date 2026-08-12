@@ -13,7 +13,7 @@ import src.api as api_module
 
 @pytest.fixture
 def client(monkeypatch):
-    fake_runtime = SimpleNamespace(database=None, embedding_model=None, rerank_model=None, llm=None)
+    fake_runtime = SimpleNamespace(database=None, embedding_model=None, rerank_model=None, llm=None, config={})
     monkeypatch.setattr(api_module, "get_runtime", lambda: fake_runtime)
     monkeypatch.setattr(api_module, "build_agent_graph", lambda *a, **k: "fake_graph")
     with TestClient(api_module.app) as c:

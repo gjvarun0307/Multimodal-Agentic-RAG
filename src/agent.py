@@ -6,13 +6,13 @@ It provides a modular, reusable agent implementation for the RAG system.
 """
 
 import heapq
-import os
 import time
 from typing import List, Literal, Optional, TypedDict
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_tavily import TavilySearch
+from langchain_tavily.tavily_search import TavilySearchAPIWrapper
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
@@ -86,7 +86,7 @@ class GraphState(TypedDict):
     reranked_chunk_ids: List[str]
 
 
-def build_agent_graph(database, embedding_model, rerank_model, llm_model):
+def build_agent_graph(database, embedding_model, rerank_model, llm_model, config: Optional[dict] = None):
     """
     Build and compile the LangGraph agent.
 
@@ -101,20 +101,23 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model):
     """
     logger.info("Building agent graph")
 
-    # Initialize web search tool
-    if not os.environ.get("TAVILY_API_KEY"):
-        os.environ["TAVILY_API_KEY"] = config_rag()["tavilly_api_key"]
-        logger.info("Set TAVILY_API_KEY from config")
+    cfg = config or config_rag()
 
+    # Initialize web search tool. Key must go through api_wrapper --
+    # TavilySearch itself has no api_key field (extra="ignore" on its
+    # pydantic model silently drops one), so passing api_key= directly
+    # is a no-op and it falls back to reading TAVILY_API_KEY from the
+    # process env instead of cfg.
     web_tool = TavilySearch(
-        max_results=config_rag().get("web_search_max_results", 5),
-        topic=config_rag().get("web_search_topic", "general"),
+        api_wrapper=TavilySearchAPIWrapper(tavily_api_key=cfg["tavilly_api_key"]),
+        max_results=cfg.get("web_search_max_results", 5),
+        topic=cfg.get("web_search_topic", "general"),
         include_images=False
     )
     logger.info("Initialized web search tool")
 
     # Router node prompt
-    domain_topics = config_rag().get("domain_topics", [])
+    domain_topics = cfg.get("domain_topics", [])
     router_node_prompt = ChatPromptTemplate(
         [
             (
@@ -279,7 +282,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model):
             logger.debug(f"Scoping retrieval to active document: {active_document}")
 
         logger.debug(f"Retrieving for question: {question[:100]}...")
-        config = config_rag()
+        config = cfg
         try:
             raw_docs = hybrid_search(
                 database,
@@ -501,7 +504,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model):
             return "websearch"  # Default to websearch on error
 
     def rewrite_router(state):
-        max_rewrites = config_rag().get("max_rewrites", 3)
+        max_rewrites = cfg.get("max_rewrites", 3)
         loop_count = state.get("loop_count", 0)
         if loop_count <= max_rewrites:
             logger.debug(f"Rewrite loop count: {loop_count}, max: {max_rewrites}, decision: retrieve")
@@ -526,7 +529,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model):
             try:
                 grounded = hallucination_check_node_llm.invoke({"documents": formatted_docs, "generation": generation}).is_grounded
                 if not grounded:
-                    max_gen_retries = config_rag().get("max_gen_retries", 2)
+                    max_gen_retries = cfg.get("max_gen_retries", 2)
                     decision = "rewrite_query" if gen_retries >= max_gen_retries else "generate"
                     logger.debug(f"Grounded: {grounded}, retries: {gen_retries}/{max_gen_retries}, decision: {decision}")
                     return decision
@@ -540,7 +543,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model):
             if relevant:
                 logger.debug("Relevance check passed")
                 return "all_pass"
-            max_gen_retries = config_rag().get("max_gen_retries", 2)
+            max_gen_retries = cfg.get("max_gen_retries", 2)
             decision = "rewrite_query" if gen_retries >= max_gen_retries else "generate"
             logger.debug(f"Relevant: {relevant}, retries: {gen_retries}/{max_gen_retries}, decision: {decision}")
             return decision

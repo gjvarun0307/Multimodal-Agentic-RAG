@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
     logger.info("API starting up -- constructing runtime")
     try:
         runtime = get_runtime()
-        graph = build_agent_graph(runtime.database, runtime.embedding_model, runtime.rerank_model, runtime.llm)
+        graph = build_agent_graph(runtime.database, runtime.embedding_model, runtime.rerank_model, runtime.llm, runtime.config)
         app.state.runtime = runtime
         app.state.graph = graph
         app.state.ready = True
