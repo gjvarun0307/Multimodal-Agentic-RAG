@@ -291,7 +291,7 @@ def _load_metadata_by_doc_id(metadata_path: Path) -> dict[str, dict]:
     return {r["doc_id"]: r for r in records}
 
 
-def _compute_config_hash(chunk_size: int, overlap_size: int, corpus_hashes: dict[str, str]) -> str:
+def compute_config_hash(chunk_size: int, overlap_size: int, corpus_hashes: dict[str, str]) -> str:
     payload = {
         "chunk_size": chunk_size,
         "overlap_size": overlap_size,
@@ -393,7 +393,7 @@ def resolve_golden_set(
     return ResolutionResult(
         chunk_size=chunk_size,
         overlap_size=overlap_size,
-        config_hash=_compute_config_hash(chunk_size, overlap_size, corpus_hashes),
+        config_hash=compute_config_hash(chunk_size, overlap_size, corpus_hashes),
         n_items=len(items),
         n_gold_passages=n_gold_passages,
         n_chunks_total=n_chunks_total,

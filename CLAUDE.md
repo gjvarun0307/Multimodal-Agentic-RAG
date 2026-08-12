@@ -67,11 +67,13 @@ Not yet present, first-time builds for Phase 2: `eval/harness.py`,
 
 ### Phase 2 — build progress (updated incrementally, not a phase close)
 
-Landed so far: `configs/default.yaml`, all 5 `eval/metrics/*.py`,
-`eval/tavily_cache.py`, `eval/judge.py`. Still open: `eval/harness.py`
-(wires everything above into one `run_eval(config)`), judge calibration
-(40-item hand-label + κ — needs the user), then a full run (needs live API
-budget). Four upstream additions made along the way, all additive (no
+Landed and wired together: `configs/default.yaml`, all 5
+`eval/metrics/*.py`, `eval/tavily_cache.py`, `eval/judge.py`, and
+`eval/harness.py` (`run_eval()` + `python -m eval.harness`). Still open:
+judge calibration (40-item hand-label + κ — needs the user), then a full
+non-retrieval-only run (needs live LLM + Groq judge API keys/budget —
+`api_keys.json` has neither `judge_api_key` nor a real `llm_api_key` set
+locally yet). Five upstream additions made along the way, all additive (no
 existing caller broke, full suite + ruff verified clean after each):
 
 - **`GraphState["retrieved_chunk_scores"]`** (`src/agent.py`) — reranker
@@ -152,6 +154,39 @@ existing caller broke, full suite + ruff verified clean after each):
   prompt wording change, never separately (invariant 11). Unverified with
   a real Groq call yet — all tests use fake judge clients; task #14
   (judge calibration) is the first real validation.
+- **`retrieve_and_rerank_core`** (`src/agent.py`, module-level, extracted
+  from the `retrieve_and_rerank` node closure) — the hybrid-search +
+  rerank + threshold-filter logic, with no GraphState/graph dependency.
+  Exists so `eval/harness.py --retrieval-only` exercises the *exact*
+  retrieval code path the real graph uses instead of a separately
+  maintained reimplementation that could drift. The node closure is now a
+  thin wrapper around it; behavior is unchanged (full suite, including the
+  real `test_smoke.py` end-to-end run, passes identically before/after).
+- **`eval/harness.py`** is built and real-verified: `python -m eval.harness
+  --config configs/default.yaml --split fast --retrieval-only` ran for real
+  against the live corpus (2026-08-12, no LLM key needed — retrieval-only
+  never constructs one), producing genuine numbers (recall@10=0.63,
+  recall@50=0.85, rerank_lift=-0.022 on that small fast-split sample —
+  not a baseline, just proof the pipeline is real). Results land in
+  `eval/results/<run_id>.json` (gitignored); `config` in that file has
+  `llm_api_key`/`judge_api_key`/`tavilly_api_key` redacted before writing,
+  even though the directory is gitignored — results get pasted/shared in
+  ways a repo file doesn't.
+  **Not yet live-verified:** the non-`--retrieval-only` full-graph path
+  (needs a real `llm_provider`/`llm_api_key` and `judge_api_key`, neither
+  configured locally yet) and Tavily replay (needs
+  `python -m eval.tavily_cache --record` run once against a real
+  `TAVILY_API_KEY` — the 4 `unanswerable_websearch` golden items will hit
+  `TavilyCacheMissError` until then). `--split fast`/`--split dev` are
+  implemented (deterministic proportional-per-category sampling, seed
+  `20260812`, never sampling `dev_split.jsonl` into `fast`/`full` per
+  invariant 6) but not yet the thing gating CI — that wiring is Phase 4.
+  **Known gap, not yet fixed:** `correction_improve_rate`/`degrade_rate`
+  always report `None` — they'd need the pre-correction generation text,
+  which `GraphState` currently overwrites rather than preserves across a
+  `rewrite_query` loop iteration. `correction_fire_rate`/`mean_retries`
+  work today (trace-derivable alone). Fixing this is a separate, not-yet-
+  scoped `GraphState` change.
 
 ### Phase 1 outcome (closed 2026-08-11)
 

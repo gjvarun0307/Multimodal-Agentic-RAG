@@ -97,6 +97,85 @@ class GraphState(TypedDict):
     fallback_events: Annotated[List[str], operator.add]
 
 
+def retrieve_and_rerank_core(question: str, *, database, embedding_model, rerank_model, config: dict) -> dict:
+    """Hybrid search + rerank + threshold filter, with no GraphState/graph
+    dependency -- the pure retrieval logic the `retrieve_and_rerank` node
+    below wraps. Pulled out to a module-level function so
+    eval.harness's --retrieval-only mode (PROJECT_SPEC.md §7 Phase 2:
+    "Retrieval-only mode makes zero LLM calls") exercises this *exact* code
+    path instead of a separately maintained reimplementation that could
+    silently drift from what the real graph does -- duplicating this logic
+    in eval/ would risk measuring something other than the real pipeline.
+
+    Returns {"documents", "retrieved_chunk_ids", "retrieved_chunk_scores",
+    "reranked_chunk_ids"}, plus "fallback_events": ["rerank_fallback"] only
+    when the reranker call itself failed (never present otherwise -- the
+    caller merges this dict into GraphState directly).
+    """
+    raw_docs = hybrid_search(
+        database,
+        embedding_model,
+        question,
+        sparse_weight=config.get("sparse_weight", 0.7),
+        dense_weight=config.get("dense_weight", 1.0),
+        limit=config.get("search_limit", 20),
+    )
+
+    retrieved_chunk_ids = [doc.get("id") for doc in raw_docs]
+
+    if not raw_docs:
+        logger.warning("No documents found in database.")
+        return {
+            "documents": [],
+            "retrieved_chunk_ids": [],
+            "retrieved_chunk_scores": [],
+            "reranked_chunk_ids": [],
+        }
+
+    fallback_tag = None
+    retrieved_chunk_scores: list = []
+    if rerank_model is None:
+        keep_top_k = config.get("reranker_top_k", 5)
+        final_documents = raw_docs[:keep_top_k]
+        logger.debug(f"No reranker available; using top {keep_top_k} raw hybrid-search results")
+    else:
+        logger.debug(f"Reranking {len(raw_docs)} retrieved documents...")
+        try:
+            question_and_docs = [[question, doc["text"]] for doc in raw_docs]
+            scores = rerank_model.compute_score(question_and_docs, normalize=True, batch_size=4, max_length=1024)
+            score_threshold = config.get("reranker_score_threshold", 0.5)
+            filtered_pairs = [(doc, score) for doc, score in zip(raw_docs, scores) if score > score_threshold]
+            keep_top_k = config.get("reranker_top_k", 5)
+            reranked_docs = heapq.nlargest(keep_top_k, filtered_pairs, key=lambda x: x[1])
+
+            final_documents = [doc for doc, _ in reranked_docs]
+            # Aligned with retrieved_chunk_ids (raw_docs order), pre-threshold --
+            # this is what makes threshold_loss computable in eval without
+            # re-running the reranker (see GraphState docstring).
+            retrieved_chunk_scores = [float(s) for s in scores]
+
+            logger.info(f"Milvus found {len(raw_docs)} docs. Reranker kept {len(final_documents)} docs > {score_threshold} score.")
+        except Exception as e:
+            logger.error(f"Error during reranking: {e}")
+            # Fallback to just taking first k documents
+            keep_top_k = config.get("reranker_top_k", 5)
+            final_documents = raw_docs[:keep_top_k]
+            fallback_tag = "rerank_fallback"
+            logger.warning(f"Using fallback: taking first {keep_top_k} documents")
+
+    reranked_chunk_ids = [doc.get("id") for doc in final_documents]
+
+    result = {
+        "documents": final_documents,
+        "retrieved_chunk_ids": retrieved_chunk_ids,
+        "retrieved_chunk_scores": retrieved_chunk_scores,
+        "reranked_chunk_ids": reranked_chunk_ids,
+    }
+    if fallback_tag:
+        result["fallback_events"] = [fallback_tag]
+    return result
+
+
 def build_agent_graph(database, embedding_model, rerank_model, llm_model, config: Optional[dict] = None, web_search_tool=None):
     """
     Build and compile the LangGraph agent.
@@ -300,74 +379,21 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         chat_history = state.get("chat_history", [])
 
         logger.debug(f"Retrieving for question: {question[:100]}...")
-        config = cfg
-        raw_docs = hybrid_search(
-            database,
-            embedding_model,
-            question,
-            sparse_weight=config.get("sparse_weight", 0.7),
-            dense_weight=config.get("dense_weight", 1.0),
-            limit=config.get("search_limit", 20),
+        core_result = retrieve_and_rerank_core(
+            question, database=database, embedding_model=embedding_model, rerank_model=rerank_model, config=cfg
         )
 
-        retrieved_chunk_ids = [doc.get("id") for doc in raw_docs]
-
-        if not raw_docs:
-            logger.warning("No documents found in database.")
-            return {
-                "documents": [],
-                "question": question,
-                "loop_count": loop_count,
-                "chat_history": chat_history,
-                "retrieved_chunk_ids": [],
-                "retrieved_chunk_scores": [],
-                "reranked_chunk_ids": [],
-            }
-
-        fallback_tag = None
-        retrieved_chunk_scores: list = []
-        if rerank_model is None:
-            keep_top_k = config.get("reranker_top_k", 5)
-            final_documents = raw_docs[:keep_top_k]
-            logger.debug(f"No reranker available; using top {keep_top_k} raw hybrid-search results")
-        else:
-            logger.debug(f"Reranking {len(raw_docs)} retrieved documents...")
-            try:
-                question_and_docs = [[question, doc["text"]] for doc in raw_docs]
-                scores = rerank_model.compute_score(question_and_docs, normalize=True, batch_size=4, max_length=1024)
-                score_threshold = config.get("reranker_score_threshold", 0.5)
-                filtered_pairs = [(doc, score) for doc, score in zip(raw_docs, scores) if score > score_threshold]
-                keep_top_k = config.get("reranker_top_k", 5)
-                reranked_docs = heapq.nlargest(keep_top_k, filtered_pairs, key=lambda x: x[1])
-
-                final_documents = [doc for doc, _ in reranked_docs]
-                # Aligned with retrieved_chunk_ids (raw_docs order), pre-threshold --
-                # this is what makes threshold_loss computable in eval without
-                # re-running the reranker (see GraphState docstring).
-                retrieved_chunk_scores = [float(s) for s in scores]
-
-                logger.info(f"Milvus found {len(raw_docs)} docs. Reranker kept {len(final_documents)} docs > {score_threshold} score.")
-            except Exception as e:
-                logger.error(f"Error during reranking: {e}")
-                # Fallback to just taking first k documents
-                keep_top_k = config.get("reranker_top_k", 5)
-                final_documents = raw_docs[:keep_top_k]
-                fallback_tag = "rerank_fallback"
-                logger.warning(f"Using fallback: taking first {keep_top_k} documents")
-
-        reranked_chunk_ids = [doc.get("id") for doc in final_documents]
-
         result = {
-            "documents": final_documents,
+            "documents": core_result["documents"],
             "question": question,
             "loop_count": loop_count,
             "chat_history": chat_history,
-            "retrieved_chunk_ids": retrieved_chunk_ids,
-            "retrieved_chunk_scores": retrieved_chunk_scores,
-            "reranked_chunk_ids": reranked_chunk_ids,
+            "retrieved_chunk_ids": core_result["retrieved_chunk_ids"],
+            "retrieved_chunk_scores": core_result["retrieved_chunk_scores"],
+            "reranked_chunk_ids": core_result["reranked_chunk_ids"],
         }
-        if fallback_tag:
-            result["fallback_events"] = [fallback_tag]
+        if "fallback_events" in core_result:
+            result["fallback_events"] = core_result["fallback_events"]
         return result
 
     def generate(state):
