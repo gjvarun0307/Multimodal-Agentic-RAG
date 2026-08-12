@@ -326,8 +326,8 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
             logger.debug(f"No reranker available; using top {keep_top_k} raw hybrid-search results")
         else:
             logger.debug(f"Reranking {len(raw_docs)} retrieved documents...")
-            question_and_docs = [[question, doc["text"]] for doc in raw_docs]
             try:
+                question_and_docs = [[question, doc["text"]] for doc in raw_docs]
                 scores = rerank_model.compute_score(question_and_docs, normalize=True, batch_size=4, max_length=1024)
                 score_threshold = config.get("reranker_score_threshold", 0.5)
                 filtered_pairs = [(doc, score) for doc, score in zip(raw_docs, scores) if score > score_threshold]
@@ -520,6 +520,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         documents = state.get("documents", [])
         generation = state.get("generation", "")
         gen_retries = state.get("gen_retries", 0)
+        max_gen_retries = cfg.get("max_gen_retries", 2)
 
         logger.debug(f"Checking hallucinations and relevance for generation: {generation[:100]}...")
 
@@ -529,7 +530,6 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
             try:
                 grounded = hallucination_check_node_llm.invoke({"documents": formatted_docs, "generation": generation}).is_grounded
                 if not grounded:
-                    max_gen_retries = cfg.get("max_gen_retries", 2)
                     decision = "rewrite_query" if gen_retries >= max_gen_retries else "generate"
                     logger.debug(f"Grounded: {grounded}, retries: {gen_retries}/{max_gen_retries}, decision: {decision}")
                     return decision
@@ -543,7 +543,6 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
             if relevant:
                 logger.debug("Relevance check passed")
                 return "all_pass"
-            max_gen_retries = cfg.get("max_gen_retries", 2)
             decision = "rewrite_query" if gen_retries >= max_gen_retries else "generate"
             logger.debug(f"Relevant: {relevant}, retries: {gen_retries}/{max_gen_retries}, decision: {decision}")
             return decision
