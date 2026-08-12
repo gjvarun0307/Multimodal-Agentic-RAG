@@ -70,8 +70,6 @@ class GraphState(TypedDict):
         loop_count: number to track loops
         gen_retries: number of generates for hallucinations
         chat_history: list of previous messages
-        active_document: filename of the most recently uploaded document this session, if any
-        scope_to_active_document: whether this turn should be retrieved/routed against active_document only
         retrieved_chunk_ids: chunk IDs from hybrid search, pre-rerank
         reranked_chunk_ids: chunk IDs post-rerank, post-threshold (what generate() actually saw)
         fallback_events: tags appended by node-level except blocks when a silent
@@ -86,8 +84,6 @@ class GraphState(TypedDict):
     loop_count: int
     gen_retries: int
     chat_history: List
-    active_document: Optional[str]
-    scope_to_active_document: bool
     retrieved_chunk_ids: List[str]
     reranked_chunk_ids: List[str]
     fallback_events: Annotated[List[str], operator.add]
@@ -282,40 +278,17 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         question = state["question"]
         loop_count = state.get("loop_count", 0)
         chat_history = state.get("chat_history", [])
-        active_document = state.get("active_document")
-        scope_to_active_document = state.get("scope_to_active_document", False)
-
-        filter_expr = None
-        if scope_to_active_document and active_document:
-            escaped = active_document.replace('"', '\\"')
-            filter_expr = f'metadata["source_file"] == "{escaped}"'
-            logger.debug(f"Scoping retrieval to active document: {active_document}")
 
         logger.debug(f"Retrieving for question: {question[:100]}...")
         config = cfg
-        try:
-            raw_docs = hybrid_search(
-                database,
-                embedding_model,
-                question,
-                sparse_weight=config.get("sparse_weight", 0.7),
-                dense_weight=config.get("dense_weight", 1.0),
-                limit=config.get("search_limit", 20),
-                filter_expr=filter_expr,
-            )
-        except Exception as e:
-            if filter_expr:
-                logger.warning(f"Scoped search failed ({e}); retrying unfiltered")
-                raw_docs = hybrid_search(
-                    database,
-                    embedding_model,
-                    question,
-                    sparse_weight=config.get("sparse_weight", 0.7),
-                    dense_weight=config.get("dense_weight", 1.0),
-                    limit=config.get("search_limit", 20),
-                )
-            else:
-                raise
+        raw_docs = hybrid_search(
+            database,
+            embedding_model,
+            question,
+            sparse_weight=config.get("sparse_weight", 0.7),
+            dense_weight=config.get("dense_weight", 1.0),
+            limit=config.get("search_limit", 20),
+        )
 
         retrieved_chunk_ids = [doc.get("id") for doc in raw_docs]
 
@@ -523,12 +496,6 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         question = state["question"]
         chat_history = state.get("chat_history", [])
 
-        # Decided once in run_query() from the original question, before any rewrite
-        # can strip the marker words that triggered it.
-        if state.get("scope_to_active_document") and state.get("active_document"):
-            logger.debug("Routing to vectorstore (active document referenced)")
-            return "vectorstore"
-
         try:
             result = router_node_llm.invoke({"question": question, "chat_history": _safe_join_history(chat_history)})
             route = result.route if result.route in {"vectorstore", "websearch", "chitchat"} else "websearch"
@@ -544,9 +511,6 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         if loop_count <= max_rewrites:
             logger.debug(f"Rewrite loop count: {loop_count}, max: {max_rewrites}, decision: retrieve")
             return "retrieve"
-        if state.get("scope_to_active_document") and state.get("active_document"):
-            logger.debug("Rewrite budget exhausted for a document-scoped query; skipping web search")
-            return "generate"
         logger.debug(f"Rewrite loop count: {loop_count}, max: {max_rewrites}, decision: web_search")
         return "web_search"
 
@@ -648,35 +612,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
     return workflow.compile()
 
 
-_ACTIVE_DOCUMENT_MARKERS = [
-    "uploaded pdf",
-    "uploaded file",
-    "uploaded document",
-    "this pdf",
-    "this file",
-    "this document",
-    "this paper",
-    "my pdf",
-    "my file",
-    "my document",
-    "attached",
-    "the attachment",
-    "document i uploaded",
-    "paper i uploaded",
-    "file i uploaded",
-    "newly added",
-    "just uploaded",
-    "just added",
-]
-
-
-def _references_active_document(question: str, chat_history: List[str]) -> bool:
-    """Heuristic: does this turn appear to reference the most recently uploaded document?"""
-    combined_text = f"{question}\n{chr(10).join(chat_history or [])}".lower()
-    return any(marker in combined_text for marker in _ACTIVE_DOCUMENT_MARKERS)
-
-
-def run_query_with_state(app_graph, question: str, chat_history: List[str], active_document: Optional[str] = None):
+def run_query_with_state(app_graph, question: str, chat_history: List[str]):
     """
     Execute a query through the agent graph, returning the full final
     GraphState and a small trace_info dict (node execution sequence +
@@ -692,22 +628,16 @@ def run_query_with_state(app_graph, question: str, chat_history: List[str], acti
         app_graph: Compiled StateGraph agent
         question: User question string
         chat_history: List of previous chat messages
-        active_document: filename of the most recently uploaded document this
-            session, if any -- used to decide whether to scope this turn's
-            retrieval/routing to that document specifically
 
     Returns:
         tuple: (answer: str, final_state: dict, trace_info: dict)
     """
     logger.info(f"Processing query: {question[:100]}...")
-    scope_to_active_document = bool(active_document) and _references_active_document(question, chat_history)
     inputs = {
         "question": question,
         "chat_history": chat_history,
         "loop_count": 0,
         "gen_retries": 0,
-        "active_document": active_document,
-        "scope_to_active_document": scope_to_active_document,
         "retrieved_chunk_ids": [],
         "reranked_chunk_ids": [],
         "fallback_events": [],
@@ -753,7 +683,7 @@ def run_query_with_state(app_graph, question: str, chat_history: List[str], acti
     return final_state["generation"], final_state, trace_info
 
 
-def run_query(app_graph, question: str, chat_history: List[str], active_document: Optional[str] = None) -> str:
+def run_query(app_graph, question: str, chat_history: List[str]) -> str:
     """
     Execute a query through the agent graph.
 
@@ -761,12 +691,9 @@ def run_query(app_graph, question: str, chat_history: List[str], active_document
         app_graph: Compiled StateGraph agent
         question: User question string
         chat_history: List of previous chat messages
-        active_document: filename of the most recently uploaded document this
-            session, if any -- used to decide whether to scope this turn's
-            retrieval/routing to that document specifically
 
     Returns:
         str: Generated response from the agent
     """
-    answer, _, _ = run_query_with_state(app_graph, question, chat_history, active_document)
+    answer, _, _ = run_query_with_state(app_graph, question, chat_history)
     return answer
