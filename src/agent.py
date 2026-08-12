@@ -210,7 +210,10 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
                 "system",
                 "You are a strict relevance grader.\n"
                 "Set is_relevant=True only if the answer directly resolves the user's current question.\n"
-                "Fail answers that are generic summaries, evasive, or only partially responsive."
+                "Fail answers that are generic summaries, evasive, or only partially responsive.\n"
+                "Exception: an honest refusal because the provided context doesn't contain the "
+                "answer (e.g. 'I cannot answer this based on the provided context') is NOT evasive -- "
+                "it is the correct response to an unanswerable question. Grade that as is_relevant=True."
             ),
             ("human", "Question:\n{question}\n\nAnswer:\n{generation}"),
         ],
