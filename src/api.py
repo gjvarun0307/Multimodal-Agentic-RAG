@@ -77,6 +77,7 @@ class QueryResponse(BaseModel):
     retrieved_chunk_ids: list[str] = []
     reranked_chunk_ids: list[str] = []
     correction_fired: bool = False
+    fallback_events: list[str] = []
     stage_latencies_ms: dict[str, float] = {}
     total_latency_ms: float
     git_sha: Optional[str] = None
@@ -106,6 +107,7 @@ def query(request: QueryRequest) -> QueryResponse:
         retrieved_chunk_ids=final_state.get("retrieved_chunk_ids", []),
         reranked_chunk_ids=final_state.get("reranked_chunk_ids", []),
         correction_fired=correction_fired,
+        fallback_events=trace_info.get("fallback_events", []),
         stage_latencies_ms=trace_info["stage_latencies_ms"],
         total_latency_ms=total_latency_ms,
         git_sha=_GIT_SHA,

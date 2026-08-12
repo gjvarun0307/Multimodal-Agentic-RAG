@@ -40,6 +40,7 @@ def test_query_returns_full_trace(client, monkeypatch):
     fake_trace_info = {
         "node_sequence": ["retrieve_and_rerank", "generate"],
         "stage_latencies_ms": {"retrieve_and_rerank": 100.0, "generate": 200.0},
+        "fallback_events": ["rerank_fallback"],
     }
     monkeypatch.setattr(
         api_module, "run_query_with_state", lambda *a, **k: ("the answer", fake_final_state, fake_trace_info)
@@ -54,6 +55,7 @@ def test_query_returns_full_trace(client, monkeypatch):
     assert body["retrieved_chunk_ids"] == ["adaptive_rag::0000::deadbeef"]
     assert body["reranked_chunk_ids"] == ["adaptive_rag::0000::deadbeef"]
     assert body["correction_fired"] is False
+    assert body["fallback_events"] == ["rerank_fallback"]
     assert body["stage_latencies_ms"] == {"retrieve_and_rerank": 100.0, "generate": 200.0}
     assert body["total_latency_ms"] >= 0
     assert "git_sha" in body
@@ -64,13 +66,16 @@ def test_query_detects_correction_fired(client, monkeypatch):
     fake_trace_info = {
         "node_sequence": ["retrieve_and_rerank", "generate", "rewrite_query", "retrieve_and_rerank", "generate"],
         "stage_latencies_ms": {},
+        "fallback_events": [],
     }
     monkeypatch.setattr(
         api_module, "run_query_with_state", lambda *a, **k: ("answer", fake_final_state, fake_trace_info)
     )
 
     response = client.post("/query", json={"question": "..."})
-    assert response.json()["correction_fired"] is True
+    body = response.json()
+    assert body["correction_fired"] is True
+    assert body["fallback_events"] == []
 
 
 def test_trace_endpoint_404_until_phase_5(client):

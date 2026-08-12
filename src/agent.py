@@ -6,8 +6,9 @@ It provides a modular, reusable agent implementation for the RAG system.
 """
 
 import heapq
+import operator
 import time
-from typing import List, Literal, Optional, TypedDict
+from typing import Annotated, List, Literal, Optional, TypedDict
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -73,6 +74,11 @@ class GraphState(TypedDict):
         scope_to_active_document: whether this turn should be retrieved/routed against active_document only
         retrieved_chunk_ids: chunk IDs from hybrid search, pre-rerank
         reranked_chunk_ids: chunk IDs post-rerank, post-threshold (what generate() actually saw)
+        fallback_events: tags appended by node-level except blocks when a silent
+            fallback would otherwise occur (e.g. "rerank_fallback") -- invariant 15
+            (PROJECT_SPEC.md) requires fallbacks be surfaced in results, not just
+            logged. Uses operator.add so nodes only need to return the new tag(s)
+            for their own step; LangGraph concatenates across the run.
     """
     question: str
     generation: str
@@ -84,6 +90,7 @@ class GraphState(TypedDict):
     scope_to_active_document: bool
     retrieved_chunk_ids: List[str]
     reranked_chunk_ids: List[str]
+    fallback_events: Annotated[List[str], operator.add]
 
 
 def build_agent_graph(database, embedding_model, rerank_model, llm_model, config: Optional[dict] = None):
@@ -323,6 +330,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
                 "reranked_chunk_ids": [],
             }
 
+        fallback_tag = None
         if rerank_model is None:
             keep_top_k = config.get("reranker_top_k", 5)
             final_documents = raw_docs[:keep_top_k]
@@ -345,11 +353,12 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
                 # Fallback to just taking first k documents
                 keep_top_k = config.get("reranker_top_k", 5)
                 final_documents = raw_docs[:keep_top_k]
+                fallback_tag = "rerank_fallback"
                 logger.warning(f"Using fallback: taking first {keep_top_k} documents")
 
         reranked_chunk_ids = [doc.get("id") for doc in final_documents]
 
-        return {
+        result = {
             "documents": final_documents,
             "question": question,
             "loop_count": loop_count,
@@ -357,6 +366,9 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
             "retrieved_chunk_ids": retrieved_chunk_ids,
             "reranked_chunk_ids": reranked_chunk_ids,
         }
+        if fallback_tag:
+            result["fallback_events"] = [fallback_tag]
+        return result
 
     def generate(state):
         """
@@ -387,6 +399,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         else:
             formatted_docs = "No context available."
 
+        fallback_tag = None
         try:
             result = generate_node_llm.invoke({
                 "question": question,
@@ -398,10 +411,14 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         except Exception as e:
             logger.error(f"Error during generation: {e}")
             generation = "I encountered an error while generating the response."
+            fallback_tag = "generate_error"
 
         gen_retries += 1
 
-        return {"documents": documents, "question": question, "generation": generation, "loop_count": loop_count, "gen_retries": gen_retries, "chat_history": chat_history}
+        output = {"documents": documents, "question": question, "generation": generation, "loop_count": loop_count, "gen_retries": gen_retries, "chat_history": chat_history}
+        if fallback_tag:
+            output["fallback_events"] = [fallback_tag]
+        return output
 
     def rewrite_query(state):
         """
@@ -422,6 +439,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         chat_history = state.get("chat_history", [])
         gen_retries = 0
 
+        fallback_tag = None
         try:
             result = rewrite_node_llm.invoke({"question": question})
             rewritten_query = result.query
@@ -430,8 +448,12 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
             logger.error(f"Error during query rewriting: {e}")
             # Return original query on error to avoid breaking the flow
             rewritten_query = question
+            fallback_tag = "rewrite_error"
 
-        return {"documents": documents, "question": rewritten_query, "loop_count": loop_count, "gen_retries": gen_retries, "chat_history": chat_history}
+        output = {"documents": documents, "question": rewritten_query, "loop_count": loop_count, "gen_retries": gen_retries, "chat_history": chat_history}
+        if fallback_tag:
+            output["fallback_events"] = [fallback_tag]
+        return output
 
     def web_search(state):
         """
@@ -450,6 +472,7 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         gen_retries = 0
 
         logger.info(f"Performing web search for: {question[:100]}...")
+        fallback_tag = None
         try:
             docs = web_tool.invoke({"query": f"{question}"})
             web_results = _extract_web_results(docs)
@@ -457,8 +480,12 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         except Exception as e:
             logger.error(f"Error during web search: {e}")
             web_results = []
+            fallback_tag = "web_search_error"
 
-        return {"documents": web_results, "question": question, "loop_count": loop_count, "gen_retries": gen_retries, "chat_history": chat_history}
+        output = {"documents": web_results, "question": question, "loop_count": loop_count, "gen_retries": gen_retries, "chat_history": chat_history}
+        if fallback_tag:
+            output["fallback_events"] = [fallback_tag]
+        return output
 
     def chitchat_node(state):
         """Handles simple greetings without searching the database."""
@@ -468,14 +495,19 @@ def build_agent_graph(database, embedding_model, rerank_model, llm_model, config
         loop_count = state.get("loop_count", 0)
         gen_retries = state.get("gen_retries", 0)
 
+        fallback_tag = None
         try:
             result = chitchat_llm.invoke({"question": question, "chat_history": _safe_join_history(chat_history)})
             logger.debug("Generated chitchat response")
         except Exception as e:
             logger.error(f"Error during chitchat generation: {e}")
             result = "Hello! How can I help you today?"
+            fallback_tag = "chitchat_error"
 
-        return {"generation": result, "question": question, "chat_history": chat_history, "loop_count": loop_count, "gen_retries": gen_retries}
+        output = {"generation": result, "question": question, "chat_history": chat_history, "loop_count": loop_count, "gen_retries": gen_retries}
+        if fallback_tag:
+            output["fallback_events"] = [fallback_tag]
+        return output
 
     # Router functions
     def query_router(state):
@@ -678,6 +710,7 @@ def run_query_with_state(app_graph, question: str, chat_history: List[str], acti
         "scope_to_active_document": scope_to_active_document,
         "retrieved_chunk_ids": [],
         "reranked_chunk_ids": [],
+        "fallback_events": [],
     }
 
     final_state = dict(inputs)
@@ -691,12 +724,20 @@ def run_query_with_state(app_graph, question: str, chat_history: List[str], acti
                 elapsed_ms = (time.time() - step_start) * 1000
                 node_sequence.append(node_name)
                 stage_latencies_ms[node_name] = stage_latencies_ms.get(node_name, 0.0) + elapsed_ms
+                if "fallback_events" in node_output:
+                    final_state["fallback_events"] = final_state.get("fallback_events", []) + node_output["fallback_events"]
+                    node_output = {k: v for k, v in node_output.items() if k != "fallback_events"}
                 final_state.update(node_output)
                 step_start = time.time()
     except Exception as e:
         logger.error(f"Error processing query through agent graph: {e}")
         final_state["generation"] = f"I encountered an error processing your request: {e}"
-        return final_state["generation"], final_state, {"node_sequence": node_sequence, "stage_latencies_ms": stage_latencies_ms}
+        fallback_events = final_state.get("fallback_events", []) + ["graph_execution_error"]
+        return final_state["generation"], final_state, {
+            "node_sequence": node_sequence,
+            "stage_latencies_ms": stage_latencies_ms,
+            "fallback_events": fallback_events,
+        }
 
     if "generation" in final_state:
         logger.info("Successfully generated response")
@@ -704,7 +745,11 @@ def run_query_with_state(app_graph, question: str, chat_history: List[str], acti
         logger.warning("No generation produced from agent graph")
         final_state["generation"] = "I encountered an error processing your request."
 
-    trace_info = {"node_sequence": node_sequence, "stage_latencies_ms": stage_latencies_ms}
+    trace_info = {
+        "node_sequence": node_sequence,
+        "stage_latencies_ms": stage_latencies_ms,
+        "fallback_events": final_state.get("fallback_events", []),
+    }
     return final_state["generation"], final_state, trace_info
 
 
