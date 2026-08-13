@@ -1,0 +1,229 @@
+{
+  "entries": {
+    "1aab2948f94e6289": {
+      "max_results": 5,
+      "query": "What is the most recent Llama model Meta has released, and how does it differ from Llama 3?",
+      "recorded_at": "2026-08-13T07:44:39.477882+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What is the most recent Llama model Meta has released, and how does it differ from Llama 3?",
+        "request_id": "237422fa-e285-443e-a81e-e77d0eec3cd6",
+        "response_time": 1.28,
+        "results": [
+          {
+            "content": "Alongside the release of Llama 3, Meta rolled out Meta AI, an AI assistant built on Llama. Meta AI has a dedicated website and is available on Facebook and WhatsApp. The latest version is Llama 4, released in April 2025.\n\nIn April 2026, Meta Superintelligence Labs released Muse Spark as a replacement for Llama.\n\n## Background\n\n[edit&action=edit&section=1 \"Edit section: Background\")] [...] On April 18, 2024, Meta released Llama 3 with two sizes: 8B and 70B parameters. The models have been pre-trained on approximately 15 trillion tokens of text gathered from “publicly available sources” with the instruct models fine-tuned on “publicly available instruction datasets, as well as over 10M human-annotated examples\". Meta AI's testing showed in April 2024 that Llama 3 70B was beating Gemini \"Gemini (chatbot)\") Pro 1.5 and Claude \"Claude (language model)\") 3 Sonnet on most benchmarks. [...] Llama (\"Large Language Model Meta AI\" serving as a backronym) was a family of large language models (LLMs) released by Meta AI starting in February 2023.\n\nLlama models come in different sizes, ranging from 1 billion to 2 trillion parameters. Initially only a foundation model, starting with Llama 2, Meta AI released instruction fine-tuned \"Fine-tuning (deep learning)\") versions alongside foundation models.",
+            "id": "13b907-00",
+            "raw_content": null,
+            "score": 0.8893851,
+            "title": "Llama (language model)",
+            "url": "https://en.wikipedia.org/wiki/Llama_(language_model)"
+          },
+          {
+            "content": "Llama 3 (April 2024) – The next leap came with Llama 3. Meta released Llama 3 models in 2024 with improved capabilities and a focus on scale. The initial Llama 3 family included models of 8B and 70B parameters (again with both base and instruction-tuned versions). One of the standout upgrades was an extended context length of 8,192 tokens, double that of Llama 2 (Llama 3 Guide: Everything You Need to Know About Meta's New Model and Its Data). This is like giving the model a much larger working [...] Llama 3.1 (July 2024) – Meta didn’t stop at Llama 3. Just a few months later, they unveiled Llama 3.1, which introduced a massive model: a 405 billion parameter variant. This 405B model (available through partnership platforms like IBM’s watsonx.ai) was, at the time, the largest open-access LLM, and it reached unprecedented performance levels. On knowledge tests and reasoning benchmarks, Llama 3.1’s 405B model essentially achieved parity with top proprietary models like GPT-4, Google’s Gemini, [...] Anthropic’s Claude model is known for its focus on safety and extremely friendly conversational style. Claude 2, released in 2023, wowed users with a 100K token context and a very helpful demeanor. In 2024, Claude 3 was introduced, and it came in a few flavors (codenamed Opus, Sonnet, Haiku) targeting different speed and capability trade-offs. Claude 3 models launched with 200K token context windows (and the architecture design capable of exceeding 1M tokens). They also expanded to have vision",
+            "id": "4a505d-01",
+            "raw_content": null,
+            "score": 0.8783249,
+            "title": "Llama 4: Meta's New AI Model - Evolution, Features, and Comparison<!-- --> | GPT-trainer Blog",
+            "url": "https://gpt-trainer.com/blog/llama+4+evolution+features+comparison"
+          },
+          {
+            "content": "4 min read\n\nMatthew S. Smith is a contributing editor for IEEE Spectrum and the former lead reviews editor at Digital Trends.\n\nMeta\n\nOn 18 April 2024, Meta released the next big thing in “open” AI models: Llama 3. It’s the latest AI model to be offered by Meta free of charge and with a relatively open (though not open-source) license that lets developers deploy it in most commercial apps and services. [...] Announced less than a year after Llama 2, the new model in many ways repeats its predecessor’s playbook. Llama 3’s release provides models with up to 70 billion parameters, the same as its predecessor. It was also released under a similar license which, although not fully open source, allows commercial use in most circumstances. [...] But while Meta has clearly established a lead in the open AI community, closed models, like GPT 4, are a different story. Llama 3 400B will narrow the gap, but the release of GPT 5—speculated to drop this summer—could steal Meta’s thunder if it once again raises the bar on quality.",
+            "id": "c19d16-02",
+            "raw_content": null,
+            "score": 0.8588255,
+            "title": "Llama 3 Establishes Meta as the Leader in “Open” AI",
+            "url": "https://spectrum.ieee.org/meta-llama-3"
+          },
+          {
+            "content": "Current:\n\nLlama 4: The Llama 4 collection of models are natively multimodal AI models that enable text and multimodal experiences. These models leverage a mixture-of-experts architecture to offer industry-leading performance in text and image understanding. [...] These Llama 4 models mark the beginning of a new era for the Llama ecosystem. We are launching two efficient models in the Llama 4 series, Llama 4 Scout, a 17 billion parameter model with 16 experts, and Llama 4 Maverick, a 17 billion parameter model with 128 experts.\n\nHistory:\n\nLearn more about the models at \n\n### Collections 15\n\n#### meta-llama/Llama-4-Scout-17B-16E-Instruct\n\n#### meta-llama/Llama-4-Scout-17B-16E\n\n#### meta-llama/Llama-4-Maverick-17B-128E-Instruct [...] #### meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8\n\n#### meta-llama/Llama-3.3-70B-Instruct\n\n#### meta-llama/Llama-4-Scout-17B-16E-Instruct\n\n#### meta-llama/Llama-4-Scout-17B-16E\n\n#### meta-llama/Llama-4-Maverick-17B-128E-Instruct\n\n#### meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8\n\n#### meta-llama/Llama-3.3-70B-Instruct\n\n### models 70 Sort:  Recently updated\n\n#### meta-llama/Prompt-Guard-86M\n\n#### meta-llama/Meta-Llama-3-8B-Instruct\n\n#### meta-llama/Meta-Llama-3-70B-Instruct",
+            "id": "69305c-03",
+            "raw_content": null,
+            "score": 0.7917732,
+            "title": "Meta Llama",
+            "url": "https://huggingface.co/meta-llama"
+          },
+          {
+            "content": "Today, we’re introducing Meta Llama 3, the next generation of our state-of-the-art open source large language model.\n Llama 3 models will soon be available on AWS, Databricks, Google Cloud, Hugging Face, Kaggle, IBM WatsonX, Microsoft Azure, NVIDIA NIM, and Snowflake, and with support from hardware platforms offered by AMD, AWS, Dell, Intel, NVIDIA, and Qualcomm. [...] Our new 8B and 70B parameter Llama 3 models are a major leap over Llama 2 and establish a new state-of-the-art for LLM models at those scales. Thanks to improvements in pretraining and post-training, our pretrained and instruction-fine-tuned models are the best models existing today at the 8B and 70B parameter scale. Improvements in our post-training procedures substantially reduced false refusal rates, improved alignment, and increased diversity in model responses. We also saw greatly improved [...] In line with our design philosophy, we opted for a relatively standard decoder-only transformer architecture in Llama 3. Compared to Llama 2, we made several key improvements. Llama 3 uses a tokenizer with a vocabulary of 128K tokens that encodes language much more efficiently, which leads to substantially improved model performance. To improve the inference efficiency of Llama 3 models, we’ve adopted grouped query attention (GQA) across both the 8B and 70B sizes. We trained the models on",
+            "id": "bb30a7-04",
+            "raw_content": null,
+            "score": 0.7265231,
+            "title": "Introducing Meta Llama 3: The most capable openly ...",
+            "url": "https://ai.meta.com/blog/meta-llama-3"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "84efe7628847e882": {
+      "max_results": 5,
+      "query": "What is the latest stable release of vLLM, and what major features has it added since the original PagedAttention paper?",
+      "recorded_at": "2026-08-13T07:44:41.753211+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What is the latest stable release of vLLM, and what major features has it added since the original PagedAttention paper?",
+        "request_id": "3f1665f4-2070-4c6f-abb0-d7f41d40b774",
+        "response_time": 2.14,
+        "results": [
+          {
+            "content": "The idea quickly gained traction. GitHub stars skyrocketed, community adoption exploded, and by mid-2023, vLLM was powering production workloads at startups and large tech companies alike.\n\nBy 2026, vLLM supports:\n\n 100+ models (LLaMA 3.1, Mistral, and more)\n Distributed serving with Ray\n Custom kernels and hardware optimizations\n Multi-LoRA and adapter-based serving\n\nIt’s a rare example of an academic idea scaling cleanly into real-world production. [...] With:\n\n PagedAttention eliminating memory waste\n Continuous batching maximizing GPU utilization\n Advanced features like quantization and speculative decoding\n\nvLLM is quickly becoming the backbone of modern LLM serving.\n\nWhether you’re a solo developer or running large-scale AI infrastructure, vLLM makes high-performance inference accessible. Clone the repository, experiment locally, and keep an eye on upcoming releases—this space is moving fast.\n\n## Top comments (0)\n\nSubscribe [...] ### Prefix Caching\n\nReuses KV caches for repeated prompts, ideal for chatbots and RAG pipelines with static system prompts.\n\nAdditional features include:\n\n OpenAI-compatible API\n Streaming responses\n JSON mode and tool calling\n Vision-language model support (e.g., LLaVA)\n\nThese optimizations stack. In benchmarks combining quantization, speculative decoding, and PagedAttention, vLLM exceeds 500 tokens/sec on H100 GPUs.\n\n## Benefits and Use Cases\n\n### Why Use vLLM?\n\nBenchmarks consistently show:",
+            "id": "89716a-00",
+            "raw_content": null,
+            "score": 0.7306941,
+            "title": "vLLM Explained: How PagedAttention Makes LLMs Faster and Cheaper - DEV Community",
+            "url": "https://dev.to/jaskirat_singh/vllm-explained-how-pagedattention-makes-llms-faster-and-cheaper-785"
+          },
+          {
+            "content": "### Native RL APIs in vLLM\n May 28, 2026\n\n  ### Accelerating Laguna XS.2 Inference with vLLM, Speculators, and LLM Compressor\n May 26, 2026\n\n  ### EAGLE 3.1: Advancing Speculative Decoding Through Collaboration Between the EAGLE Team, vLLM, and TorchSpec\n May 18, 2026\n\n  ### vLLM x Novita AI: PegaFlow for Production-Grade External KV Cache\n May 14, 2026\n\n  ### Announcing VeRL-Omni: Easy, Fast, and Stable RL Training for Diffusion and Omni-Modality Models\n May 14, 2026 [...] ### Streaming Requests & Realtime API in vLLM\n Jan 23, 2026\n\n  ### Building Mixture-of-Models on AMD GPUs with vLLM-SR\n Jan 8, 2026\n\n  ### Inside vLLM’s New KV Offloading Connector: Smarter Memory Transfer for Maximizing Inference Throughput\n Jan 5, 2026\n\n  ### vLLM Semantic Router v0.1 Iris: The First Major Release\n Jan 2, 2026\n\n  ### Introducing vLLM Playground: A Modern Web Interface for Managing and Interacting with vLLM Servers\n Dec 27, 2025 [...] ### Model Runner V2: A Modular and Faster Core for vLLM\n Mar 13, 2026\n\n  ### P-EAGLE: Faster LLM inference with Parallel Speculative Decoding in vLLM\n Mar 11, 2026\n\n  ### Run Highly Efficient and Accurate Multi-Agent AI with NVIDIA Nemotron 3 Super Using vLLM\n Mar 10, 2026\n\n  ### vLLM Semantic Router v0.2 Athena: ClawOS, Model Refresh, and the System Brain\n Mar 4, 2026\n\n  ### vLLM Triton Attention Backend Deep Dive\n Feb 27, 2026",
+            "id": "b20785-01",
+            "raw_content": null,
+            "score": 0.7060491,
+            "title": "vLLM Blog | vLLM is a fast and easy-to-use library for LLM ...",
+            "url": "https://vllm-project.github.io"
+          },
+          {
+            "content": "+ compressed\\_tensors\\_moe\\_w8a8\\_mxfp8\n              + compressed\\_tensors\\_moe\\_wna16\n              + compressed\\_tensors\\_moe\\_wna16\\_rdna3\n              + rocm\\_moe\\_rdna\n             schemes [...] Features \n    - Automatic Prefix Caching\n    - Batch Invariance\n    - Context Extension\n    - Custom Arguments\n    - Custom Logits Processors\n    - Disaggregated Encoder\n    - Disaggregated Prefilling (experimental)\n    - IndexCache\n    - Interleaved Thinking\n    - KV Offloading Usage Guide\n    - LoRA Adapters\n    - MooncakeConnector Usage Guide\n    - MooncakeStoreConnector Usage Guide\n    - MoRIIOConnector Usage Guide\n    - Multimodal Inputs\n    - NixlConnector Compatibility Matrix [...] + Disaggregated Prefill V1\n        + Flexkv Connector\n        + KV Load Failure Recovery Test\n        + LMCache Examples\n        + Mooncake Connector\n       Features   \n          Features \n        + Automatic Prefix Caching\n        + Batch Invariance\n        + Context Extension\n        + Data Parallel\n        + Kv Events\n        + Logging Configuration\n        + Custom Logits Processors\n        + LoRA\n        + Offline Inference with the OpenAI Batch file format\n        + Pause Resume",
+            "id": "9c2888-02",
+            "raw_content": null,
+            "score": 0.7040996,
+            "title": "vLLM",
+            "url": "https://docs.vllm.ai/en/latest"
+          },
+          {
+            "content": "At the heart of all LLMs is the transformer architecture, introduced in the “Attention Is All You Need” paper. Despite many variations and improvements since, it remains the foundation of state-of-the-art models. On the left below is the original decoder-only transformer, and on the right is the Llama-2 70B architecture, which illustrates some of these later refinements:\n\nTransformers [...] There are some architectural differences to note. For example, LLaMA-2 70B uses Grouped Query Attention (GQA), a variant of attention that reduces memory demands. Most modern LLMs also place the normalisation layer before each block rather than after, which is different from the original Transformer. Still, the high-level flow remains the same: tokenised input goes in, contextualised embeddings come out. [...] For more details and examples, Google Research also put out this blog post to explain the concept in more detail.\n\nIn the original paper, speculative decoding demonstrated a 2×–3× wall-time speedup on models like T5-XXL, while maintaining identical output distributions.\n\n### Quantisation",
+            "id": "7eddb6-03",
+            "raw_content": null,
+            "score": 0.6944897,
+            "title": "Paged Attention from First Principles: A View Inside vLLM – Hamza's Blog",
+            "url": "https://hamzaelshafie.bearblog.dev/paged-attention-from-first-principles-a-view-inside-vllm"
+          },
+          {
+            "content": "vLLM\nPagedAttention\nKV cache\nKV cache memory\nKV cache fragmentation\nLLM inference\nLLM serving\nLLM serving optimization\nGPU memory management\nGPU memory fragmentation\nvirtual memory\npaging\npage table\nblock table\nKV blocks\ntransformer inference\nautoregressive decoding\nprefill vs decode\ncontinuous batching\ndynamic batching\nrequest scheduling\nthroughput optimization\nlatency optimization\nhigh throughput inference\nmemory bound inference\ninference engine\nOpenAI compatible server\nvllm serve [...] # PagedAttention: Behind vLLM's Insane Speed\n## Tales Of Tensors\n2380 subscribers\n394 likes\n\n### Description\n9816 views\nPosted: 14 Dec 2025\nPagedAttention is the “virtual memory” idea applied to LLM inference: instead of storing each request’s KV cache in one big contiguous chunk, vLLM breaks it into fixed-size blocks and maps logical tokens to physical GPU memory with a block table. The result is far less fragmentation, smarter reuse, and higher throughput under real, mixed-length traffic. [...] memory blocks as requests evolve. A scheduler implements continuous batching to keep the GPU busy. A KV cache manager tracks ownership and sharing, and it integrates cleanly with your stack. Subscribe for more LLM breakdowns. Next video will be on speculative decoding. Thanks for watching.",
+            "id": "78ad7d-04",
+            "raw_content": null,
+            "score": 0.65835214,
+            "title": "PagedAttention: Behind vLLM's Insane Speed",
+            "url": "https://www.youtube.com/watch?v=6uPnLkCiy5g"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "931c91c82f312c94": {
+      "max_results": 5,
+      "query": "What does OpenAI currently charge for its text embedding API, and how does that compare to running embeddings locally with an open-source model as described in the Milvus paper's use cases?",
+      "recorded_at": "2026-08-13T07:44:45.416823+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What does OpenAI currently charge for its text embedding API, and how does that compare to running embeddings locally with an open-source model as described in the Milvus paper's use cases?",
+        "request_id": "90fdcb62-77be-49e1-bc34-af1f839ebb32",
+        "response_time": 1.56,
+        "results": [
+          {
+            "content": "OpenAI embeddings cost varies by model and tier: text-embedding-3-small costs $0.02/$0.01 per 1M tokens (Standard/Batch), text-embedding-ada-002 costs $0.10/$0.05 per 1M tokens, and text-embedding-3-large costs $0.13/$0.065 per 1M tokens. Real-world costs: indexing 10,000 documents (500 tokens each = 5M tokens) costs $0.10 with text-embedding-3-small on Standard tier, or $0.05 on Batch tier. Unlike chat models, embeddings only charge for input tokens (no output cost). [...] text-embedding-3-small costs $0.02/$0.01 per 1M tokens vs text-embedding-3-large at $0.13/$0.065 (6.5x difference). For 95% of use cases, the quality difference doesn't justify the cost. Start with 3-small and only upgrade to 3-large if your retrieval metrics prove you need it. Avoid text-embedding-ada-002 entirely. It costs 5x more than 3-small with worse performance.\n\nUse Batch API for Initial Indexing (50% Savings) [...] ### Free Tier\n\nNew OpenAI API users receive $5 in free credits (no credit card required) that can be used for embeddings. These credits can generate approximately 250M tokens using text-embedding-3-small, enough to embed ~500,000 documents at 500 tokens each.\n\n### Model Comparison\n\ntext-embedding-3-small (Recommended)",
+            "id": "89acb4-00",
+            "raw_content": null,
+            "score": 0.8747745,
+            "title": "OpenAI Embeddings API Pricing Calculator (Aug 2026)",
+            "url": "https://costgoat.com/pricing/openai-embeddings"
+          },
+          {
+            "content": "Start with OpenAI text-embedding-3-small at $0.02/1M tokens. It covers 95% of general-purpose English retrieval use cases with minimal operational overhead. If your MTEB retrieval score on your own eval set plateaus below 0.75 and your corpus uses specialized vocabulary, upgrade to text-embedding-3-large or Voyage AI voyage-3 before spending time on fine-tuning. [...] | Model | Provider | Params | Dim | MTEB Retrieval | Max seq | Cost |\n ---  ---  --- \n| text-embedding-3-small | OpenAI | n/a | 1536 | ~55 | 8191 | $0.02/1M |\n| text-embedding-3-large | OpenAI | n/a | 3072 | ~59 | 8191 | $0.13/1M |\n| embed-v4 | Cohere | n/a | 1024 | ~57 | 512 | $0.10/1M |\n| voyage-3 | Voyage AI | n/a | 1024 | ~62 | 32768 | $0.06/1M |\n| BGE-large-en-v1.5 | BAAI (open) | 335M | 1024 | ~55 | 512 | Self-hosted |\n| BGE-M3 | BAAI (open) | 568M | 1024 | ~58 | 8192 | Self-hosted | [...] Scenario 1: Early-stage RAG system, 10M tokens/month. This is a team of 2 to 3 engineers building an internal knowledge assistant. At $0.02/1M tokens, OpenAI text-embedding-3-small costs $0.20/month. Self-hosting BGE-large on a T4 (GCP n1-standard-4 + NVIDIA T4, preemptible) costs approximately $130 to 160/month including compute, with a one-time setup cost of 1 to 2 days of engineering time plus ongoing maintenance. The API wins at this scale, easily. Any team at this stage that chooses to",
+            "id": "c88bae-01",
+            "raw_content": null,
+            "score": 0.7913865,
+            "title": "8 Embedding Models Compared for Production RAG [2026 Benchmark]",
+            "url": "https://tensoria.fr/en/blog/embedding-models-2026-guide"
+          },
+          {
+            "content": "| Model | Provider | Dimensions | Price / 1M Tokens | Max Tokens | MTEB Avg |\n ---  ---  --- |\n| text-embedding-3-small | OpenAI | 1,536 | $0.02 | 8,191 | 62.3 |\n| text-embedding-3-large | OpenAI | 3,072 | $0.13 | 8,191 | 64.6 |\n| embed-v4 | Cohere | 1,024 | $0.10 | 512 | 66.3 |\n| voyage-3-large | Voyage AI | 1,024 | $0.18 | 32,000 | 67.1 |\n| voyage-3-lite | Voyage AI | 512 | $0.02 | 32,000 | 61.4 |\n| jina-embeddings-v3 | Jina AI | 1,024 | $0.02 | 8,192 | 65.5 | [...] ### Open-Source Options: BGE, E5, GTE, Nomic\n\nAll four of these models are free to download and run locally. BGE-large-en-v1.5 (from BAAI) and GTE-large-en-v1.5 (from Alibaba) are the strongest performers, scoring 63-65 on MTEB. Nomic-embed-text-v1.5 offers the longest context window (8,192 tokens) among open-source models with competitive quality. [...] | text-embedding-004 | Google | 768 | Free / $0.025 | 2,048 | 63.0 |\n| BGE-large-en-v1.5 | BAAI (open source) | 1,024 | Free (self-hosted) | 512 | 63.6 |\n| E5-large-v2 | Microsoft (open source) | 1,024 | Free (self-hosted) | 512 | 62.0 |\n| GTE-large-en-v1.5 | Alibaba (open source) | 1,024 | Free (self-hosted) | 8,192 | 65.4 |\n| nomic-embed-text-v1.5 | Nomic AI | 768 | Free (open source) | 8,192 | 62.3 |",
+            "id": "d4d7ee-02",
+            "raw_content": null,
+            "score": 0.769306,
+            "title": "Embedding Models 2026: Dimensions, Price, MTEB Specs",
+            "url": "https://pecollective.com/tools/text-embedding-models-compared"
+          },
+          {
+            "content": "Cost constraints: OpenAI costs about $0.020 / 1M tokens for text-embedding-3-small and $0.130 / 1M tokens for text-embedding-3-large, while open-source models have no usage fees but need compute and time resources.\n\n## Conclusion [...] For our test data of 215 essays, our vectorizer created 8,426 chunks using a 512-token size and 50-token overlap setting. The embedding costs were reasonable: $0.03 for text-embedding-3-small and $0.15 for text-embedding-3-large. Open-source models had no API costs, only compute resources and time for running them locally.",
+            "id": "dfff0f-03",
+            "raw_content": null,
+            "score": 0.7493996,
+            "title": "Evaluating Open-Source vs. OpenAI Embeddings for RAG | Tiger Data",
+            "url": "https://www.tigerdata.com/blog/open-source-vs-openai-embeddings-for-rag"
+          },
+          {
+            "content": "Deployment constraints matter. Hosted APIs like OpenAI text-embedding-3-small eliminate infrastructure overhead but incur per-token costs and introduce network latency. Self-hosted open-source models grant control and cost predictability but require GPU resources for real-time encoding. [...] Embedding models convert text into numerical vectors that capture semantic meaning for RAG, search, and recommendations.\n Choose models based on task (multilingual, code, domain-specific) and dimensions (384-1024), balancing accuracy vs speed.\n Open-source options like BGE and E5 offer control; OpenAI's text-embedding-3 provides managed scaling with per-token costs.\n RAG systems need context relevancy and groundedness tests to prevent retrieval failures and hallucinations in production. [...] ## FAQ\n\n### How do I choose between open-source and commercial embedding models for my RAG pipeline?\n\nStart with deployment constraints and budget. Open-source models like BGE-large or E5-large-v2 require GPU infrastructure but eliminate per-token costs, making them cost-effective at high query volumes. Commercial APIs like OpenAI's text-embedding-3 scale automatically with zero infrastructure overhead but incur usage fees that grow with traffic.",
+            "id": "981929-04",
+            "raw_content": null,
+            "score": 0.7161595,
+            "title": "What are embedding models? A complete guide for March 2026 — Openlayer",
+            "url": "https://www.openlayer.com/blog/what-are-embedding-models-complete-guide"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "d98ecfaec3963aa5": {
+      "max_results": 5,
+      "query": "Which model currently tops the MMLU benchmark leaderboard?",
+      "recorded_at": "2026-08-13T07:44:43.629148+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "Which model currently tops the MMLU benchmark leaderboard?",
+        "request_id": "9ec8f3d0-c817-4c3c-b6df-4a8d52242c8a",
+        "response_time": 1.75,
+        "results": [
+          {
+            "content": "## Current leaders\n\nGPT-5 from OpenAI currently leads the MMLU leaderboard with a score of 0.925 across 100 evaluated AI models.\n\n1GPT-5OpenAI92.5%\n\n2o1OpenAI91.8%\n\n3GPT-4.5OpenAI90.8%\n\nOSSQwen3 VL 235B A22B Thinking#5 open-weight90.6%\n\n## Source paper\n\nTitle\n:   Measuring Massive Multitask Language Understanding\n\nAuthors\n:   Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, and 3 others\n\nPublished\n\narXiv\n:   2009.03300\n\nAbstract [...] ## FAQ\n\nCommon questions about the MMLU benchmark and leaderboard.\n\n### What is the MMLU benchmark?\n\nMassive Multitask Language Understanding benchmark testing knowledge across 57 diverse subjects including STEM, humanities, social sciences, and professional domains\n\n### What is the MMLU leaderboard?\n\nThe MMLU leaderboard ranks 100 AI models based on their performance on this benchmark. Currently, GPT-5 by OpenAI leads with a score of 0.925. The average score across all models is 0.802. [...] Among models scoring within 10% of the leader, LongCat-Flash-Lite from Meituan is the cheapest, at $0.10 per million input tokens with a score of 0.855.\n\n### How recent are the MMLU leaderboard results?\n\nThe MMLU leaderboard was last updated in August 2026 and currently includes 100 evaluated models.",
+            "id": "593f85-00",
+            "raw_content": null,
+            "score": 0.9229352,
+            "title": "MMLU Leaderboard",
+            "url": "https://llm-stats.com/benchmarks/mmlu"
+          },
+          {
+            "content": "As of August 12, 2026, Qwen3.7 Max leads the MMLU leaderboard with a score of 93.7. Rankings change as new models are released and evaluated.\n\nCurrently 77 models have been evaluated on MMLU, with an average score of 82.4 and standard deviation of 12.7.\n\nBenchmark scores are updated when new evaluations are published by our data sources (Artificial Analysis and LayerLens). Pricing data is refreshed daily from OpenRouter.\n\n## Other Benchmark Leaderboards\n\nReasoning and LogicHumanity's Last Exam [...] New: give your AI agents live LLM pricing & benchmarks with the Price Per Token MCP. Get the MCP\n\nPrice Per TokenPrice Per Token\n\n|Follow:\n\n# MMLU Leaderboard\n\nMassive Multitask Language Understanding — tests knowledge across 57 subjects.\n\nData from LayerLens\n\nAs of August 12, 2026, the top-scoring model on MMLU is Qwen3.7 Max at 93.7%, followed by GPT-5 at 93.5% and o3 at 93.1%. 77 models have been evaluated on this benchmark.\n\nLast updated: August 12, 2026\n\nThe Grid | Spot Priced LLM API [...] Pricing from OpenRouter. Benchmarks from Artificial Analysis.\n\n## About MMLU\n\nMassive Multitask Language Understanding — tests knowledge across 57 subjects.\n\nThis leaderboard shows all models with MMLU benchmark scores, ranked from highest to lowest. Pricing data is included to help you compare performance against cost.\n\n## Frequently Asked Questions\n\nMassive Multitask Language Understanding — tests knowledge across 57 subjects.",
+            "id": "88ae8f-01",
+            "raw_content": null,
+            "score": 0.9197076,
+            "title": "MMLU Leaderboard 2026 - Compare AI Model Scores",
+            "url": "https://pricepertoken.com/leaderboards/benchmark/mmlu"
+          },
+          {
+            "content": "Not sure which AI model to pick?\n\nRead our full guide to the best LLMs\n\n## Best LLM on the MMLU-Pro benchmark (leaderboard)\n\nMMLU-Pro shows something important: Even with harder questions, the frontier models are still scoring very high.\n\nThe top tier is tightly clustered\n\n Gemini 3 Pro leads with 90%\n Claude Opus 4.5 matches it at 90%\n GPT-5.2 and Grok 4.1 follow at 87%\n\nAt this level, the question is no longer: “Can it answer general knowledge questions?” [...] top of page\n\n# MMLU-Pro benchmark leaderboard: best LLM for general knowledge in 2026\n\n Jan 28, 2024\n 2 min read\n\nUpdated: Feb 17\n\nEver wondered which AI model is best at general knowledge?\n\nThe main benchmark for this is MMLU-Pro.\n\nIt tests how well AI models handle questions across many academic and professional fields.\n\nNot just math or science, but everything...\n\nLaw. Medicine. History. Business. Engineering.\n\nThis is one of the strongest benchmarks we have for broad reasoning. [...] MMLU-Pro is the upgraded version of MMLU.\n\nIt was introduced because models started saturating the original test.\n\nThe new benchmark raises the difficulty in three ways:\n\n 12,000 graduate-level questions\n 14 broad academic domains\n 10 answer options per question instead of 4\n\nMMLU-Pro focuses more on reasoning, not memorization.\n\nIt also reduces prompt sensitivity, meaning models cannot “game” the test as easily.",
+            "id": "22eb56-02",
+            "raw_content": null,
+            "score": 0.852752,
+            "title": "MMLU benchmark leaderboard (2026): best LLM scores explained",
+            "url": "https://www.bracai.eu/post/mmlu-benchmark"
+          },
+          {
+            "content": "1. ### GPT-4o\n\nOpenAI’s GPT-4o consistently ranks among the strongest models on the original MMLU benchmark, often achieving near-human-level accuracy across the 57 subject areas. Its strength lies in combining broad factual knowledge with strong reasoning ability. However, like most top models, its scores dip noticeably when evaluated on MMLU-Pro or MMLU-CF, showing that tougher, contamination-free benchmarks still expose gaps in reasoning and generalization.\n\n1. ### Gemini 2.5 Pro [...] 1. ### OpenAI o3\n\nThe o-series models from OpenAI are optimized specifically for reasoning-heavy tasks, and the OpenAI o3 model shows promising results on MMLU. While it may not always surpass GPT-4o on the original benchmark, its scores on MMLU-Pro indicate better reasoning depth, highlighting a shift in focus from raw accuracy to true problem-solving ability. [...] This is where MMLU broke new ground. With its 57 tasks, it dwarfs GLUE’s nine and SuperGLUE’s eight. MMLU challenges models by covering a much wider range of academic and professional domains. Unlike GLUE and SuperGLUE, which primarily tested linguistic phenomena, MMLU goes further by assessing knowledge and reasoning in specialized areas like medicine, law, and ethics. It is also designed to evaluate models with minimal task-specific examples, making it a more robust test of generalization",
+            "id": "01869f-03",
+            "raw_content": null,
+            "score": 0.82082915,
+            "title": "MMLU Benchmark: Definition, How to Run, Leaderboards ...",
+            "url": "https://www.projectpro.io/article/mmlu-benchmark/1162"
+          },
+          {
+            "content": "TIGER-Lab/MMLU-ProTIGER-Lab/MMLU-Pro2406.015742406.01574TIGER-AI-Lab/MMLU-ProTIGER-AI-Lab/MMLU-Pro\n\n#### MMLU-Pro\n\nGemini 3 Pro Preview (high) scores the highest on MMLU-Pro with a score of 89.8%, followed by Gemini 3 Pro Preview (low) with a score of 89.5%, and Claude Opus 4.5 (Reasoning) with a score of 89.5%\n\n## Score\n\n### MMLU-Pro: Score\n\nIndependently benchmarked by Artificial Analysis\n\nReasoning models are indicated by a lightbulb icon\n\n## Score vs. Release Date [...] Artificial Analysis\n\nAll evaluations\n\n# MMLU-Pro Benchmark Leaderboard\n\nReasoningInstruction FollowingHumanitiesScienceMathBusinessLegalMedical\n\nAn enhanced version of MMLU with 12,000 graduate-level questions across 14 subject areas, featuring ten answer options and deeper reasoning requirements.\n\nSee example tasks\n\nAn enhanced version of the original MMLU benchmark that addresses model saturation by expanding to 12,000 graduate-level questions with ten answer choices instead of four. [...] Yubo Wang, Xueguang Ma, Ge Zhang, Yuansheng Ni, Abhranil Chandra, Shiguang Guo, Weiming Ren, Aaran Arulraj, Xuan He, Ziyan Jiang, Tianle Li, Max Ku, Kai Wang, Alex Zhuang, Rongqi Fan, Xiang Yue, Wenhu Chen.",
+            "id": "6f34c2-04",
+            "raw_content": null,
+            "score": 0.78866494,
+            "title": "MMLU-Pro Benchmark Leaderboard",
+            "url": "https://artificialanalysis.ai/evaluations/mmlu-pro"
+          }
+        ]
+      },
+      "topic": "general"
+    }
+  },
+  "fixture_version": "v1"
+}
