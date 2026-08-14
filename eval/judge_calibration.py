@@ -19,7 +19,11 @@ Step 1 -- python -m eval.judge_calibration sample [--config configs/default.yaml
 
     This is a real, costed, multi-minute run: one full graph invocation
     per item (LLM generation + router + graders) plus one judge call per
-    applicable dimension.
+    applicable dimension. The web-search tool is the frozen-fixture replay
+    wrapper (eval.tavily_cache.build_tavily_tool), same as eval.harness --
+    any item that falls through to web_search (routed there directly, or
+    via the rewrite-exhausted fallback) replays from the fixture, never
+    makes a live call (invariant 12).
 
 Step 2 -- python -m eval.judge_calibration score --csv <path>
     Reads the completed CSV, computes Cohen's kappa + raw agreement per
@@ -45,6 +49,7 @@ from eval.judge import (
     grade_faithfulness,
     grade_refusal,
 )
+from eval.tavily_cache import build_tavily_tool
 from src.agent import build_agent_graph, run_query_with_state
 from src.helper import open_jsonl
 from src.runtime import get_runtime
@@ -155,8 +160,22 @@ def run_sample(*, config_path: Path, n: int, out_path: Path) -> Path:
     sampled = sample_calibration_items(golden_items, target_n=n)
 
     runtime = get_runtime(resolved_config)
+    # web_search_tool= is required here -- omitting it (as this function
+    # did until 2026-08-14) makes build_agent_graph() construct the REAL
+    # TavilySearch client, so any sampled item that falls through to the
+    # web_search node (either routed there directly, or via the
+    # rewrite-exhausted fallback) makes a live, uncontrolled Tavily call
+    # instead of replaying from the frozen fixture -- caught live when a
+    # calibration row for an unanswerable_refuse item came back with
+    # scraped-web-blog content instead of corpus text (invariant 12).
+    tavily_tool = build_tavily_tool(resolved_config)
     graph = build_agent_graph(
-        runtime.database, runtime.embedding_model, runtime.rerank_model, runtime.llm, resolved_config
+        runtime.database,
+        runtime.embedding_model,
+        runtime.rerank_model,
+        runtime.llm,
+        resolved_config,
+        web_search_tool=tavily_tool,
     )
     judge_llm = build_judge_llm(resolved_config)
 

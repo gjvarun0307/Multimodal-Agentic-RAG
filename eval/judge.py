@@ -41,10 +41,15 @@ JUDGE_VERSION = "v1"
 # NOT a reasoning model, deliberately: openai/gpt-oss-20b (the original
 # placeholder here) was live-tested during judge calibration (2026-08-13)
 # and failed with a hard 400 output_parse_failed from Groq -- it emitted a
-# long chain-of-thought monologue instead of a clean tool call for the
-# faithfulness prompt. That's a structural mismatch between reasoning
-# models and strict structured-output enforcement, not a one-off fluke, so
-# a plain instruct model is the safer pin.
+# long chain-of-thought monologue instead of a clean tool call. Separately
+# (also live-tested, same date): Groq's `json_schema` structured-output
+# response format is ONLY supported by the gpt-oss family --
+# every other model, including this one, 400s outright if asked for it.
+# That's why every with_structured_output() call in this module passes
+# method="function_calling" explicitly instead of relying on the
+# provider's default method -- tool/function calling is supported by
+# effectively every model Groq hosts (confirmed via Groq's own tool-use
+# docs), unlike the narrower json_schema mode.
 DEFAULT_JUDGE_MODEL = "llama-3.3-70b-versatile"
 JUDGE_PROVIDER = "groq"  # fixed by invariant 11, never config-selectable
 
@@ -148,7 +153,7 @@ def grade_faithfulness(judge_llm, *, context: str, generation: str) -> Faithfuln
         ],
         input_variables=["context", "generation"],
     )
-    chain = prompt | judge_llm.with_structured_output(FaithfulnessJudgment)
+    chain = prompt | judge_llm.with_structured_output(FaithfulnessJudgment, method="function_calling")
     return _invoke_judge_chain(chain, {"context": context, "generation": generation}, dimension="faithfulness")
 
 
@@ -168,7 +173,7 @@ def grade_correctness(judge_llm, *, question: str, gold_answer: str, generation:
         ],
         input_variables=["question", "gold_answer", "generation"],
     )
-    chain = prompt | judge_llm.with_structured_output(CorrectnessJudgment)
+    chain = prompt | judge_llm.with_structured_output(CorrectnessJudgment, method="function_calling")
     return _invoke_judge_chain(
         chain, {"question": question, "gold_answer": gold_answer, "generation": generation}, dimension="correctness"
     )
@@ -190,7 +195,7 @@ def grade_refusal(judge_llm, *, question: str, generation: str) -> RefusalJudgme
         ],
         input_variables=["question", "generation"],
     )
-    chain = prompt | judge_llm.with_structured_output(RefusalJudgment)
+    chain = prompt | judge_llm.with_structured_output(RefusalJudgment, method="function_calling")
     return _invoke_judge_chain(chain, {"question": question, "generation": generation}, dimension="refusal")
 
 
@@ -210,7 +215,7 @@ def grade_citation_precision(judge_llm, *, context: str, generation: str) -> Cit
         ],
         input_variables=["context", "generation"],
     )
-    chain = prompt | judge_llm.with_structured_output(CitationJudgment)
+    chain = prompt | judge_llm.with_structured_output(CitationJudgment, method="function_calling")
     return _invoke_judge_chain(chain, {"context": context, "generation": generation}, dimension="citation_precision")
 
 

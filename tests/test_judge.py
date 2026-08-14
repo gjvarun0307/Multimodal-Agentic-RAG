@@ -42,9 +42,11 @@ class _FakeJudgeLLM:
     def __init__(self, response):
         self._response = response
         self.last_schema = None
+        self.last_method = None
 
-    def with_structured_output(self, schema):
+    def with_structured_output(self, schema, method=None):
         self.last_schema = schema
+        self.last_method = method
         return _FakeStructuredChain(self._response)
 
 
@@ -61,7 +63,7 @@ class _RaisingStructuredChain:
 
 
 class _RaisingJudgeLLM:
-    def with_structured_output(self, schema):
+    def with_structured_output(self, schema, method=None):
         return _RaisingStructuredChain()
 
 
@@ -121,6 +123,19 @@ def test_grade_faithfulness_wires_context_and_generation():
     fake_llm = _FakeJudgeLLM(expected)
     result = grade_faithfulness(fake_llm, context="the sky is blue", generation="the sky is blue")
     assert result is expected
+
+
+def test_grade_faithfulness_uses_function_calling_method():
+    # Regression: Groq's default with_structured_output method (json_schema)
+    # 400s outright on every model except the gpt-oss family (live-verified
+    # 2026-08-13) -- every grade_* call must request method="function_calling"
+    # explicitly, never rely on the provider default.
+    from eval.judge import FaithfulnessJudgment
+
+    expected = FaithfulnessJudgment(reasoning="ok", unsupported_claims=[], is_faithful=True)
+    fake_llm = _FakeJudgeLLM(expected)
+    grade_faithfulness(fake_llm, context="ctx", generation="gen")
+    assert fake_llm.last_method == "function_calling"
 
 
 def test_grade_correctness_wires_gold_answer():
