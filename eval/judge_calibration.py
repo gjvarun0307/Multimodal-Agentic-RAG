@@ -37,7 +37,14 @@ from pathlib import Path
 from typing import Optional
 
 from eval.harness import DEFAULT_CONFIG, _format_documents, load_harness_config, stratified_fast_subset
-from eval.judge import JUDGE_VERSION, build_judge_llm, grade_correctness, grade_faithfulness, grade_refusal
+from eval.judge import (
+    JUDGE_VERSION,
+    JudgeGradingError,
+    build_judge_llm,
+    grade_correctness,
+    grade_faithfulness,
+    grade_refusal,
+)
 from src.agent import build_agent_graph, run_query_with_state
 from src.helper import open_jsonl
 from src.runtime import get_runtime
@@ -104,23 +111,40 @@ def _row(item: dict, dimension: str, context: str, generation: str, judge_verdic
 
 
 def build_calibration_rows(item: dict, answer: str, final_state: dict, judge_llm) -> list[dict]:
+    """A single dimension failing to grade (e.g. the judge model emitting
+    unparseable output -- a real failure mode hit live during calibration,
+    see eval/judge.py's JudgeGradingError) must not lose the whole item's
+    other dimensions or crash the run for every remaining item. Failures
+    are logged loudly to stderr and simply produce one fewer row, never
+    silently skipped without a trace (invariant 15)."""
     rows: list[dict] = []
     documents = final_state.get("documents", [])
     context_text = _format_documents(documents) if documents else ""
 
     if documents:
-        faithfulness = grade_faithfulness(judge_llm, context=context_text, generation=answer)
-        rows.append(_row(item, "faithfulness", context_text, answer, faithfulness.is_faithful, faithfulness.reasoning))
+        try:
+            faithfulness = grade_faithfulness(judge_llm, context=context_text, generation=answer)
+            rows.append(
+                _row(item, "faithfulness", context_text, answer, faithfulness.is_faithful, faithfulness.reasoning)
+            )
+        except JudgeGradingError as e:
+            print(f"  SKIPPED {item['id']}/faithfulness: {e}", file=sys.stderr)
 
     if item.get("gold_answer"):
-        correctness = grade_correctness(
-            judge_llm, question=item["question"], gold_answer=item["gold_answer"], generation=answer
-        )
-        rows.append(_row(item, "correctness", context_text, answer, correctness.is_correct, correctness.reasoning))
+        try:
+            correctness = grade_correctness(
+                judge_llm, question=item["question"], gold_answer=item["gold_answer"], generation=answer
+            )
+            rows.append(_row(item, "correctness", context_text, answer, correctness.is_correct, correctness.reasoning))
+        except JudgeGradingError as e:
+            print(f"  SKIPPED {item['id']}/correctness: {e}", file=sys.stderr)
 
     if item.get("expected_route") == "refuse":
-        refusal = grade_refusal(judge_llm, question=item["question"], generation=answer)
-        rows.append(_row(item, "refusal", context_text, answer, refusal.is_refusal, refusal.reasoning))
+        try:
+            refusal = grade_refusal(judge_llm, question=item["question"], generation=answer)
+            rows.append(_row(item, "refusal", context_text, answer, refusal.is_refusal, refusal.reasoning))
+        except JudgeGradingError as e:
+            print(f"  SKIPPED {item['id']}/refusal: {e}", file=sys.stderr)
 
     return rows
 

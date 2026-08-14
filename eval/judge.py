@@ -37,7 +37,15 @@ JUDGE_VERSION = "v1"
 # Kept in sync with configs/default.yaml's judge_model -- update both
 # together (module docstring: a prompt or model change forces a
 # re-baseline either way, so there's no cost to keeping them the same edit).
-DEFAULT_JUDGE_MODEL = "openai/gpt-oss-20b"
+#
+# NOT a reasoning model, deliberately: openai/gpt-oss-20b (the original
+# placeholder here) was live-tested during judge calibration (2026-08-13)
+# and failed with a hard 400 output_parse_failed from Groq -- it emitted a
+# long chain-of-thought monologue instead of a clean tool call for the
+# faithfulness prompt. That's a structural mismatch between reasoning
+# models and strict structured-output enforcement, not a one-off fluke, so
+# a plain instruct model is the safer pin.
+DEFAULT_JUDGE_MODEL = "llama-3.3-70b-versatile"
 JUDGE_PROVIDER = "groq"  # fixed by invariant 11, never config-selectable
 
 
@@ -45,6 +53,24 @@ class JudgeConfigError(Exception):
     """Raised when the judge can't be constructed -- e.g. no judge_api_key
     resolved. Never falls back to the generation model's key (that would
     silently violate invariant 11's independence requirement)."""
+
+
+class JudgeGradingError(Exception):
+    """Raised when a single grading call fails -- wraps whatever the
+    underlying provider raised (e.g. openai.BadRequestError's
+    output_parse_failed, seen live from Groq when a reasoning-style model
+    emitted chain-of-thought text instead of a clean tool call) into one
+    exception type so callers grading many items don't need to know every
+    possible provider-specific exception class to catch and skip a single
+    failed row loudly (invariant 15) rather than letting it crash an
+    entire run."""
+
+
+def _invoke_judge_chain(chain, inputs: dict, *, dimension: str):
+    try:
+        return chain.invoke(inputs)
+    except Exception as e:
+        raise JudgeGradingError(f"Judge grading failed for dimension={dimension!r}: {e}") from e
 
 
 class FaithfulnessJudgment(BaseModel):
@@ -123,7 +149,7 @@ def grade_faithfulness(judge_llm, *, context: str, generation: str) -> Faithfuln
         input_variables=["context", "generation"],
     )
     chain = prompt | judge_llm.with_structured_output(FaithfulnessJudgment)
-    return chain.invoke({"context": context, "generation": generation})
+    return _invoke_judge_chain(chain, {"context": context, "generation": generation}, dimension="faithfulness")
 
 
 def grade_correctness(judge_llm, *, question: str, gold_answer: str, generation: str) -> CorrectnessJudgment:
@@ -143,7 +169,9 @@ def grade_correctness(judge_llm, *, question: str, gold_answer: str, generation:
         input_variables=["question", "gold_answer", "generation"],
     )
     chain = prompt | judge_llm.with_structured_output(CorrectnessJudgment)
-    return chain.invoke({"question": question, "gold_answer": gold_answer, "generation": generation})
+    return _invoke_judge_chain(
+        chain, {"question": question, "gold_answer": gold_answer, "generation": generation}, dimension="correctness"
+    )
 
 
 def grade_refusal(judge_llm, *, question: str, generation: str) -> RefusalJudgment:
@@ -163,7 +191,7 @@ def grade_refusal(judge_llm, *, question: str, generation: str) -> RefusalJudgme
         input_variables=["question", "generation"],
     )
     chain = prompt | judge_llm.with_structured_output(RefusalJudgment)
-    return chain.invoke({"question": question, "generation": generation})
+    return _invoke_judge_chain(chain, {"question": question, "generation": generation}, dimension="refusal")
 
 
 def grade_citation_precision(judge_llm, *, context: str, generation: str) -> CitationJudgment:
@@ -183,7 +211,7 @@ def grade_citation_precision(judge_llm, *, context: str, generation: str) -> Cit
         input_variables=["context", "generation"],
     )
     chain = prompt | judge_llm.with_structured_output(CitationJudgment)
-    return chain.invoke({"context": context, "generation": generation})
+    return _invoke_judge_chain(chain, {"context": context, "generation": generation}, dimension="citation_precision")
 
 
 def citation_precision_score(judgment: CitationJudgment) -> Optional[float]:

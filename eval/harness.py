@@ -56,6 +56,7 @@ import yaml
 from eval.judge import (
     JUDGE_VERSION,
     JudgeConfigError,
+    JudgeGradingError,
     build_judge_llm,
     citation_precision_score,
     grade_citation_precision,
@@ -325,21 +326,39 @@ def _run_full(
         gen_item = GenerationItem(id=item["id"])
         documents = final_state.get("documents", [])
         if judge_llm is not None:
+            # A single dimension's grading failure (e.g. the judge model
+            # emitting unparseable output -- a real failure mode hit live
+            # during judge calibration, see eval/judge.py's
+            # JudgeGradingError) must not lose an item's other dimensions
+            # or crash the whole run. Logged loudly, never silent
+            # (invariant 15) -- the field just stays None for this item.
             if documents:
                 context_text = _format_documents(documents)
-                faithfulness = grade_faithfulness(judge_llm, context=context_text, generation=answer)
-                gen_item.is_faithful = faithfulness.is_faithful
-                citation = grade_citation_precision(judge_llm, context=context_text, generation=answer)
-                gen_item.citation_precision = citation_precision_score(citation)
+                try:
+                    faithfulness = grade_faithfulness(judge_llm, context=context_text, generation=answer)
+                    gen_item.is_faithful = faithfulness.is_faithful
+                except JudgeGradingError as e:
+                    logger.warning(f"{item['id']}: faithfulness grading failed, skipping: {e}")
+                try:
+                    citation = grade_citation_precision(judge_llm, context=context_text, generation=answer)
+                    gen_item.citation_precision = citation_precision_score(citation)
+                except JudgeGradingError as e:
+                    logger.warning(f"{item['id']}: citation_precision grading failed, skipping: {e}")
             if item.get("gold_answer"):
-                correctness = grade_correctness(
-                    judge_llm, question=item["question"], gold_answer=item["gold_answer"], generation=answer
-                )
-                gen_item.is_correct = correctness.is_correct
+                try:
+                    correctness = grade_correctness(
+                        judge_llm, question=item["question"], gold_answer=item["gold_answer"], generation=answer
+                    )
+                    gen_item.is_correct = correctness.is_correct
+                except JudgeGradingError as e:
+                    logger.warning(f"{item['id']}: correctness grading failed, skipping: {e}")
             if item.get("expected_route") == "refuse":
-                refusal = grade_refusal(judge_llm, question=item["question"], generation=answer)
-                gen_item.is_refusal = refusal.is_refusal
-                gen_item.expected_refusal = True
+                try:
+                    refusal = grade_refusal(judge_llm, question=item["question"], generation=answer)
+                    gen_item.is_refusal = refusal.is_refusal
+                    gen_item.expected_refusal = True
+                except JudgeGradingError as e:
+                    logger.warning(f"{item['id']}: refusal grading failed, skipping: {e}")
         generation_items.append(gen_item)
 
         per_item_records.append(

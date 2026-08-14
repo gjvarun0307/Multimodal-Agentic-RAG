@@ -10,6 +10,7 @@ import pytest
 from eval.judge import (
     CitationJudgment,
     JudgeConfigError,
+    JudgeGradingError,
     build_judge_llm,
     citation_precision_score,
     grade_citation_precision,
@@ -47,9 +48,31 @@ class _FakeJudgeLLM:
         return _FakeStructuredChain(self._response)
 
 
+class _RaisingStructuredChain:
+    """Simulates the real failure hit live during judge calibration: the
+    provider raises mid-invoke (Groq's output_parse_failed 400) instead of
+    returning a parsed object."""
+
+    def __call__(self, inputs):
+        return self.invoke(inputs)
+
+    def invoke(self, inputs):
+        raise RuntimeError("Parsing failed. The model generated output that could not be parsed.")
+
+
+class _RaisingJudgeLLM:
+    def with_structured_output(self, schema):
+        return _RaisingStructuredChain()
+
+
 def test_build_judge_llm_raises_without_api_key():
     with pytest.raises(JudgeConfigError):
         build_judge_llm({"judge_api_key": ""})
+
+
+def test_grade_faithfulness_wraps_provider_failure_in_judge_grading_error():
+    with pytest.raises(JudgeGradingError):
+        grade_faithfulness(_RaisingJudgeLLM(), context="ctx", generation="gen")
 
 
 def test_build_judge_llm_never_falls_back_to_generation_key(monkeypatch):
