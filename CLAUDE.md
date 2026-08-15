@@ -68,13 +68,57 @@ Not yet present, first-time builds for Phase 2: `eval/harness.py`,
 ### Phase 2 — build progress (updated incrementally, not a phase close)
 
 Landed and wired together: `configs/default.yaml`, all 5
-`eval/metrics/*.py`, `eval/tavily_cache.py`, `eval/judge.py`, and
-`eval/harness.py` (`run_eval()` + `python -m eval.harness`). Still open:
-judge calibration (40-item hand-label + κ — needs the user), then a full
-non-retrieval-only run (needs live LLM + Groq judge API keys/budget —
-`api_keys.json` has neither `judge_api_key` nor a real `llm_api_key` set
-locally yet). Five upstream additions made along the way, all additive (no
-existing caller broke, full suite + ruff verified clean after each):
+`eval/metrics/*.py`, `eval/tavily_cache.py`, `eval/judge.py`,
+`eval/harness.py` (`run_eval()` + `python -m eval.harness`), and
+`eval/judge_calibration.py`. Judge calibration is done (2026-08-14/15,
+30-item stratified sample, `llama-3.3-70b-versatile` judge, see below).
+Still open: a full non-retrieval-only `eval.harness` run (needs live LLM +
+Groq judge API keys/budget — both are set locally now, this just hasn't
+been run for real yet), which is Phase 2's last acceptance criterion.
+
+**Judge calibration result** (`eval/judge_calibration/calibration_v1_labeled.csv`,
+committed): 30-item stratified sample of `golden_set.jsonl` (never
+`dev_split.jsonl`), 46 labeled (item, dimension) rows, 0 left blank, one row
+lost to a graceful `JudgeGradingError` skip (`gs_0123`/refusal — the
+resilience path working as designed, not a labeling gap).
+- `correctness`: n=24, raw_agreement=0.958, **κ=0.917** — the statistically
+  meaningful number here (real variance on both sides: judge 50% true,
+  human 54% true). Both disagreements had the judge grading `FALSE`
+  where the human graded `TRUE` — the judge being the stricter side, not
+  randomly wrong.
+- `faithfulness`: n=18, raw_agreement=0.944, **κ=0.000** — do not quote
+  the κ number alone, it's misleading here. The human labeled all 18 rows
+  `TRUE` (zero variance); Cohen's κ is mathematically degenerate whenever
+  one rater's marginal rate is exactly 100% (the chance-agreement term
+  collapses to equal the raw agreement, forcing κ=0 regardless of how few
+  disagreements exist — here just 1/18). Report raw agreement for this
+  dimension, with this caveat, not κ in isolation.
+- `refusal`: n=4, raw_agreement=1.000, κ=1.000 — sample too small (one
+  `unanswerable_refuse` item's grading call failed) to carry much weight
+  alone; corroborates rather than proves.
+- `citation_precision` is not calibrated (by design — a continuous ratio,
+  not suited to Cohen's κ; spot-check it by eye if needed).
+
+Two real live-run findings surfaced *during* calibration, both fixed and
+committed before this result was produced:
+- `openai/gpt-oss-20b` (the original judge placeholder) hard-400'd on
+  Groq — it emitted chain-of-thought text instead of a clean tool call.
+  Separately (and more fundamentally): Groq's `json_schema` structured-
+  output mode is *only* supported by the gpt-oss family — every other
+  model 400s outright unless `with_structured_output(..., method=
+  "function_calling")` is passed explicitly. All 4 `eval/judge.py` grade_*
+  functions now pass that. `DEFAULT_JUDGE_MODEL` moved to
+  `llama-3.3-70b-versatile`.
+- `eval/judge_calibration.py`'s `run_sample()` built the graph without a
+  `web_search_tool=` override, so any sampled item that fell through to
+  `web_search` made a **live, uncontrolled Tavily call** instead of
+  replaying from the frozen fixture — caught because a calibration row
+  for an `unanswerable_refuse` item came back with scraped-web-blog
+  content instead of corpus text. Fixed to wire in
+  `eval.tavily_cache.build_tavily_tool()`, matching `eval/harness.py`.
+
+Ten upstream additions made along the way, all additive (no existing
+caller broke, full suite + ruff verified clean after each):
 
 - **`GraphState["retrieved_chunk_scores"]`** (`src/agent.py`) — reranker
   score per `retrieved_chunk_ids` entry, pre-threshold, aligned by position;
@@ -96,12 +140,9 @@ existing caller broke, full suite + ruff verified clean after each):
 - `eval/tavily_cache.py`: `TAVILY_MODE` env var (`replay` default / `live`),
   fixture at `eval/fixtures/tavily_v1.json`, keyed by sha256 of
   `(query, max_results, topic)`. Replay miss raises `TavilyCacheMissError`
-  loudly (invariant 15) — never falls through to a live call. Not yet
-  recorded for real (needs a live `TAVILY_API_KEY` run of
-  `python -m eval.tavily_cache --record` against the 4
-  `unanswerable_websearch` golden items) — `eval/harness.py` will hit
-  `TavilyCacheMissError` on those items until that one-time recording pass
-  runs.
+  loudly (invariant 15) — never falls through to a live call. Recorded
+  for real (2026-08-13, committed at `eval/fixtures/tavily_v1.json`) —
+  all 4 `unanswerable_websearch` golden items covered.
 - `eval/metrics/router.py`: `expected_route: "refuse"` (unanswerable_refuse
   items) has no router edge to compare against — `query_router` only ever
   picks vectorstore/websearch/chitchat. Resolved by treating "refuse"
@@ -140,10 +181,9 @@ existing caller broke, full suite + ruff verified clean after each):
   `JUDGE_API_KEY` env var) — deliberately separate from `llm_api_key` so
   the judge (`eval/judge.py`, pinned to Groq, invariant 11) never
   accidentally shares credentials with the generation model under test,
-  even when that model is also Groq-hosted. Set it in `api_keys.json` as
-  `"judge_api_key": "..."` before running anything that grades generation
-  quality — not yet set locally, so `eval.judge.build_judge_llm()` will
-  raise `JudgeConfigError` until it is.
+  even when that model is also Groq-hosted. Set in `api_keys.json` as
+  `"judge_api_key": "..."` — set locally now; `eval.judge.build_judge_llm()`
+  raises `JudgeConfigError` loudly if it's ever missing.
 - `eval/judge.py` grades one item at a time (faithfulness, correctness,
   refusal, citation precision) via 4 separate structured-output judge
   calls; `eval/metrics/generation.py` only aggregates already-graded
@@ -151,9 +191,11 @@ existing caller broke, full suite + ruff verified clean after each):
   grade/aggregate split as `structured.py`+`router.py`. All 4 judge
   prompts carry `JUDGE_VERSION` (`"v1"`, kept in sync with
   `configs/default.yaml`'s `judge_version`) — bump both together on any
-  prompt wording change, never separately (invariant 11). Unverified with
-  a real Groq call yet — all tests use fake judge clients; task #14
-  (judge calibration) is the first real validation.
+  prompt wording change, never separately (invariant 11). Live-verified
+  via judge calibration (2026-08-14/15, see above) — `llama-3.3-70b-versatile`
+  pinned as `DEFAULT_JUDGE_MODEL` after `openai/gpt-oss-20b` failed live;
+  every `with_structured_output()` call needs `method="function_calling"`
+  since Groq's `json_schema` mode only supports the gpt-oss family.
 - **`retrieve_and_rerank_core`** (`src/agent.py`, module-level, extracted
   from the `retrieve_and_rerank` node closure) — the hybrid-search +
   rerank + threshold-filter logic, with no GraphState/graph dependency.
