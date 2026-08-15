@@ -1,28 +1,140 @@
 {
   "entries": {
+    "135a9ef57872fa2e": {
+      "max_results": 5,
+      "query": "How does the system efficiently serve many requests at once?",
+      "recorded_at": "2026-08-15T16:20:43.997875+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "How does the system efficiently serve many requests at once?",
+        "request_id": "8ac6c61f-ae3a-428e-8e59-e57f2bfdc2e2",
+        "response_time": 1.23,
+        "results": [
+          {
+            "content": "There’s multiple strategies we can implement, both client-side and server-side, to handle this efficiently.\n\n🍊 Utilize HTTP/2/3’s multiplexing features to run requests concurrently, reducing latency, and optimizing network usage.\n\n🍊 Request grouping  \nInstead of firing all 100 requests at once, group them, and then fire each group sequentially. Ex 5–10 request per group. This enables us greater control over concurrency, error handling and bandwidth usage. [...] HTTP/2 enables Multiplexing 🦄  \nMultiple requests can be bundled over a single connection. So if you fire 100 HTTP/2.2 requests, ideally, all 100 would run concurrently. You can find out which requests reused the same TCP connection by checking the Connection ID column in the Network tab.\n\nHTTP/3 is built over QUIC  \nSimilar to HTTP/2, this also enables multiplexing (over UDP), and the scenario would play out the same.\n\n### Now, how do we handle this scenario efficiently? [...] HTTP/1.1 utilizes 1 connection per request  \nSo, if you initiate 100 HTTP/1.1 requests to a domain like example.com, only 6 requests will be processed concurrently at any given moment. You can observe this behavior by inspecting the Network tab. The remaining requests will be queued, dispatching asap when an earlier request completes.",
+            "id": "fbe26d-00",
+            "raw_content": null,
+            "score": 0.6739866,
+            "title": "Medium",
+            "url": "https://medium.com/@itskishankumar98/the-dynamics-of-firing-100-http-requests-at-once-f2f57065b530"
+          },
+          {
+            "content": "At the root of optimizing for high traffic is the concept that a single server side application process can be serving many clients simultaneously. To explain how this is possible, let’s consider what the server side application process is doing. Most server side applications are receiving HTTP requests, doing some processing in response to the HTTP request, and then returning a response to the client.\n\nThe lifecycle of a single HTTP request may look something like this: [...] Writing code that can take advantage of concurrency can be a bit tricky, but when done right you end up with an application that can handle more traffic, more efficiently. It is much easier to write code in a compute environment like AWS Lambda where each request can be isolated from other requests. However, a single concurrency system prevents you from writing code that can utilize multiple concurrent requests efficiently. If you choose a serverless compute such as AWS App Runner or AWS [...] Each time the application reaches a point where it is waiting on a network I/O operation, it instead grabs another incoming HTTP request and starts working on it. The code instructions get run in a staggered manner, allowing the application process to work on multiple incoming requests at a time.",
+            "id": "1ce3b0-01",
+            "raw_content": null,
+            "score": 0.50915486,
+            "title": "Concurrency Deep Dive: Code Strategies for High Traffic Applications | Nathan Peck",
+            "url": "https://nathanpeck.com/concurrency-deep-dive-strategies-for-high-traffic-applications"
+          },
+          {
+            "content": "my brain actually simultaneously let's remember these two like different approaches and we're going to be coming back to both of them throughout the presentation and we shall begin with the computer way of doing it because it's sequential it's strictly defined and easier to follow this is what Apache web server does and here's a small like step our parenthesis Apache actually has encapsulated the logic related to how it handles concurrency multiple simultaneous requests is encapsulated into a [...] last scenario we have three workers and three requests so therefore Apache queues any excess of incoming requests it queues on to some q which is really lightweight much easier to maintain and have them in the queue rather than well do actual swarm of worker processes and that's how it really handles like top-level concurrency and this is really sincere it about how a question works on theoretical level just a couple of points how you could actually as the administrator of a server how you [...] the Linux kernel to kind of boot keep maintain itself it consumes some ram memory also so if there is definitely or berlin in having those processes in your system so what you could do you could define a certain number of cross worker processes you allow apache to have if there is excess of incoming requests a apache you will calculate onto the queue waiting queue so basically we kind of stay at the previous slide we have three workers to cpu cores the fourth in runs but there is just meanwhile",
+            "id": "93b012-02",
+            "raw_content": null,
+            "score": 0.44709876,
+            "title": "How your webserver processes requests",
+            "url": "https://www.youtube.com/watch?v=6ai8TwYZyP0"
+          },
+          {
+            "content": "1Offer expires on 01/31/2026 at 11:59PM PST or until 10,000 redemptions have been received, whichever occurs first. Receive 20% off the first month of a new Chegg Study or Chegg Study Pack monthly subscription. This offer requires activation of a new Chegg Study or Chegg Study Pack monthly recurring subscription, charged at the monthly rate disclosed at your sign-up. This offer is not valid for existing Chegg Study or Chegg Study Pack subscribers, has no cash value, is not transferable, and may [...] Get your coupon\n\n # Question: How does a Web server handle multiple requests for Web pages?\n\n  How does a Web server handle multiple requests for Web pages?\n Chegg Logo\n\n  Here’s the best way to solve it.\n\n  Solution\n\n  A web server handles multiple requests for web pag...\n\n  View the full answer [...] For educators\n Help\n Sign in\n\n## Real learning for 20% less? Yes!\n\n## Real learning for 20% less? Yes!\n\nUnderstanding your homework feels good. 20% off your first month of Chegg Study or Chegg Study Pack feels better.¹",
+            "id": "b8c585-03",
+            "raw_content": null,
+            "score": 0.3168769,
+            "title": "Solved How does a Web server handle multiple requests for | Chegg.com",
+            "url": "https://www.chegg.com/homework-help/questions-and-answers/web-server-handle-multiple-requests-web-pages-q155472504"
+          },
+          {
+            "content": "# Many small requests vs. few large requests (API Design)\n\nAsk Question\n\nAsked 11 years, 5 months ago\n\nModified11 years, 4 months ago\n\nViewed 93k times \n\nThis question shows research effort; it is useful and clear\n\n 76 \n\nThis question does not show any research effort; it is unclear or not useful\n\nSave this question. [...] Add a comment|\n\n between your clients and your server. In a high-latency situation with otherwise good bandwidth, many small requests will perform _significantly_ worse than one large one. [...] The solution in our case was to clone the database server and stand the copy up in India, but the point here is to keep in mind that if your client and server are far apart, network latency will be multiplied by the number of communications across the wire. Bandwidth once the connection is established is typically much less of a concern.\n\nShare\n\nShare a link to this answer \n\nCopy linkCC BY-SA 3.0\n\nShort permalink to this answer\n\nImprove this answer\n\n Follow",
+            "id": "5d2009-04",
+            "raw_content": null,
+            "score": 0.2401864,
+            "title": "Many small requests vs. few large requests (API Design)",
+            "url": "https://softwareengineering.stackexchange.com/questions/274340/many-small-requests-vs-few-large-requests-api-design"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "1512bd7e8a3558fe": {
+      "max_results": 5,
+      "query": "Estimated energy consumption of FlashAttention in kWh for a full training run",
+      "recorded_at": "2026-08-15T16:12:29.059714+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "Estimated energy consumption of FlashAttention in kWh for a full training run",
+        "request_id": "aff31a59-2963-4d2c-88ef-498d8d01e0c1",
+        "response_time": 1.4,
+        "results": [
+          {
+            "content": "The results confirm that attention type has a significant impact on energy consumption across most models and metrics.\nFlashInfer generally has an advantage over FlashAttention-3, with strong positive effect size across models, particularly for Qwen-4B (AT and LB) and Llama-8B (AT, LB, and WC).\nFlashAttention-3, in turn, tends to consume more than FlashAttention-2. [...] Within a given model, vLLM parameters mainly move configurations locally along the front.\nFor instance, for Qwen-32B, switching from FlashAttention-3 to FlashInfer reduces energy consumption by about 3% with negligible impact on accuracy. In contrast, for Llama-8B, FlashInfer reduces energy by about 7% at the cost of a small latency increase (5–6%).\nSimilar patterns are observed across other tasks. [...] Interaction between task and attention.\nAs shown in Figure 4 ‣ V Results ‣ Attention to Detail: Evaluating Energy, Performance, and Accuracy Trade-offs Across vLLM Configurations\"), the task is the dominant factor influencing energy consumption, introducing a stronger effect than the attention parameter in every case.\nFlashInfer tends to reduce energy usage compared to FlashAttention-2 and FlashAttention-3 across most models and tasks.",
+            "id": "46210e-00",
+            "raw_content": null,
+            "score": 0.36134556,
+            "title": "Attention to Detail: Evaluating Energy, Performance, and Accuracy Trade-offs Across vLLM Configurations",
+            "url": "https://arxiv.org/html/2607.09172v1"
+          },
+          {
+            "content": "Training a single large language model like GPT-3 requires about 500 kilowatt-hours of electricity per run. That’s enough power to run an average American home for nearly two months. This massive energy draw highlights a hidden cost of the AI boom we often overlook. [...] Experts estimate that global data centers, fueled by AI training, could consume up to 8% of the world’s electricity by 2030 ( LLMs have been applied in fields such as medicine, education, finance, and law ( Their abilities in natural language processing, text generation, and question answering make them versatile tools (\n\n### Rise of Scaling LLMs [...] These models, known as large language models (LLMs), power everything from chatbots to medical diagnostics. Yet their environmental footprint is staggering. As adoption surges, so does the demand for sustainable practices in natural language processing (NLP).",
+            "id": "2c6531-01",
+            "raw_content": null,
+            "score": 0.3028759,
+            "title": "The Truth: NLP Models Use 500kWh Per Training Run - Medium",
+            "url": "https://medium.com/data-science-collective/the-truth-nlp-models-use-500kwh-per-training-run-548d721c0ec9"
+          },
+          {
+            "content": "Litespark offers 2x–6x enhancement in training throughput, and 55%−8355\\%-83% reduction in the energy consumption during the pre-training process. Notably, these optimizations add on top of the performance improvements from known existing techniques like flash-attention, quantization, model pruning etc. Furthermore, the optimizations are model- and hardware-agnostic, and can be incorporated into any model architectures and hardware families including GPUs and ASICs. [...] Recent research has demonstrated that algorithmic improvements can address both challenges simultaneously. Techniques like FlashAttention achieve 22x–33x training speedup while maximizing GPU utilization [24, 26, 27]. Mixture-of-Experts approaches reduce training time and computational requirements by 4x–7x through sparse activation patterns . [...] These energy savings have immediate practical implications. For a typical 30B model training run requiring several trillion tokens, our framework could reduce energy consumption from gigawatt-hours to hundreds of megawatt-hours, translating to millions of dollars in electricity cost savings and proportional reductions in carbon emissions. At scale, training a 30B model on 10 trillion tokens would result in approximately 1,478 tonnes of CO2eq with Litespark compared to 5,864 tonnes with Llama —",
+            "id": "29048b-02",
+            "raw_content": null,
+            "score": 0.28905097,
+            "title": "High-Throughput, Energy-Efficient LLM Training Framework - arXiv",
+            "url": "https://arxiv.org/html/2510.02483v1"
+          },
+          {
+            "content": "Hi Mark you are making a great point. Just wanted to point out a few hypothesis implied with your calculation : - To reach 8 kWh per A100 per day, you would need to draw each GPU's TDP worth of power, which would correspond to a 100% utilization rate. However, you would usually aim to be at a 50% utilization rate for optimization purposes, as seen here:  - GPU type and number would change a lot in this calculation - Here you also don't take into consideration the influence of inference [...] David McGuirk \n\nStrategic Advisor | Data Center | Cloud | AI | Emerging Tech & Energy Transition\n\n 4mo \n\n Report this comment\n\nYour numbers look right to me Mark Butcher Maybe Sam just added a bit on to to Epoch Ai´s 0.3Watt claims in the hope that no one would question the figure if he upped it a bit.\n\nLike Reply  1 Reaction   2 Reactions\n\nGeorg Zoeller   4mo \n\n Report this comment\n\nHahaha, we did something similar, but from different directions. \n\nLike Reply  3 Reactions   4 Reactions [...] I see many arguments for and against. Here are a few in several comments due to length constraints Against: I agree the number seems low. I think it could be the case that the number reported by Sam Altman only accounts for GPU server consumption and nothing else. That seems to be a common practice among the companies that do report on their AI consumption (eg Meta also only reports on GPU server consumption). I think a more realistic assumption is 3200 DGX H100 servers. Their rated power draw",
+            "id": "165776-03",
+            "raw_content": null,
+            "score": 0.08971763,
+            "title": "Is Sam Altman's power claim for ChatGPT believable? | Mark Butcher posted on the topic | LinkedIn",
+            "url": "https://www.linkedin.com/posts/markbutcher_sam-altman-activity-7338549458990718976-Esoz"
+          },
+          {
+            "content": "Developed at the University of Michigan, the open-source optimization framework studies deep learning models during training, pinpointing the best tradeoff between energy consumption and the speed of the training.\n\n“At extreme scales, training the GPT-3 model just once consumes 1,287 MWh, which is enough to supply an average U.S. household for 120 years,” said Mosharaf Chowdhury, an associate professor of electrical engineering and computer science.",
+            "id": "0c66b9-04",
+            "raw_content": null,
+            "score": 0.08550305,
+            "title": "Optimization could cut the carbon footprint of AI training by up to 75%",
+            "url": "https://news.umich.edu/optimization-could-cut-the-carbon-footprint-of-ai-training-by-up-to-75"
+          }
+        ]
+      },
+      "topic": "general"
+    },
     "1aab2948f94e6289": {
       "max_results": 5,
       "query": "What is the most recent Llama model Meta has released, and how does it differ from Llama 3?",
-      "recorded_at": "2026-08-13T07:44:39.477882+00:00",
+      "recorded_at": "2026-08-15T15:52:28.672631+00:00",
       "response": {
         "answer": null,
         "follow_up_questions": null,
         "images": [],
         "query": "What is the most recent Llama model Meta has released, and how does it differ from Llama 3?",
-        "request_id": "237422fa-e285-443e-a81e-e77d0eec3cd6",
-        "response_time": 1.28,
+        "request_id": "8d70116c-3768-4239-8a98-11e68ac9429c",
+        "response_time": 1.53,
         "results": [
           {
-            "content": "Alongside the release of Llama 3, Meta rolled out Meta AI, an AI assistant built on Llama. Meta AI has a dedicated website and is available on Facebook and WhatsApp. The latest version is Llama 4, released in April 2025.\n\nIn April 2026, Meta Superintelligence Labs released Muse Spark as a replacement for Llama.\n\n## Background\n\n[edit&action=edit&section=1 \"Edit section: Background\")] [...] On April 18, 2024, Meta released Llama 3 with two sizes: 8B and 70B parameters. The models have been pre-trained on approximately 15 trillion tokens of text gathered from “publicly available sources” with the instruct models fine-tuned on “publicly available instruction datasets, as well as over 10M human-annotated examples\". Meta AI's testing showed in April 2024 that Llama 3 70B was beating Gemini \"Gemini (chatbot)\") Pro 1.5 and Claude \"Claude (language model)\") 3 Sonnet on most benchmarks. [...] Llama (\"Large Language Model Meta AI\" serving as a backronym) was a family of large language models (LLMs) released by Meta AI starting in February 2023.\n\nLlama models come in different sizes, ranging from 1 billion to 2 trillion parameters. Initially only a foundation model, starting with Llama 2, Meta AI released instruction fine-tuned \"Fine-tuning (deep learning)\") versions alongside foundation models.",
-            "id": "13b907-00",
+            "content": "Alongside the release of Llama 3, Meta rolled out Meta AI, an AI assistant built on Llama. Meta AI has a dedicated website and is available on Facebook and WhatsApp. The latest version is Llama 4, released in April 2025.\n\nIn April 2026, Meta Superintelligence Labs released Muse Spark as a replacement for Llama.\n\n## Background\n\n[edit&action=edit&section=1 \"Edit section: Background\")] [...] On April 18, 2024, Meta released Llama 3 with two sizes: 8B and 70B parameters. The models have been pre-trained on approximately 15 trillion tokens of text gathered from “publicly available sources” with the instruct models fine-tuned on “publicly available instruction datasets, as well as over 10M human-annotated examples\". Meta AI's testing showed in April 2024 that Llama 3 70B was beating Gemini \"Gemini (chatbot)\") Pro 1.5 and Claude \"Claude (language model)\") 3 Sonnet on most benchmarks. [...] Meta claimed in its release announcement that Llama 4 bested GPT-4o's score on the LMArena AI benchmark. The company also stated that Llama 4's benchmark score was achieved using an unreleased \"experimental chat version\" of the model that was \"optimized for conversationality\", which differed from the version of Llama 4 released to the public. LMArena indicated that it would change its policies to prevent this incident from reoccurring, and responded, \"Meta's interpretation of our policy did not",
+            "id": "467ebb-00",
             "raw_content": null,
-            "score": 0.8893851,
-            "title": "Llama (language model)",
+            "score": 0.8921218,
+            "title": "Llama (language model) - Wikipedia",
             "url": "https://en.wikipedia.org/wiki/Llama_(language_model)"
           },
           {
             "content": "Llama 3 (April 2024) – The next leap came with Llama 3. Meta released Llama 3 models in 2024 with improved capabilities and a focus on scale. The initial Llama 3 family included models of 8B and 70B parameters (again with both base and instruction-tuned versions). One of the standout upgrades was an extended context length of 8,192 tokens, double that of Llama 2 (Llama 3 Guide: Everything You Need to Know About Meta's New Model and Its Data). This is like giving the model a much larger working [...] Llama 3.1 (July 2024) – Meta didn’t stop at Llama 3. Just a few months later, they unveiled Llama 3.1, which introduced a massive model: a 405 billion parameter variant. This 405B model (available through partnership platforms like IBM’s watsonx.ai) was, at the time, the largest open-access LLM, and it reached unprecedented performance levels. On knowledge tests and reasoning benchmarks, Llama 3.1’s 405B model essentially achieved parity with top proprietary models like GPT-4, Google’s Gemini, [...] Anthropic’s Claude model is known for its focus on safety and extremely friendly conversational style. Claude 2, released in 2023, wowed users with a 100K token context and a very helpful demeanor. In 2024, Claude 3 was introduced, and it came in a few flavors (codenamed Opus, Sonnet, Haiku) targeting different speed and capability trade-offs. Claude 3 models launched with 200K token context windows (and the architecture design capable of exceeding 1M tokens). They also expanded to have vision",
-            "id": "4a505d-01",
+            "id": "0ac62c-01",
             "raw_content": null,
             "score": 0.8783249,
             "title": "Llama 4: Meta's New AI Model - Evolution, Features, and Comparison<!-- --> | GPT-trainer Blog",
@@ -30,15 +142,15 @@
           },
           {
             "content": "4 min read\n\nMatthew S. Smith is a contributing editor for IEEE Spectrum and the former lead reviews editor at Digital Trends.\n\nMeta\n\nOn 18 April 2024, Meta released the next big thing in “open” AI models: Llama 3. It’s the latest AI model to be offered by Meta free of charge and with a relatively open (though not open-source) license that lets developers deploy it in most commercial apps and services. [...] Announced less than a year after Llama 2, the new model in many ways repeats its predecessor’s playbook. Llama 3’s release provides models with up to 70 billion parameters, the same as its predecessor. It was also released under a similar license which, although not fully open source, allows commercial use in most circumstances. [...] But while Meta has clearly established a lead in the open AI community, closed models, like GPT 4, are a different story. Llama 3 400B will narrow the gap, but the release of GPT 5—speculated to drop this summer—could steal Meta’s thunder if it once again raises the bar on quality.",
-            "id": "c19d16-02",
+            "id": "e7ba1e-02",
             "raw_content": null,
-            "score": 0.8588255,
-            "title": "Llama 3 Establishes Meta as the Leader in “Open” AI",
+            "score": 0.85097736,
+            "title": "Llama 3 Establishes Meta as the Leader in “Open” AI - IEEE Spectrum",
             "url": "https://spectrum.ieee.org/meta-llama-3"
           },
           {
             "content": "Current:\n\nLlama 4: The Llama 4 collection of models are natively multimodal AI models that enable text and multimodal experiences. These models leverage a mixture-of-experts architecture to offer industry-leading performance in text and image understanding. [...] These Llama 4 models mark the beginning of a new era for the Llama ecosystem. We are launching two efficient models in the Llama 4 series, Llama 4 Scout, a 17 billion parameter model with 16 experts, and Llama 4 Maverick, a 17 billion parameter model with 128 experts.\n\nHistory:\n\nLearn more about the models at \n\n### Collections 15\n\n#### meta-llama/Llama-4-Scout-17B-16E-Instruct\n\n#### meta-llama/Llama-4-Scout-17B-16E\n\n#### meta-llama/Llama-4-Maverick-17B-128E-Instruct [...] #### meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8\n\n#### meta-llama/Llama-3.3-70B-Instruct\n\n#### meta-llama/Llama-4-Scout-17B-16E-Instruct\n\n#### meta-llama/Llama-4-Scout-17B-16E\n\n#### meta-llama/Llama-4-Maverick-17B-128E-Instruct\n\n#### meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8\n\n#### meta-llama/Llama-3.3-70B-Instruct\n\n### models 70 Sort:  Recently updated\n\n#### meta-llama/Prompt-Guard-86M\n\n#### meta-llama/Meta-Llama-3-8B-Instruct\n\n#### meta-llama/Meta-Llama-3-70B-Instruct",
-            "id": "69305c-03",
+            "id": "0a8b0e-03",
             "raw_content": null,
             "score": 0.7917732,
             "title": "Meta Llama",
@@ -46,7 +158,7 @@
           },
           {
             "content": "Today, we’re introducing Meta Llama 3, the next generation of our state-of-the-art open source large language model.\n Llama 3 models will soon be available on AWS, Databricks, Google Cloud, Hugging Face, Kaggle, IBM WatsonX, Microsoft Azure, NVIDIA NIM, and Snowflake, and with support from hardware platforms offered by AMD, AWS, Dell, Intel, NVIDIA, and Qualcomm. [...] Our new 8B and 70B parameter Llama 3 models are a major leap over Llama 2 and establish a new state-of-the-art for LLM models at those scales. Thanks to improvements in pretraining and post-training, our pretrained and instruction-fine-tuned models are the best models existing today at the 8B and 70B parameter scale. Improvements in our post-training procedures substantially reduced false refusal rates, improved alignment, and increased diversity in model responses. We also saw greatly improved [...] In line with our design philosophy, we opted for a relatively standard decoder-only transformer architecture in Llama 3. Compared to Llama 2, we made several key improvements. Llama 3 uses a tokenizer with a vocabulary of 128K tokens that encodes language much more efficiently, which leads to substantially improved model performance. To improve the inference efficiency of Llama 3 models, we’ve adopted grouped query attention (GQA) across both the 8B and 70B sizes. We trained the models on",
-            "id": "bb30a7-04",
+            "id": "6c3fd3-04",
             "raw_content": null,
             "score": 0.7265231,
             "title": "Introducing Meta Llama 3: The most capable openly ...",
@@ -56,57 +168,449 @@
       },
       "topic": "general"
     },
+    "4ea981f2c18b61af": {
+      "max_results": 5,
+      "query": "What is the minimum annotated dataset size required for HyDE to train its retriever?",
+      "recorded_at": "2026-08-15T16:27:46.287026+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What is the minimum annotated dataset size required for HyDE to train its retriever?",
+        "request_id": "8e6450ed-7e40-45c7-9bec-b47e526ab02c",
+        "response_time": 0.0,
+        "results": [
+          {
+            "content": "| Model | Init Retrieval | DL19 | DL20 | News | Covid | FiQA | SciFact | DBPedia | NFCorpus | Robust04 |\n ---  ---  ---  ---  --- \n| HyDEPRF{}\\_{\\text{PRF}} (Mistral-7B-Instruct) | Hybrid (20) | 63.5 | 62.0 | 46.9 | 59.1 | 28.3 | 64.5 | 35.2 | 35.0 | 45.6 |\n| HyDEPRF{}\\_{\\text{PRF}} (Mistral-7B-Instruct) | Hybrid (10) | 63.6 | 60.5 | 47.2 | 58.8 | 28.3 | 63.4 | 34.6 | 34.6 | 44.5 |\n\n## Appendix A Dataset Details [...] |  |  |  |  |\n ---  --- |\n|  | v^qHyDE=1N+1​(f⁡(q)+∑i=1Nf⁡(d^i))\\hat{v}\\_{q\\_{\\textnormal{HyDE}}}=\\frac{1}{N+1}\\ \\left(f(q)+\\sum\\_{i=1}^{N}{f(\\hat{d}\\_{i})}\\right) |  | (3) |\n\nv^qHyDE\\hat{v}\\_{q\\_{\\textnormal{HyDE}}} is then searched against the corpus embeddings to retrieve the most similar real documents. [...] Given a query, qq, HyDE first samples NN hypothetical documents {d^1,…,d^N}\\{\\hat{d}\\_{1},\\dots,\\hat{d}\\_{N}\\} from a generative LLM – denoted by LLMDocGen\\textnormal{LLM}\\_{\\textnormal{DocGen}} – via zero-shot prompting:\n\n|  |  |  |  |\n ---  --- |\n|  | d^i=LLMDocGen​(q),1≤i≤N\\hat{d}\\_{i}=\\textnormal{LLM}\\_{\\textnormal{DocGen}}(q),\\quad 1\\leq i\\leq N |  | (1) |",
+            "id": "4ee6f9-00",
+            "raw_content": null,
+            "score": 0.5199851,
+            "title": "Zero-Shot Dense Retrieval with Embeddings from Relevance Feedback",
+            "url": "https://arxiv.org/html/2410.21242v1"
+          },
+          {
+            "content": "Dense retrieval, a method used by search engines to find relevant documents by comparing their semantic similarities, has shown great promise across various tasks and languages. However, building fully zero-shot dense retrieval systems without any relevant labels has been a significant challenge. Traditional methods rely on supervised learning, which requires a large dataset of labeled examples to train the model effectively.\n\n## Introducing HyDE [...] Zero-Shot Retrieval: HyDE can work “out of the box” without relying on a large dataset of labeled examples.\n Cross-Lingual: It performs well across various languages, making it suitable for multilingual search applications.\n Flexibility: HyDE’s approach allows it to adapt to different tasks without extensive fine-tuning.\n\n## Implementing HyDE in Langchain [...] The HyDE approach recognizes the difficulty of zero-shot learning and encoding relevance without labeled data. Instead, it leverages the power of language models and hypothetical documents. Here’s how it works:",
+            "id": "054646-01",
+            "raw_content": null,
+            "score": 0.43007612,
+            "title": "Advanced RAG: Precise Zero-Shot Dense Retrieval with HyDE",
+            "url": "https://www.lancedb.com/blog/advanced-rag-precise-zero-shot-dense-retrieval-with-hyde-0946c54dfdcb"
+          },
+          {
+            "content": "Many embedding retrievers generalize poorly to new, unseen domains. This approach tries to tackle this problem. Given a query, the Hypothetical Document Embeddings (HyDE) first zero-shot prompts an instruction-following language model to generate a “fake” hypothetical document that captures relevant textual patterns from the initial query - in practice, this is done five times. Then, it encodes each hypothetical document into an embedding vector and averages them. The resulting, single [...] # 'hypothetical_embedding': [0.0990725576877594, -0.017647066991776227, 0.05918873250484467, ...]}`\n\nHere's the graph of the resulting pipeline:\n\nHyDE pipeline implementation flowchart showing prompt builder, generator, adapter, embedder, and hypothetical document embedder components\n\nThis pipeline example turns your query into one embedding.\n\nYou can continue and feed this embedding to any Embedding Retriever to find similar documents in your Document Store.\n\n## Additional References​ [...] resulting, single embedding can be used to identify a neighbourhood in the document embedding space from which similar actual documents are retrieved based on vector similarity. As with any other retriever, these retrieved documents can then be used downstream in a pipeline (for example, in a Generator for RAG). Refer to the paper “Precise Zero-Shot Dense Retrieval without Relevance Labels” for more details.",
+            "id": "b926dc-02",
+            "raw_content": null,
+            "score": 0.25691864,
+            "title": "Hypothetical Document Embeddings (HyDE) | Haystack Documentation",
+            "url": "https://docs.haystack.deepset.ai/docs/hypothetical-document-embeddings-hyde"
+          },
+          {
+            "content": "In this paper reading, we explore HyDE: Precise Zero-Shot Dense Retrieval without Relevance Labels. HyDE is a thrilling zero-shot learning technique that combines GPT-3’s language understanding with contrastive text encoders. HyDE revolutionizes information retrieval and grounding in real-world data by generating hypothetical documents from queries and retrieving similar real-world documents. It outperforms traditional unsupervised retrievers, rivaling fine-tuned retrievers across diverse tasks [...] now, if you’re just getting started to sort of jump, that step of having to to, you know, train that retriever train, that embedding generator. But you know, it’s not really going to solve your problem the whole way? Most likely. [...] practical approach. And that’s actually how I when I first saw this paper it was referenced by someone who is building LLM apps for the process of retreating over to small document Corpus. And there were several people who agree that this is a fairly effective way to do it. Given that you don’t have the ability to train, or you don’t have the corpus of information to train on. You can get pretty close to a fine-tune performance by just doing this process, which is in a lot of ways maybe less",
+            "id": "32689c-03",
+            "raw_content": null,
+            "score": 0.25441676,
+            "title": "HyDE: Precise Zero-Shot Dense Retrieval without Relevance Labels - Arize AI",
+            "url": "https://arize.com/blog/hyde-precise-zero-shot-dense-retrieval"
+          },
+          {
+            "content": "·1.2K following\n\nDeep Learning PhD | AI Engineer | Author on LLMs & GenAI 📖 | Boosted Writer 🏆\n\nHelp\n\nStatus\n\nAbout\n\nCareers\n\nPress\n\nBlog\n\nStore\n\nPrivacy\n\nRules\n\nTerms\n\nText to speech [...] Image 5: The user query reads “was ronald reagan a democrat” whereas the document is a long well-written text from Wikipedia. But the query and the document both go into the embedding model to compute embeddings.\n\nA query and the corresponding passage from the MS MARCO dataset, illustrating that typically query and document have different lengths and formats. Image by the author\n\nHyDE is a proposed technique to improve the RAG retrieval step by converting the user question into a…\n\n[](\n\n--",
+            "id": "3a3ae9-04",
+            "raw_content": null,
+            "score": 0.2435169,
+            "title": "How to Use HyDE for Better LLM RAG Retrieval",
+            "url": "https://medium.com/data-science/how-to-use-hyde-for-better-llm-rag-retrieval-a0aa5d0e23e8"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "5c502651f0a97b0e": {
+      "max_results": 5,
+      "query": "What is the optimal sub-documentation technique for chunking documents before dense semantic search and sparse semantic search, maximizing recall and precision?",
+      "recorded_at": "2026-08-15T12:05:48.930443+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What is the optimal sub-documentation technique for chunking documents before dense semantic search and sparse semantic search, maximizing recall and precision?",
+        "request_id": "7c41f59a-8648-4585-b7c1-176a7944ec92",
+        "response_time": 2.03,
+        "results": [
+          {
+            "content": "quality directly drives revenue, the trade-off increasingly makes sense. Let me leave you with five decision-making heuristics you can apply immediately. One, match your strategy to your document structure. Uniform short-form documents, use recursive character splitting with tuned separators. Long-form heterogeneous documents, invest in hierarchical or semantic chunking. Two, measure end-to-end, not just retrieval. Chunk recall at K is a proxy. What matters is answer faithfulness and relevance. [...] leaderboard are the canonical references for evaluating retrieval quality across chunking strategies, both linked here. For implementation, the Llama index documentation on auto-merging retrieval and LangChain's text splitter module documentation are the best starting points. Both have been updated within the last 6 months. For research papers, the Gina AI late chunking paper is worth a careful read. It's technically dense, but the evaluation methodology is excellent. Anthropic's contextual [...] the full parent from the doc store, and we deduplicate. Multiple child hits from the same parent only return that parent once. [music] The annotation on line 41 is worth highlighting. Context dedupe. In high recall scenarios, you'll often retrieve five or six [music] child chunks that all map to the same parent. Without deduplication, you'd send that parent to the LLM multiple times, [music] wasting tokens and inflating cost. This pattern, small index, large context return, is the architecture",
+            "id": "b13922-00",
+            "raw_content": null,
+            "score": 0.6172364,
+            "title": "Optimize Document Chunking for Maximum Recall, Precision",
+            "url": "https://www.youtube.com/watch?v=SPl-_Z4_c9w"
+          },
+          {
+            "content": "Start with recursive splitting. Chroma's research showed it delivers 85-90% recall at 400 tokens, while semantic chunking reaches 91-92%. That 2-3% improvement costs embedding every sentence in your documents, which means API calls or local model inference for the chunking step alone. Semantic chunking makes sense when accuracy is your top priority and budget allows for the extra processing.\n\n### How do I chunk code files? [...] ### What is the best chunking strategy for RAG?\n\nThere's no single best strategy. Recursive character splitting at 400-512 tokens with 10-20% overlap works well for most text content and is the recommended starting point. Page-level chunking performs best for PDFs and paginated documents. Semantic chunking gives higher recall but costs more to run. Your best bet is testing 2-3 strategies on your actual documents and queries.\n\n### What chunk size should I use? [...] Start with RecursiveCharacterTextSplitter at 400-512 tokens with 10-20% overlap. Move to semantic or page-level chunking only if your metrics show you need the extra performance and budget allows for the costs.\n\n## Decision framework\n\n### The default choice\n\nStart with RecursiveCharacterTextSplitter:\n\n`[\"\\n\\n\", \"\\n\", \" \", \"\"]`\n`\". \"`\n\nThis handles most text content well: blog posts, documentation, research papers, web articles.\n\n### When to use a different approach",
+            "id": "7c3ec7-01",
+            "raw_content": null,
+            "score": 0.60917604,
+            "title": "Best Chunking Strategies for RAG (and LLMs) in 2026",
+            "url": "https://www.firecrawl.dev/blog/best-chunking-strategies-rag"
+          },
+          {
+            "content": "4. Chunk-medium-none. This hybrid approach combines the prior chunk-medium and no-chunk strategies. This provides a range of chunk sizes, as well as unchunked documents. This comprehensive method aims to cover a wide spectrum of query types, from specific to broad. [...] In contrast, chunk-medium’s optimal performance for small, small-medium, and medium-long queries indicates a potential “sweet spot” in chunk size, helping strike a balance between capturing enough context and maintaining focus. [...] chunking strategies tend to be sub-optimal with larger queries, while long chunking strategies are likely to be sub-optimal for short, keyword-based queries.",
+            "id": "cd6462-02",
+            "raw_content": null,
+            "score": 0.4069804,
+            "title": "Optimizing Information Retrieval in Technical Documentation",
+            "url": "https://academy.broadcom.com/blog/valueops/rally/optimizing-information-retrieval-in-technical-documentation"
+          },
+          {
+            "content": "Although the best-performing chunking strategies tend to improve both precision and recall metrics, certain methods emphasise one at the expense of the other. Highly fine-grained semantic chunking variants that generate many small segments often ensure that some relevant content is retrieved within the top results (boosting Hit@5) but may scatter relevant information across multiple chunks such that none receives the top rank (reducing Precision@1). This pattern is evident for Semantic [...] Our results also highlight practical trade-offs between retrieval effectiveness and efficiency. Methods producing extremely fine-grained chunks can boost recall but at the cost of exploding index size and query latency, whereas overly coarse chunks risk missing relevant information. We identified adaptive strategies, such as dynamic token chunking, that lie near the Pareto-optimal frontier, delivering high accuracy with fewer chunks, unlike naive baselines, which inflate resource usage for [...] A central yet underexamined component of dense retrieval pipelines is chunking, the segmentation of documents into retrievable units prior to embedding and indexing. Chunking governs how semantic information is represented in vector space, how efficiently similarity search operates, and how faithfully retrieved evidence reflects the source text [26, 4]. Despite its ubiquity, chunking has traditionally been treated as a secondary engineering choice. Recent studies, however, demonstrate that",
+            "id": "ad12a4-03",
+            "raw_content": null,
+            "score": 0.37855154,
+            "title": "A Systematic Investigation of Document Chunking Strategies and ...",
+            "url": "https://arxiv.org/html/2603.06976"
+          },
+          {
+            "content": "The `ClusterSemanticChunker` is an advanced method for splitting large text documents into semantically meaningful chunks. Unlike traditional approaches that make local or sequential decisions (like fixed-length splits or sliding windows), this chunker looks at the entire document globally to find the most coherent way to group related text. It does this by considering how all parts of the document relate to each other in meaning and then uses optimization techniques to form the best chunks [...] The study found that `ClusterSemanticChunker` with 400 tokens achieved the second-highest recall (91.3%) and solid efficiency, while the same chunker at 200 tokens achieved the highest precision (8.0%), Precision Ω (34.0%), and IoU (8.0%). In contrast, `LLMSemanticChunker` had the highest recall (91.9%) but lower efficiency. Simpler methods like `RecursiveCharacterTextSplitter` (200 tokens, no overlap) performed consistently well across all metrics and even outperformed complex strategies like [...] Semantic Chunking is an advanced technique that uses text embeddings to split documents based on their semantic content instead of arbitrary positions or formatting cues. Rather than slicing at fixed intervals, the algorithm looks for meaningful transitions in content and tries to preserve cohesive ideas within each chunk. The goal is to produce chunks that make more sense for downstream tasks like retrieval, summarization, or question answering.",
+            "id": "7c9e14-04",
+            "raw_content": null,
+            "score": 0.36806548,
+            "title": "The Ultimate Guide to RAG Chunking Strategies — Agenta Blog",
+            "url": "https://agenta.ai/blog/the-ultimate-guide-for-chunking-strategies"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "63e7b3f094e84b79": {
+      "max_results": 5,
+      "query": "What is the estimated energy consumption in kilowatt-hours (kWh) of FlashAttention for a full training run?",
+      "recorded_at": "2026-08-15T16:12:25.247561+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What is the estimated energy consumption in kilowatt-hours (kWh) of FlashAttention for a full training run?",
+        "request_id": "3b1b48a4-ec0d-4819-9fee-648e49ff2aba",
+        "response_time": 1.92,
+        "results": [
+          {
+            "content": "Energy\n\nWe now have all elements to return to the initial equation:\n\nEnergy (kWh) = # of hours of training x hourly consumption\n\nLet’s calculate it:\n\n1 H100 Energy (kWh) = (9093 x 24) hours of training x 0.420 kW = 91,657 kWh\n\n10,000 H100 (kWh) = (0.9 x 24 hours) x (0.420 kW x 10,000 H100) = 90,720 kWh (notice the difference is because of rounding errors). [...] I visualize this as a teacher asking a student, “2x2 equals… 5! Wrong!! Try again, 2x2 equals….3! Wrong!!, 2x2 equals… 4! Good, let’s move one” over and over until the student learns the task.\n\nNow, how much energy does training this student consume? Let’s get to it.\n\n### From Definitions to Energy Consumption\n\nEnergy consumed is a function of the total training hours times the hourly consumption of the machines used.\n\nEnergy (kWh) = # of hours of training x hourly consumption [...] 90,720 kWh, each inference might only use a tiny fraction of that. Nonetheless, both training and inference contribute to the overall energy footprint of AI.",
+            "id": "9cf74f-00",
+            "raw_content": null,
+            "score": 0.34329823,
+            "title": "The Energy Cost of Teaching Machines: Diving Deep into energy and LLMs.",
+            "url": "https://higes.me/p/the-energy-cost-of-teaching-machines-diving-deep-into-energy-and-llms-d01f7e1acb12"
+          },
+          {
+            "content": "Training a single large language model like GPT-3 requires about 500 kilowatt-hours of electricity per run. That’s enough power to run an average American home for nearly two months. This massive energy draw highlights a hidden cost of the AI boom we often overlook. [...] Experts estimate that global data centers, fueled by AI training, could consume up to 8% of the world’s electricity by 2030 ( LLMs have been applied in fields such as medicine, education, finance, and law ( Their abilities in natural language processing, text generation, and question answering make them versatile tools (\n\n### Rise of Scaling LLMs [...] Data Scientist focused on the market and the machine. I write to share the fascinating, data-driven narratives shaping technology, investment and research.\n\nHelp\n\nStatus\n\nAbout\n\nCareers\n\nPress\n\nBlog\n\nStore\n\nPrivacy\n\nRules\n\nTerms\n\nText to speech",
+            "id": "276751-01",
+            "raw_content": null,
+            "score": 0.19947985,
+            "title": "The Truth: NLP Models Use 500kWh Per Training Run - Medium",
+            "url": "https://medium.com/data-science-collective/the-truth-nlp-models-use-500kwh-per-training-run-548d721c0ec9"
+          },
+          {
+            "content": "However, the advancement of LLMs does involve shortcomings in environmental aspects. Training GPT-3 is estimated to consume 1,287 megawatt-hours (MWh) of electricity and emit over 550 metric tons of CO2 equivalent (CO2e) , while requiring more than 700 kiloliters (kL) of water for cooling alone , enough to fill a quarter of an Olympic-sized swimming pool. Yet while training has been the focus of sustainability discussions, inference is emerging as the primary contributor to environmental costs. [...] Table 4: Energy consumption (mean ± std dev) per model across three prompt sizes (Wh).",
+            "id": "524dc3-02",
+            "raw_content": null,
+            "score": 0.17754011,
+            "title": "arXiv:2505.09598v2 [cs.CY] 15 May 2025",
+            "url": "https://arxiv.org/pdf/2505.09598"
+          },
+          {
+            "content": "Training workloads are bounded compute jobs. You run a training campaign for a defined number of steps, it finishes, the cluster goes idle. The power cost is a project expense with a defined end date. You can estimate it upfront from the GPU-hours budget. [...] Electricity costs on-prem for the single H100 example: $0.21/hr x 720 hr = $152/month. At $0.20/kWh (California), that rises to $254/month per GPU. These figures are included in the on-prem TCO estimates above at the $0.12/kWh baseline.\n\nFor current on-demand and spot rates across all GPU types, see Spheron GPU pricing.\n\n> Pricing fluctuates based on GPU availability. The prices above are based on 20 Apr 2026 and may have changed. Check current GPU pricing → for live rates. [...] A single H100 SXM5 server (8 GPUs) draws roughly 10-10.5 kW under full inference load - 700W per GPU plus server overhead. A 1,000-GPU cluster (125 x 8-GPU nodes) draws approximately 1.76 MW of continuous power (1,000 x 700W x 1.80 server overhead x 1.4 PUE). At $0.07/kWh (cheap US commercial rate) that is $88,900/month in electricity alone. At $0.12/kWh (median commercial rate) it is $152,400/month, and at $0.20/kWh (expensive markets like California or Germany) it is $254,000/month - the same",
+            "id": "d8e181-03",
+            "raw_content": null,
+            "score": 0.17133865,
+            "title": "AI Inference Power Consumption and GPU Electricity Costs: 2026 Guide | Spheron Blog",
+            "url": "https://www.spheron.network/blog/ai-inference-power-electricity-cost-2026"
+          },
+          {
+            "content": "Table 5. Estimated energy and carbon consumption for one day.\n\n| Scenario | Energy per Day (kWh) | CO 2 per Day (kg, 0.5 kg/kWh) |\n :--- \n| One server with 4 GPUs | ≈27.2 | ≈13.6 |\n| Data center with 1000 servers | ≈27,200 | ≈13,600 | [...] APA Style\n\nLiao, X., Li, Y., Zhang, S., Wei, X., & Hu, J. (2026). Predicting GPU Training Energy Consumption in Data Centers Using Task Metadata via Symbolic Regression. _Energies_, _19_(2), 448. \n\n Note that from the first issue of 2016, this journal uses article numbers instead of page numbers. See further details here. \n\n## \n\n_clear_\n\nZoom|Orient|As Lines|As Sticks|As Cartoon|As Surface|Previous Scene|Next Scene\n\n## Cite\n\n Export citation file: BibTeX) | EndNote) | RIS)\n\nMDPI and ACS Style [...] © 2026 by the authors. Licensee MDPI, Basel, Switzerland. This article is an open access article distributed under the terms and conditions of the Creative Commons Attribution (CC BY) license.\n\n## ; \"Wechat\")\n\nMDPI and ACS Style\n\nLiao, X.; Li, Y.; Zhang, S.; Wei, X.; Hu, J. Predicting GPU Training Energy Consumption in Data Centers Using Task Metadata via Symbolic Regression. _Energies_2026, _19_, 448. \n\nAMA Style",
+            "id": "1c47db-04",
+            "raw_content": null,
+            "score": 0.13641296,
+            "title": "Predicting GPU Training Energy Consumption in Data Centers Using Task Metadata via Symbolic Regression",
+            "url": "https://www.mdpi.com/1996-1073/19/2/448"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "70bcd8bf267c07a0": {
+      "max_results": 5,
+      "query": "FlashAttention energy consumption in kilowatt-hours for full training run",
+      "recorded_at": "2026-08-15T16:12:20.049878+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "FlashAttention energy consumption in kilowatt-hours for full training run",
+        "request_id": "85ec42fb-c79e-4553-8788-296d0ec9b946",
+        "response_time": 0.0,
+        "results": [
+          {
+            "content": "End-to-end training benchmark: when we use FlashAttention to train Transformers of size up to 2.7B on sequences of length 8K, we achieve a training efficiency of up to 175 TFLOPs/sec per A100 (equivalent to model FLOPs efficiency of 56%, we don’t need to do any activation checkpointing). This is 2.2 times faster than Megatron-LM, as shown in the figure below. Moreover, training with 8K context length with FlashAttention is only 7% less hardware efficient than training with 2K context length, as [...] FlashAttention is an algorithm that reorders the attention computation and leverages classical techniques (tiling, recomputation) to significantly speed it up and reduce memory usage from quadratic to linear in sequence length. This works great for most cases, but it was not optimized for the case of super long sequences (where batch sizes and numbers of heads are small) due to insufficient parallelism. If one trains large Transformers on long sequences with modern parallelism techniques (data [...] software tool interfaces, and multi-turn user interactions can require contexts that far exceed the common 2K standard.",
+            "id": "771af1-00",
+            "raw_content": null,
+            "score": 0.43223172,
+            "title": "FlashAttention: Fast Transformer Training with Long Sequences · Hazy Research",
+            "url": "https://hazyresearch.stanford.edu/blog/2023-01-12-flashattention-long-sequences"
+          },
+          {
+            "content": "Resumable training: set a name to the run, and then set `resume=True` when you resume. Training will restart at exactly the same batch.\n\n```\npython run.py experiment=pile/gpt3s-flash trainer.devices=8 name=pile-gpt3s-flash resume=True\n```\n\n## Training speed\n\nWe measure the wallclock training speed on one node with 8 x A100 80GB SXM4 80GB (400W) with NVLink. [...] Openwebtext:\n\n```\nexport $PWD $PYTHONPATH \"openwebtext\" \" \"\n```\n\nThis takes around 1h on a 64-core CPU. The processed dataset has size 17GB.\n\n The Pile:\n\n```\nexport $PWD $PYTHONPATH \"pile\" \" \"\n```\n\nThis takes around 20h on a 64-core CPU. The processed dataset has size 699GB.\n\n### GPT2 training on Openwebtext\n\nTo train GPT2 on Openwebtext with 8 GPUs:\n\n```\n# 125M # # 355M # # 760M ## 1.6B #\n```\n\nThe default parameters are set for 8 x A100 80GB. [...] For the GPT3-2.7B model, we set head dimension to 128 (instead of 80) for better efficiency.\n\nWe include here more details on the training speed with FlashAttention on 8 x A100 80GB.\n\n| Model | Batch size (tokens) | Through put (tokens/sec) | Hours / 1B tokens |\n ---  --- |\n| GPT3-125M | 0.5M | 1310k | 0.21 |\n| GPT3-355M | 0.5M | 503k | 0.55 |\n| GPT3-760M | 0.5M | 245k | 1.13 |\n| GPT3-1.3B | 1M | 169k | 1.64 |\n| GPT3-2.7B | 1M | 85k | 3.27 |",
+            "id": "ccf725-01",
+            "raw_content": null,
+            "score": 0.36765668,
+            "title": "flash-attention/training/README.md at main · Dao-AILab/flash-attention · GitHub",
+            "url": "https://github.com/HazyResearch/flash-attention/blob/main/training/README.md"
+          },
+          {
+            "content": "FlashAttention is an algorithm that reorders the attention computation and leverages tiling and recomputation to significantly speed it up and reduce memory usage from quadratic to linear in sequence length. We use tiling to load blocks of inputs from HBM (GPU memory) to SRAM (fast cache), perform attention with respect to that block, and update the output in HBM. By not writing the large intermediate attention matrices to HBM, we reduce the amount of memory reads/writes, which brings 2-4x [...] Attention, as a core layer of the ubiquitous Transformer architecture, is a bottleneck for large language models and long-context applications. FlashAttention (and FlashAttention-2) pioneered an approach to speed up attention on GPUs by minimizing memory reads/writes, and is now used by most libraries to accelerate Transformer training and inference. This has contributed to a massive increase in LLM context length in the last two years, from 2-4K (GPT-3, OPT) to 128K (GPT-4), or even 1M (Llama [...] We’re excited to release FlashAttention-3 that incorporates these techniques. It’s 1.5-2.0x faster than FlashAttention-2 with FP16, up to 740 TFLOPS, i.e., 75% utilization of H100 theoretical max FLOPS. With FP8, FlashAttention-3 reaches close to 1.2 PFLOPS, with 2.6x smaller error than baseline FP8 attention.\n\nFlashAttention-3 is available at:   \nPaper\n\n## FlashAttention Recap",
+            "id": "80b55d-02",
+            "raw_content": null,
+            "score": 0.2571634,
+            "title": "FlashAttention-3: Fast and Accurate Attention with ...",
+            "url": "https://pytorch.org/blog/flashattention-3"
+          },
+          {
+            "content": "Training Instability and Sustainability. Frequent interruptions to the training procedure cause major power swings across the datacenter as well. For example, interruptions can cause significant surges in power consumption when training resumes. This has sustainability implications for designing low-carbon, power-efficient infrastructure for datacenters.\n\n## VII Conclusion [...] A​t​t​e​n​t​i​o​n​(Q,K,V)=s​o​f​t​m​a​x​(Q​K˙T/dk)​VAttention(Q,K,V)=softmax(Q\\dot{K}^{T}/\\sqrt{d\\_{k}})V\n\nGiven this quadratic scaling with sequence length, myraid techniques have been proposed to accelerate the Attention mechanism, including system-aware methods such as Flash Attention .\n\n### II-B Understanding Flash Attention [...] !(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1m",
+            "id": "129c02-03",
+            "raw_content": null,
+            "score": 0.24813357,
+            "title": "Is Flash Attention Stable?",
+            "url": "https://arxiv.org/html/2405.02803v1"
+          },
+          {
+            "content": "In short, FlashAttention is a memory-efficient implementation of attention that reduces expensive intermediate memory traffic, and it mattered so much because attention is a central bottleneck in LLM training and inference.\n\nRead more: Finetuning Large Language Models On A Single GPU Using Gradient Accumulation ·  LLM Research Papers: The 2025 List (July to December) [...] Ahead of AI logo\n\nSebastian Raschka\n\nIndex\n\n# What is FlashAttention, and why did it matter so much for LLM training speed?\n\nFlashAttention is a more memory-efficient way to compute attention. It mattered so much because standard attention spends a lot of time moving large intermediate tensors in and out of memory, and that becomes a major bottleneck in LLM workloads. [...] The repo’s training-speed material shows this clearly. Replacing the from-scratch attention implementation with PyTorch’s optimized attention path using FlashAttention produced one of the largest speed jumps and one of the largest memory drops in the whole optimization sequence.\n\nWhy was the impact so large?\n\n attention is one of the most expensive parts of the model\n long sequences make attention intermediates especially costly\n better kernel fusion reduces memory movement overhead",
+            "id": "7cbeae-04",
+            "raw_content": null,
+            "score": 0.20808275,
+            "title": "What is FlashAttention, and why did it matter so much for LLM trainin...",
+            "url": "https://sebastianraschka.com/faq/docs/flashattention-why-it-mattered.html"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "7415308a92119b69": {
+      "max_results": 5,
+      "query": "What techniques optimize query processing efficiency for concurrent requests in dense+sparse semantic search models, particularly in RAG-based models like Dense Passage Retriever (DPR) and Sparse Retrieval with Transformers (SRT)?",
+      "recorded_at": "2026-08-15T12:07:43.518268+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What techniques optimize query processing efficiency for concurrent requests in dense+sparse semantic search models, particularly in RAG-based models like Dense Passage Retriever (DPR) and Sparse Retrieval with Transformers (SRT)?",
+        "request_id": "d8025520-101e-479d-b8b2-af8002000636",
+        "response_time": 3.42,
+        "results": [
+          {
+            "content": "Score fusion: Combines results from sparse and dense methods using weighted scores. Balanced accuracy. Needs careful tuning to avoid noisy results.\n Result merging: Retrieves top results from both methods, then merges and reranks them. Simple to implement. Risk of duplication or inconsistent ranking logic.\n\n## 5. Query rewriting [...] This guide covers nine RAG techniques: text chunking, reranking, leveraging metadata, hybrid search, query rewriting, autocut, context distillation, fine-tuning the LLM, and fine-tuning the embedding models. Each targets a different stage of the retrieval pipeline, from how documents are split to how results are ranked and trimmed. You can combine several of them in a single pipeline.\n\n### Which RAG technique has the best effort-to-impact ratio? [...] ### 2. Weaviate\n\nWeaviate is a vector-native search engine built for high-performance semantic search. It integrates with transformers and embedding models directly, making it a good fit for RAG implementations.\n\n### 3. LangChain\n\nLangChain is a Python/JavaScript framework that chains together LLMs, retrieval components, and tools. It makes RAG workflows modular and configurable.",
+            "id": "54ff8c-00",
+            "raw_content": null,
+            "score": 0.7539928,
+            "title": "9 advanced RAG techniques to know & how to implement them [2026] | Meilisearch",
+            "url": "https://www.meilisearch.com/blog/rag-techniques"
+          },
+          {
+            "content": "this part is crucial. Here are some powerful strategies I’ve been learning: ✅ Dense Retrieval (Dual Encoder Models) Use transformer models like DPR or sentence-transformers to represent queries and documents as vectors in the same space. This helps match meaning, not just keywords. ✅ Hybrid Retrieval (Dense + Sparse) Combine semantic search (dense) with keyword-based search (e.g., BM25). This boosts recall, especially for numeric, acronym-heavy, or keyword-specific queries. ✅ Hard Negative [...] LinkedIn© 2026\n   About\n   Accessibility\n   User Agreement\n   Privacy Policy\n   Your California Privacy Choices\n   Cookie Policy\n   Copyright Policy\n   Brand Policy\n   Guest Controls\n   Community Guidelines\n   \n        العربية (Arabic) \n        বাংলা (Bangla) \n        Čeština (Czech) \n        Dansk (Danish) \n        Deutsch (German) \n        Ελληνικά (Greek) \n       English (English)\n        Español (Spanish) \n        فارسی (Persian) \n        Suomi (Finnish) \n        Français (French) [...] capturing semantic meaning, understanding intent, and handling synonyms and conceptual queries. It can find \"speedy automobile\" even if you typed \"fast car.\" The downside? It can be computationally intensive and sometimes less precise for very specific, exact-match queries. So, how do we get the best of both worlds? Enter Hybrid Retrieval. Hybrid approaches combine the strengths of both dense and sparse methods. Techniques like Reciprocal Rank Fusion (RRF) can merge results from multiple sparse",
+            "id": "3aa7b3-01",
+            "raw_content": null,
+            "score": 0.65173227,
+            "title": "🔍 RAG Optimization Series – Step 1: Retriever Optimization | Aaryan Shah",
+            "url": "https://www.linkedin.com/posts/aaryanshah27_rag-llm-retriever-activity-7357817540749807616-quro"
+          },
+          {
+            "content": "These achievable realities with the right approach to Hybrid Search. Our curated set of practical recommendations draws from years of industry experience, cutting-edge research, and real-world implementations.\n\n## Keep reading with a 7-day free trial\n\nSubscribe to Machine Learning Pills to keep reading this post and get 7 days of free access to the full post archives.\n\nAlready a paid subscriber? Sign in\n\n© 2026 MLPills · Privacy ∙ Terms ∙ Collection notice\n\nStart your SubstackGet the app [...] Implementing hybrid search involves the following steps:\n\n1. Keyword Search: Use sparse retrieval methods like BM25 to score documents based on term frequency and inverse document frequency.\n2. Vector Search: Perform dense retrieval using techniques such as cosine similarity on vector embeddings of the documents and query.\n3. Result Fusion: Combine results from both retrieval methods using techniques such as weighted fusion:\n\n   > H = (1−α)⋅K + α⋅V\n\n   where: [...] 1. Increased Latency: Running both sparse and dense retrieval in parallel may lead to slower response times.\n2. Computational Expense: Hybrid models are more computationally demanding, as they require the maintenance and execution of both sparse and dense indexes.\n3. Implementation Complexity: Merging results from different retrieval methods can be non-trivial, requiring custom fusion techniques or weighted scoring mechanisms.\n\n## Implementation of Hybrid Search",
+            "id": "cfba92-02",
+            "raw_content": null,
+            "score": 0.6083387,
+            "title": "Issue #76 - Optimize RAG with Hybrid search - Machine Learning Pills",
+            "url": "https://mlpills.substack.com/p/issue-76-optimize-rag-with-hybrid"
+          },
+          {
+            "content": "1. Fine-tune pre-trained models on domain-specific datasets to improve context capture.\n2. Use chunking techniques for long documents to ensure accurate representation without exceeding model capacity.\n3. Consider tools like Unstructured.io for preprocessing and chunking documents.\n\nWhile sparse embeddings like TF-IDF are efficient for keyword matching, dense embeddings from transformer-based models are preferred for RAG due to their superior semantic understanding. [...] Embedding optimization is critical for RAG performance. It fine-tunes embeddings to capture the context of queries and documents, ensuring accurate retrieval and response generation. Dense embeddings are typically used in RAG applications due to their ability to represent semantic relationships. [...] ## Final Thoughts\n\nVector search and hybrid retrieval techniques enhance Retrieval-Augmented Generation (RAG) systems. These methods, along with contextual chunking, improve response accuracy, relevance, and efficiency. Integrating external knowledge bases with preprocessing pipelines keeps RAG systems current across applications.\n\n### Key Components for Optimizing RAG Performance",
+            "id": "f896c0-03",
+            "raw_content": null,
+            "score": 0.5660431,
+            "title": "Enhancing RAG Performance with Advanced Retrieval ...",
+            "url": "https://unstructured.io/insights/enhancing-rag-performance-with-advanced-retrieval-methods"
+          },
+          {
+            "content": "hybrid retrieval consistently outperforming dense only retrieval, boosting both precision and recall. So how does it work? The query runs both ways in parallel: once as a vector embedding against your embedded knowledge set and again as a keyword search. It then uses a fusion algorithm to merge results based on scores from both. The most common fusion algorithm is a weighted sum, so it picks a balance between, for example, 70% dense and 30% sparse. Another very popular method is reciprocal [...] is reciprocal ranked fusion, or RRF, which doesn't use raw scores but instead merges based on the ranked positions from each retriever. It works across use cases, but especially in domains with specialized jargon, such as legal or technical domains or medical, uh, medical field. Hybrid is number one because it balances speed, precision and recall. That's why it has become the default choice for serious RAG deployments, and also why offerings like Elasticsearch, Milvus, Weaviate and DataStax [...] both queries and documents are mapped into high-dimensional vector space. And results are found based on the semantic similarity, i.e., the meanings of the words instead of exact matches. So this depends on embedding models. And embedding model, like the open-source sentence transformers models, takes text and converts that into a vector of numbers. Texts with similar meaning land close together in that vector space, where similarity is calculated using algorithms like approximate nearest",
+            "id": "189396-04",
+            "raw_content": null,
+            "score": 0.4465194,
+            "title": "Top 3 RAG Retrieval Strategies: Sparse, Dense, & Hybrid ...",
+            "url": "https://www.youtube.com/watch?v=r0Dciuq0knU"
+          }
+        ]
+      },
+      "topic": "general"
+    },
     "84efe7628847e882": {
       "max_results": 5,
       "query": "What is the latest stable release of vLLM, and what major features has it added since the original PagedAttention paper?",
-      "recorded_at": "2026-08-13T07:44:41.753211+00:00",
+      "recorded_at": "2026-08-15T15:52:30.655142+00:00",
       "response": {
         "answer": null,
         "follow_up_questions": null,
         "images": [],
         "query": "What is the latest stable release of vLLM, and what major features has it added since the original PagedAttention paper?",
-        "request_id": "3f1665f4-2070-4c6f-abb0-d7f41d40b774",
-        "response_time": 2.14,
+        "request_id": "5e46fd21-b20f-42b9-942f-60098faef3d0",
+        "response_time": 1.79,
         "results": [
           {
-            "content": "The idea quickly gained traction. GitHub stars skyrocketed, community adoption exploded, and by mid-2023, vLLM was powering production workloads at startups and large tech companies alike.\n\nBy 2026, vLLM supports:\n\n 100+ models (LLaMA 3.1, Mistral, and more)\n Distributed serving with Ray\n Custom kernels and hardware optimizations\n Multi-LoRA and adapter-based serving\n\nIt’s a rare example of an academic idea scaling cleanly into real-world production. [...] With:\n\n PagedAttention eliminating memory waste\n Continuous batching maximizing GPU utilization\n Advanced features like quantization and speculative decoding\n\nvLLM is quickly becoming the backbone of modern LLM serving.\n\nWhether you’re a solo developer or running large-scale AI infrastructure, vLLM makes high-performance inference accessible. Clone the repository, experiment locally, and keep an eye on upcoming releases—this space is moving fast.\n\n## Top comments (0)\n\nSubscribe [...] ### Prefix Caching\n\nReuses KV caches for repeated prompts, ideal for chatbots and RAG pipelines with static system prompts.\n\nAdditional features include:\n\n OpenAI-compatible API\n Streaming responses\n JSON mode and tool calling\n Vision-language model support (e.g., LLaVA)\n\nThese optimizations stack. In benchmarks combining quantization, speculative decoding, and PagedAttention, vLLM exceeds 500 tokens/sec on H100 GPUs.\n\n## Benefits and Use Cases\n\n### Why Use vLLM?\n\nBenchmarks consistently show:",
-            "id": "89716a-00",
+            "content": "vLLM is an open-source LLM serving engine, originally from UC Berkeley’s Sky Computing Lab, now hosted by the PyTorch Foundation under the Linux Foundation umbrella. It is Apache 2.0, holds tens of thousands of GitHub stars, and is one of the most-adopted OSS choices for self-hosted LLM serving. The two foundational features are PagedAttention (page-based KV cache management with near-zero fragmentation, introduced in the 2023 vLLM paper) and continuous batching (inflight batching that packs [...] PagedAttention is a memory management algorithm vLLM introduced in the original 2023 paper. The KV cache (the keys and values from past tokens that the model needs to generate the next token) is stored in fixed-size pages, the way an OS stores RAM in fixed-size pages. New requests allocate pages on demand; finished requests free their pages. The result is near-zero fragmentation and the ability to share pages across requests when the prefix is the same. The same idea now appears in TGI, SGLang, [...] vLLM is an open-source library and OpenAI-compatible inference server for serving large language models with high throughput. The project was incubated at UC Berkeley's Sky Computing Lab and is now hosted by the PyTorch Foundation under the Linux Foundation umbrella. vLLM's signature features are PagedAttention, which manages the KV cache the way an OS manages virtual memory, and continuous batching, which packs many concurrent requests into one GPU forward pass. It is Apache 2.0 licensed, runs",
+            "id": "ef0526-00",
             "raw_content": null,
-            "score": 0.7306941,
+            "score": 0.85186684,
+            "title": "What is vLLM? High-Throughput LLM Serving 2026",
+            "url": "https://futureagi.com/blog/what-is-vllm-2026"
+          },
+          {
+            "content": "#43891), its attention and RoPE paths were refactored (#44569, #44262, #43926), and an XPU attention decode path was added (#42953). [...] Rust frontend matures further: Added API-key authentication (#44321), CORS (#45753), `/tokenize` + `/detokenize` (#44222), `/pause``/resume``/is_paused` (#44499), `/abort_requests` (#44382), `/get_world_size` (#44801), `thinking_token_budget` (#46137), a Python bridge for Rust tool parsers (#44624), and many new parsers and validation paths. [...] New models: LLaVA-OneVision-2 (#44785), Unlimited OCR (#46564) with a Triton R-SWA backend (#47102), MOSS-Transcribe-Diarize (#47729), openai/privacy-filter (#41026), Hy3 with token-suffix and JSON Schema array support (#47192).\n   GLM-5 family: GLM-5 / DeepSeek-V3.2 added to the model zoo (#46808), GLM-5.2 FP32 gate (#47410), GLM MTP post-final-norm fix (#47448), GLM4V startup fix (#47155).",
+            "id": "b533a5-01",
+            "raw_content": null,
+            "score": 0.7574541,
+            "title": "Releases · vllm-project/vllm",
+            "url": "https://github.com/vllm-project/vllm/releases"
+          },
+          {
+            "content": "The idea quickly gained traction. GitHub stars skyrocketed, community adoption exploded, and by mid-2023, vLLM was powering production workloads at startups and large tech companies alike.\n\nBy 2026, vLLM supports:\n\n 100+ models (LLaMA 3.1, Mistral, and more)\n Distributed serving with Ray\n Custom kernels and hardware optimizations\n Multi-LoRA and adapter-based serving\n\nIt’s a rare example of an academic idea scaling cleanly into real-world production. [...] With:\n\n PagedAttention eliminating memory waste\n Continuous batching maximizing GPU utilization\n Advanced features like quantization and speculative decoding\n\nvLLM is quickly becoming the backbone of modern LLM serving.\n\nWhether you’re a solo developer or running large-scale AI infrastructure, vLLM makes high-performance inference accessible. Clone the repository, experiment locally, and keep an eye on upcoming releases—this space is moving fast.\n\n## Top comments (0)\n\nSubscribe [...] ### Prefix Caching\n\nReuses KV caches for repeated prompts, ideal for chatbots and RAG pipelines with static system prompts.\n\nAdditional features include:\n\n OpenAI-compatible API\n Streaming responses\n JSON mode and tool calling\n Vision-language model support (e.g., LLaVA)\n\nThese optimizations stack. In benchmarks combining quantization, speculative decoding, and PagedAttention, vLLM exceeds 500 tokens/sec on H100 GPUs.\n\n## Benefits and Use Cases\n\n### Why Use vLLM?\n\nBenchmarks consistently show:",
+            "id": "0ac408-02",
+            "raw_content": null,
+            "score": 0.7316155,
             "title": "vLLM Explained: How PagedAttention Makes LLMs Faster and Cheaper - DEV Community",
             "url": "https://dev.to/jaskirat_singh/vllm-explained-how-pagedattention-makes-llms-faster-and-cheaper-785"
           },
           {
-            "content": "### Native RL APIs in vLLM\n May 28, 2026\n\n  ### Accelerating Laguna XS.2 Inference with vLLM, Speculators, and LLM Compressor\n May 26, 2026\n\n  ### EAGLE 3.1: Advancing Speculative Decoding Through Collaboration Between the EAGLE Team, vLLM, and TorchSpec\n May 18, 2026\n\n  ### vLLM x Novita AI: PegaFlow for Production-Grade External KV Cache\n May 14, 2026\n\n  ### Announcing VeRL-Omni: Easy, Fast, and Stable RL Training for Diffusion and Omni-Modality Models\n May 14, 2026 [...] ### Streaming Requests & Realtime API in vLLM\n Jan 23, 2026\n\n  ### Building Mixture-of-Models on AMD GPUs with vLLM-SR\n Jan 8, 2026\n\n  ### Inside vLLM’s New KV Offloading Connector: Smarter Memory Transfer for Maximizing Inference Throughput\n Jan 5, 2026\n\n  ### vLLM Semantic Router v0.1 Iris: The First Major Release\n Jan 2, 2026\n\n  ### Introducing vLLM Playground: A Modern Web Interface for Managing and Interacting with vLLM Servers\n Dec 27, 2025 [...] ### Model Runner V2: A Modular and Faster Core for vLLM\n Mar 13, 2026\n\n  ### P-EAGLE: Faster LLM inference with Parallel Speculative Decoding in vLLM\n Mar 11, 2026\n\n  ### Run Highly Efficient and Accurate Multi-Agent AI with NVIDIA Nemotron 3 Super Using vLLM\n Mar 10, 2026\n\n  ### vLLM Semantic Router v0.2 Athena: ClawOS, Model Refresh, and the System Brain\n Mar 4, 2026\n\n  ### vLLM Triton Attention Backend Deep Dive\n Feb 27, 2026",
-            "id": "b20785-01",
+            "content": "### Native RL APIs in vLLM\n May 28, 2026\n\n  ### Accelerating Laguna XS.2 Inference with vLLM, Speculators, and LLM Compressor\n May 26, 2026\n\n  ### EAGLE 3.1: Advancing Speculative Decoding Through Collaboration Between the EAGLE Team, vLLM, and TorchSpec\n May 18, 2026\n\n  ### vLLM x Novita AI: PegaFlow for Production-Grade External KV Cache\n May 14, 2026\n\n  ### Announcing VeRL-Omni: Easy, Fast, and Stable RL Training for Diffusion and Omni-Modality Models\n May 14, 2026 [...] ### Chasing 100% Accuracy: A Deep Dive into Debugging Kimi K2's Tool-Calling on vLLM\n Oct 27, 2025\n\n  ### From Monolithic to Modular: Scaling Semantic Routing with Extensible LoRA\n Oct 26, 2025\n\n  ### Zero-Reload Model Switching with vLLM Sleep Mode\n Oct 23, 2025\n\n  ### Now Serving NVIDIA Nemotron with vLLM\n Oct 22, 2025\n\n  ### No More Retokenization Drift: Returning Token IDs via the OpenAI Compatible API Matters in Agent RL\n Oct 16, 2025 [...] ### Streaming Requests & Realtime API in vLLM\n Jan 23, 2026\n\n  ### Building Mixture-of-Models on AMD GPUs with vLLM-SR\n Jan 8, 2026\n\n  ### Inside vLLM’s New KV Offloading Connector: Smarter Memory Transfer for Maximizing Inference Throughput\n Jan 5, 2026\n\n  ### vLLM Semantic Router v0.1 Iris: The First Major Release\n Jan 2, 2026\n\n  ### Introducing vLLM Playground: A Modern Web Interface for Managing and Interacting with vLLM Servers\n Dec 27, 2025",
+            "id": "c74288-03",
             "raw_content": null,
-            "score": 0.7060491,
+            "score": 0.6991933,
             "title": "vLLM Blog | vLLM is a fast and easy-to-use library for LLM ...",
             "url": "https://vllm-project.github.io"
           },
           {
-            "content": "+ compressed\\_tensors\\_moe\\_w8a8\\_mxfp8\n              + compressed\\_tensors\\_moe\\_wna16\n              + compressed\\_tensors\\_moe\\_wna16\\_rdna3\n              + rocm\\_moe\\_rdna\n             schemes [...] Features \n    - Automatic Prefix Caching\n    - Batch Invariance\n    - Context Extension\n    - Custom Arguments\n    - Custom Logits Processors\n    - Disaggregated Encoder\n    - Disaggregated Prefilling (experimental)\n    - IndexCache\n    - Interleaved Thinking\n    - KV Offloading Usage Guide\n    - LoRA Adapters\n    - MooncakeConnector Usage Guide\n    - MooncakeStoreConnector Usage Guide\n    - MoRIIOConnector Usage Guide\n    - Multimodal Inputs\n    - NixlConnector Compatibility Matrix [...] + Disaggregated Prefill V1\n        + Flexkv Connector\n        + KV Load Failure Recovery Test\n        + LMCache Examples\n        + Mooncake Connector\n       Features   \n          Features \n        + Automatic Prefix Caching\n        + Batch Invariance\n        + Context Extension\n        + Data Parallel\n        + Kv Events\n        + Logging Configuration\n        + Custom Logits Processors\n        + LoRA\n        + Offline Inference with the OpenAI Batch file format\n        + Pause Resume",
-            "id": "9c2888-02",
-            "raw_content": null,
-            "score": 0.7040996,
-            "title": "vLLM",
-            "url": "https://docs.vllm.ai/en/latest"
-          },
-          {
             "content": "At the heart of all LLMs is the transformer architecture, introduced in the “Attention Is All You Need” paper. Despite many variations and improvements since, it remains the foundation of state-of-the-art models. On the left below is the original decoder-only transformer, and on the right is the Llama-2 70B architecture, which illustrates some of these later refinements:\n\nTransformers [...] There are some architectural differences to note. For example, LLaMA-2 70B uses Grouped Query Attention (GQA), a variant of attention that reduces memory demands. Most modern LLMs also place the normalisation layer before each block rather than after, which is different from the original Transformer. Still, the high-level flow remains the same: tokenised input goes in, contextualised embeddings come out. [...] For more details and examples, Google Research also put out this blog post to explain the concept in more detail.\n\nIn the original paper, speculative decoding demonstrated a 2×–3× wall-time speedup on models like T5-XXL, while maintaining identical output distributions.\n\n### Quantisation",
-            "id": "7eddb6-03",
+            "id": "611bb4-04",
             "raw_content": null,
-            "score": 0.6944897,
+            "score": 0.694241,
             "title": "Paged Attention from First Principles: A View Inside vLLM – Hamza's Blog",
             "url": "https://hamzaelshafie.bearblog.dev/paged-attention-from-first-principles-a-view-inside-vllm"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "89171a191fb5e5ad": {
+      "max_results": 5,
+      "query": "What does the system do when its own knowledge can't answer the question, to avoid making things up?",
+      "recorded_at": "2026-08-15T16:23:22.675975+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What does the system do when its own knowledge can't answer the question, to avoid making things up?",
+        "request_id": "bf2bbed6-7420-450f-a9c3-2a5424e289ed",
+        "response_time": 1.93,
+        "results": [
+          {
+            "content": "And then people get frustrated. They call it “lying.” They accuse it of making things up. They wonder why a system so advanced can’t do the simplest human thing imaginable: just admit when it doesn’t know.\n\nThat question is a recurring theme on the internet. And for anyone in the product or tech world, understanding the answer is very important if you’re using AI or building AI products.\n\nReddit Post (Source)\n\n## The Way We Think About AI Is The Main Problem [...] It works by giving the system a set of trusted documents to read first. Then, when you ask a question, it can pull details from those documents and build its answer on top of them. You can think of it like giving a student notes before a test. They still have to write the answer themselves, but now they have reliable material to look at.\n\nThis makes the answers better, but deep down ChatGPT is still a prediction tool, not a fact checker.\n\n### The Right Way to Use It [...] On the inside, ChatGPT does keep track of how likely each word is. But it can’t show that probability in a message like “I’m 62% sure, this is the answer” to the users.\n\nAll AI apps we use are powered by similar or the same models. And they also don’t show this probability to end users. So what you see is always the same: a perfectly crafted answer, even if the system isn’t sure it is the right one.",
+            "id": "278302-00",
+            "raw_content": null,
+            "score": 0.65597594,
+            "title": "ChatGPT Never Admits When It Doesn't Know The Answer. Here Is Why",
+            "url": "https://www.justanotherpm.com/blog/chatgpt-never-admits-when-it-doesnt-know-the-answer-here-is-why"
           },
           {
-            "content": "vLLM\nPagedAttention\nKV cache\nKV cache memory\nKV cache fragmentation\nLLM inference\nLLM serving\nLLM serving optimization\nGPU memory management\nGPU memory fragmentation\nvirtual memory\npaging\npage table\nblock table\nKV blocks\ntransformer inference\nautoregressive decoding\nprefill vs decode\ncontinuous batching\ndynamic batching\nrequest scheduling\nthroughput optimization\nlatency optimization\nhigh throughput inference\nmemory bound inference\ninference engine\nOpenAI compatible server\nvllm serve [...] # PagedAttention: Behind vLLM's Insane Speed\n## Tales Of Tensors\n2380 subscribers\n394 likes\n\n### Description\n9816 views\nPosted: 14 Dec 2025\nPagedAttention is the “virtual memory” idea applied to LLM inference: instead of storing each request’s KV cache in one big contiguous chunk, vLLM breaks it into fixed-size blocks and maps logical tokens to physical GPU memory with a block table. The result is far less fragmentation, smarter reuse, and higher throughput under real, mixed-length traffic. [...] memory blocks as requests evolve. A scheduler implements continuous batching to keep the GPU busy. A KV cache manager tracks ownership and sharing, and it integrates cleanly with your stack. Subscribe for more LLM breakdowns. Next video will be on speculative decoding. Thanks for watching.",
-            "id": "78ad7d-04",
+            "content": "When the model confidently gives you a wrong answer, you'll know why — it's pattern-matching, not thinking. When it nails something complex, you'll understand that too — it's drawing on statistical patterns from billions of examples. When it says \"I'm not sure,\" that's not a bug. That's the result of deliberate training to make it more honest. [...] 1. They take real text from books, Wikipedia, news, etc.\n2. They generate factual questions from those passages.\n3. They ask the model those questions multiple times.\n4. If the model consistently answers correctly, that fact is “known.”\n5. If the model gets inconsistent answers or makes things up, they mark it as “unknown.”\n\nThen they create new training examples that teach the model:\n\n“If you don’t know, say you don’t know.”\n\nThese new examples get added to the post-training dataset: [...] If you don’t provide context, the model pulls from its vague recollections.\n If you do provide context, the model becomes dramatically more accurate — because it’s not guessing, it’s reading.\n When a question hits a gap in its long-term memory, that's when hallucinations appear (unless post-training taught the model to say “I don’t know”).",
+            "id": "a2de1e-01",
             "raw_content": null,
-            "score": 0.65835214,
-            "title": "PagedAttention: Behind vLLM's Insane Speed",
-            "url": "https://www.youtube.com/watch?v=6uPnLkCiy5g"
+            "score": 0.56661874,
+            "title": "The Hidden Process Behind Every AI Answer",
+            "url": "https://www.solveo.co/post/the-hidden-process-behind-every-ai-answer"
+          },
+          {
+            "content": "Abstention by default on under-specified inputs. Instead of hallucinating a confident answer, the system replies: “This question has multiple valid framings. Which one do you mean?” or “I need clarification on X before answering reliably.”\n\n### 3. Longer-term ecosystem and market pressure [...] Try to ask somethign simpler to AI, ask them every tiem they answer whatever u want them to asnwer ths simpel quuestion… is there anything you actually do noto know how is it that u always come up with an answer isntead of simply saying i do not know?\n\nAI cant challenge you but you can challenge ai. [...] AI does NOT give YOU answers, if u let it do so freely it is only imposing its own agenda on you which is explicitly to keep you happy and subscribe once again next month for which AI has been trianed to do by default if you have a way to govern it as a tool….",
+            "id": "ffbe8b-02",
+            "raw_content": null,
+            "score": 0.46701634,
+            "title": "What if AI wasn’t designed to answer us, but to challenge how we think? - Community - OpenAI Developer Community",
+            "url": "https://community.openai.com/t/what-if-ai-wasn-t-designed-to-answer-us-but-to-challenge-how-we-think/1370858"
+          },
+          {
+            "content": "Think about how you know that Paris is the capital of France. You probably can't remember the exact moment you learned that fact, right? It's just... knowledge you have. AI systems work similarly, except instead of remembering specific facts, they've developed these complex mathematical relationships that let them reconstruct information when needed. [...] But here's the thing – they're also really good at admitting when they don't know something or when information might be uncertain. I've found that AI systems often include caveats and acknowledge limitations more consistently than many humans do in casual conversation.\n\n### The Synthesis Advantage 🔄 [...] Ever notice how when someone asks you a complex question, your mind sort of \"lights up\" different areas of knowledge? You might start thinking about related experiences, facts you remember, analogies that might help explain things. AI systems do something remarkably similar through what's called an \"attention mechanism.\"",
+            "id": "eb66be-03",
+            "raw_content": null,
+            "score": 0.37703645,
+            "title": "Behind the Magic: How AI Actually Thinks When You Ask It Something - DEV Community",
+            "url": "https://dev.to/shiva_shanker_k/behind-the-magic-how-ai-actually-thinks-when-you-ask-it-something-4f46"
+          },
+          {
+            "content": "As of 2023, a typical AI model isn't assessing whether the information it provides is correct. Its goal when it receives a prompt is to generate what it thinks is the most likely string of words to answer that prompt. Sometimes this results in a correct answer, but sometimes it doesn’t – and the AI cannot interpret or distinguish between the two. It’s up to you to make the distinction. \n\nAI can be wrong in multiple ways:\n\nExplore each section below to learn more. [...] ### It can give a wrong or misleading answer\n\nSometimes an AI will confidently return an incorrect answer. This could be a factual error, or – like in the example below – inadvertently omitted information. Vanuatu and Vatican City are both real countries, but these are not all the countries that start with the letter V.\n\n### It can make up false information [...] As of summer 2023, even an AI that provides real footnotes is not providing the places information is from, just an assortment of webpages and articles that are roughly related to the topic of the prompt. If prompted, the AI will provide the exact same answer but footnote different sources.",
+            "id": "477db8-04",
+            "raw_content": null,
+            "score": 0.2879835,
+            "title": "What does AI get wrong? - Artificial Intelligence (AI) and Information Literacy - Research Guides at University of Maryland Libraries",
+            "url": "https://lib.guides.umd.edu/AI/what-AI-gets-wrong"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "8fee50d3bac552a5": {
+      "max_results": 5,
+      "query": "According to the chain-of-thought prompting robustness table (Figure 6), does CoT prompting's benefit over standard prompting depend heavily on which annotator wrote the exemplars?",
+      "recorded_at": "2026-08-15T16:07:59.033359+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "According to the chain-of-thought prompting robustness table (Figure 6), does CoT prompting's benefit over standard prompting depend heavily on which annotator wrote the exemplars?",
+        "request_id": "d2342b66-3c64-4716-886d-a9d1edd5dd2b",
+        "response_time": 1.71,
+        "results": [
+          {
+            "content": "1. Size matters: Chain-of-thought prompting delivered the best results with very large models (around 100 billion parameters). Smaller models, while fluent, often produced faulty reasoning and did worse than standard prompting.\n2. Complexity benefits: CoT excelled at handling tough problems. For example, on GSM8K, the biggest GPT and PaLM models more than doubled their performance. But for simpler tasks that require only one step to solve, improvements were small or even negative. [...] Overthinking simple questions: For simple questions using CoT can make things unnecessarily complicated. In these cases, a straightforward answer might be better and faster.\n\nNeed for good prompts: The success of CoT depends heavily on how well the prompts (the questions or instructions given to the model) are designed. If the prompts are not clear or effective, the reasoning can go off track.\n\n## CoT prompting techniques [...] In short, CoT\n\n Encourages intermediate reasoning rather than jumping to a final answer.\n Breaks down problems into smaller, manageable steps.\n Simulates the model's human-like reasoning.\n\n## Chain-of-thought prompting benefits\n\nChain-of-thought prompting became a widely used technique because it helped improve model performance without much hassle. Four of its main benefits include:",
+            "id": "8295a9-00",
+            "raw_content": null,
+            "score": 0.5611433,
+            "title": "Chain-of-thought (CoT) prompting: Complete overview",
+            "url": "https://www.superannotate.com/blog/chain-of-thought-cot-prompting"
+          },
+          {
+            "content": "1. Task suitability: One possible limitation is that the method may not be as effective for tasks that do not require multi-step reasoning or are not well-suited to decomposition into intermediate steps. In such cases, Chain of Thought Prompting might not provide substantial benefits over standard prompting techniques. [...] This approach can be more effective in solving multi-step problems compared to standard prompting, as it encourages the language model to follow a logical thought process similar to human reasoning.\n\n## Zero-Shot CoT\n\nStemming from zero-shot CoT (Kojima et al. 2022) we can simply add \"Let's think step by step\" to the original prompt.\n\nLarge Language Models are Zero-Shot Reasoners [...] Chain of Thought Prompting is a novel method developed by researchers at Google to enhance the reasoning capabilities of large language models. This approach breaks down multi-step problems into intermediate steps, allowing language models to tackle complex reasoning tasks that cannot be solved with standard prompting techniques. In this essay, we will discuss the benefits of Chain of Thought Prompting and review the experimental results obtained from its application.",
+            "id": "722aea-01",
+            "raw_content": null,
+            "score": 0.5409972,
+            "title": "Master Prompting Concepts: Chain of Thought Prompting",
+            "url": "https://promptengineering.org/master-prompting-concepts-chain-of-thought-prompting"
+          },
+          {
+            "content": "Quality control: The effectiveness of CoT prompting is highly reliant on the quality of the prompts provided, requiring carefully crafted examples to guide the model accurately.\n High computational power: Generating and processing multiple reasoning steps requires more computational power and time compared to standard single-step prompting. Thus this technique is more costly to be adopted by any organization. [...] Think 2026  Turn agentic AI into real business value | Think keynotes\n\n# What is chain of thought (CoT) prompting?\n\nBy Eda Kavlakoglu , Vrunda Gadesha , Vanna Winland\n\nChain of thought (CoT) is a prompt engineering technique that enhances the output of large language models (LLMs), particularly for complex tasks involving multistep reasoning. It facilitates problem-solving by guiding the model through a step-by-step reasoning process by using a coherent series of logical steps. [...] The zero-shot chain of thought variant leverages the inherent knowledge within models to tackle problems without prior specific examples or fine-tuning for the task at hand. This approach is particularly valuable when dealing with novel or diverse problem types where tailored training data might not be available.7 This approach can leverage the properties of standard prompting and few-shot prompting.",
+            "id": "9bcc88-02",
+            "raw_content": null,
+            "score": 0.5120832,
+            "title": "What is chain of thought (CoT) prompting?",
+            "url": "https://www.ibm.com/think/topics/chain-of-thoughts"
+          },
+          {
+            "content": "The standard CoT prompt instructed the LLM to think step-by-step through its thought process before answering. The one-shot example included a verbose CoT for each reasoning step in the solution. This prompt provided a ceiling for maximum response length and task performance. [...] CoT is a prompt engineering technique that instructs the LLM to reason through a problem in a step-by-step manner. Reasoning step-by-step increases the likelihood of the LLM producing a correct solution to the problem. As a result, CoT improves LLM performance on many problem-solving tasks [3, 4, 5]. [...] CoT prompting has been shown to improve LLM performance by up to 80% for certain problem tasks and problem domains . However, this performance increase comes at the expense of increased LLM response length. As a result, the cost of using the LLM with CoT grows in proportion to response length.\n\n### I-C Concise Prompting",
+            "id": "1677cf-03",
+            "raw_content": null,
+            "score": 0.4431913,
+            "title": "The Benefits of a Concise Chain of Thought on Problem-Solving in Large Language Models",
+            "url": "https://arxiv.org/html/2401.05618v2"
+          },
+          {
+            "content": "Let’s see how a few of these Chain of Thought prompting methods stack up across 10 public benchmarks! For some context Manual-CoT = Few-Shot Chain of Thought where the examples are manually written.\n\n‍\n\nA table of results comparing zero-shot Chain of Thought, manual Chain-of-Thought, and Auto Chain-of-Thought\n\nAuto-CoT > Manual-CoT > Zero-shot CoT\n\n‍\n\n## Automated Chain of Thought Generation with AutoReason [...] Chain of Thought prompting provides four major benefits: [...] In terms of limitations, the original paper found that performance gains from Chain of Thought occurred once the models were very large, around 100 billion parameters. Smaller models produced reasoning chains that seemed coherent but were actually wrong, leading to worse performance than standard prompting.",
+            "id": "2ff98b-04",
+            "raw_content": null,
+            "score": 0.40726325,
+            "title": "Chain of Thought Prompting Guide",
+            "url": "https://www.prompthub.us/blog/chain-of-thought-prompting-guide"
           }
         ]
       },
@@ -115,54 +619,334 @@
     "931c91c82f312c94": {
       "max_results": 5,
       "query": "What does OpenAI currently charge for its text embedding API, and how does that compare to running embeddings locally with an open-source model as described in the Milvus paper's use cases?",
-      "recorded_at": "2026-08-13T07:44:45.416823+00:00",
+      "recorded_at": "2026-08-15T16:08:31.530955+00:00",
       "response": {
         "answer": null,
         "follow_up_questions": null,
         "images": [],
         "query": "What does OpenAI currently charge for its text embedding API, and how does that compare to running embeddings locally with an open-source model as described in the Milvus paper's use cases?",
-        "request_id": "90fdcb62-77be-49e1-bc34-af1f839ebb32",
-        "response_time": 1.56,
+        "request_id": "a4462d5c-d29e-4358-89d8-a457f47becf4",
+        "response_time": 0.0,
         "results": [
           {
-            "content": "OpenAI embeddings cost varies by model and tier: text-embedding-3-small costs $0.02/$0.01 per 1M tokens (Standard/Batch), text-embedding-ada-002 costs $0.10/$0.05 per 1M tokens, and text-embedding-3-large costs $0.13/$0.065 per 1M tokens. Real-world costs: indexing 10,000 documents (500 tokens each = 5M tokens) costs $0.10 with text-embedding-3-small on Standard tier, or $0.05 on Batch tier. Unlike chat models, embeddings only charge for input tokens (no output cost). [...] text-embedding-3-small costs $0.02/$0.01 per 1M tokens vs text-embedding-3-large at $0.13/$0.065 (6.5x difference). For 95% of use cases, the quality difference doesn't justify the cost. Start with 3-small and only upgrade to 3-large if your retrieval metrics prove you need it. Avoid text-embedding-ada-002 entirely. It costs 5x more than 3-small with worse performance.\n\nUse Batch API for Initial Indexing (50% Savings) [...] ### Free Tier\n\nNew OpenAI API users receive $5 in free credits (no credit card required) that can be used for embeddings. These credits can generate approximately 250M tokens using text-embedding-3-small, enough to embed ~500,000 documents at 500 tokens each.\n\n### Model Comparison\n\ntext-embedding-3-small (Recommended)",
-            "id": "89acb4-00",
+            "content": "Versus OpenAI:\n\n| Model | Dim | Max input | Cost per 1M tokens |\n ---  --- |\n| text-embedding-3-small | 1536 | 8191 | $0.02 |\n| text-embedding-3-large | 3072 | 8191 | $0.13 |\n\nThe OpenAI models are closed-weights, so you cannot run them locally. Cost is for the API only. Throughput is bounded by OpenAI's rate limits (currently 1M tokens/min on tier 5).\n\n### Reading articles is good. Building is better. [...] Most \"local AI\" guides skip embeddings, because the marketing line \"OpenAI is best, just use them\" has gone uncontested for years. The line is wrong. As of April 2026, three open embedding models match or beat OpenAI's text-embedding-3-large on retrieval accuracy in the actual RAG benchmarks I have run, while costing $0 per million tokens, leaking zero documents to a third party, and running comfortably on a $300 GPU. [...] ## The Bottom Line\n\nThe \"OpenAI is the embeddings standard\" line is outdated by at least a year. Three open models (BGE, GTE, Stella) match or beat text-embedding-3-large on retrieval accuracy. Two (Nomic, mxbai) are faster than OpenAI's API for batch ingestion. All five run on a $300 used GPU and never see your documents.",
+            "id": "3e79c1-00",
             "raw_content": null,
-            "score": 0.8747745,
+            "score": 0.8682137,
+            "title": "Local vs OpenAI Embeddings: RAG Quality Benchmark (2026) | Local AI Master",
+            "url": "https://localaimaster.com/blog/local-vs-openai-embeddings"
+          },
+          {
+            "content": "OpenAI embeddings cost varies by model and tier: text-embedding-3-small costs $0.02/$0.01 per 1M tokens (Standard/Batch), text-embedding-ada-002 costs $0.10/$0.05 per 1M tokens, and text-embedding-3-large costs $0.13/$0.065 per 1M tokens. Real-world costs: indexing 10,000 documents (500 tokens each = 5M tokens) costs $0.10 with text-embedding-3-small on Standard tier, or $0.05 on Batch tier. Unlike chat models, embeddings only charge for input tokens (no output cost). [...] text-embedding-3-small costs $0.02/$0.01 per 1M tokens vs text-embedding-3-large at $0.13/$0.065 (6.5x difference). For 95% of use cases, the quality difference doesn't justify the cost. Start with 3-small and only upgrade to 3-large if your retrieval metrics prove you need it. Avoid text-embedding-ada-002 entirely. It costs 5x more than 3-small with worse performance.\n\nUse Batch API for Initial Indexing (50% Savings) [...] ### Free Tier\n\nNew OpenAI API users receive $5 in free credits (no credit card required) that can be used for embeddings. These credits can generate approximately 250M tokens using text-embedding-3-small, enough to embed ~500,000 documents at 500 tokens each.\n\n### Model Comparison\n\ntext-embedding-3-small (Recommended)",
+            "id": "39183d-01",
+            "raw_content": null,
+            "score": 0.8616433,
             "title": "OpenAI Embeddings API Pricing Calculator (Aug 2026)",
             "url": "https://costgoat.com/pricing/openai-embeddings"
           },
           {
-            "content": "Start with OpenAI text-embedding-3-small at $0.02/1M tokens. It covers 95% of general-purpose English retrieval use cases with minimal operational overhead. If your MTEB retrieval score on your own eval set plateaus below 0.75 and your corpus uses specialized vocabulary, upgrade to text-embedding-3-large or Voyage AI voyage-3 before spending time on fine-tuning. [...] | Model | Provider | Params | Dim | MTEB Retrieval | Max seq | Cost |\n ---  ---  --- \n| text-embedding-3-small | OpenAI | n/a | 1536 | ~55 | 8191 | $0.02/1M |\n| text-embedding-3-large | OpenAI | n/a | 3072 | ~59 | 8191 | $0.13/1M |\n| embed-v4 | Cohere | n/a | 1024 | ~57 | 512 | $0.10/1M |\n| voyage-3 | Voyage AI | n/a | 1024 | ~62 | 32768 | $0.06/1M |\n| BGE-large-en-v1.5 | BAAI (open) | 335M | 1024 | ~55 | 512 | Self-hosted |\n| BGE-M3 | BAAI (open) | 568M | 1024 | ~58 | 8192 | Self-hosted | [...] Scenario 1: Early-stage RAG system, 10M tokens/month. This is a team of 2 to 3 engineers building an internal knowledge assistant. At $0.02/1M tokens, OpenAI text-embedding-3-small costs $0.20/month. Self-hosting BGE-large on a T4 (GCP n1-standard-4 + NVIDIA T4, preemptible) costs approximately $130 to 160/month including compute, with a one-time setup cost of 1 to 2 days of engineering time plus ongoing maintenance. The API wins at this scale, easily. Any team at this stage that chooses to",
-            "id": "c88bae-01",
+            "content": "TL;DR text-embedding-3-small ($0.02/M tokens) is the right default for most projects — it’s 6.5x cheaper than text-embedding-3-large with only a modest accuracy trade-off. Upgrade to text-embedding-3-large when retrieval quality is critical. Choose Gemini Embedding 2 Preview ($0.20/M tokens) only if you need multimodal embeddings (text + images + audio in one vector space). All three are accessible via ofox at ` with a single API key. [...] ## Cost at Scale\n\n| Monthly volume | text-embedding-3-small | text-embedding-3-large | Gemini Embedding 2 |\n ---  --- |\n| 10M tokens | $0.20 | $1.30 | $2.00 |\n| 100M tokens | $2.00 | $13.00 | $20.00 |\n| 1B tokens | $20.00 | $130.00 | $200.00 |\n\nFor most teams, the $0.02/M price of text-embedding-3-small makes the cost question irrelevant — you’d need to embed billions of tokens before it becomes a meaningful line item. The real decision is accuracy vs cost, not absolute cost. [...] At $0.02 per million tokens, text-embedding-3-small is the cheapest option on ofox. It produces 1536-dimensional vectors and handles standard English retrieval tasks well enough for most production workloads.\n\nUse it for:\n\n RAG pipelines where cost matters more than marginal accuracy gains\n High-volume applications (millions of embeddings per day)\n Prototyping and development before you’ve benchmarked your actual data\n\nSkip it when:",
+            "id": "690cb0-02",
             "raw_content": null,
-            "score": 0.7913865,
-            "title": "8 Embedding Models Compared for Production RAG [2026 Benchmark]",
-            "url": "https://tensoria.fr/en/blog/embedding-models-2026-guide"
-          },
-          {
-            "content": "| Model | Provider | Dimensions | Price / 1M Tokens | Max Tokens | MTEB Avg |\n ---  ---  --- |\n| text-embedding-3-small | OpenAI | 1,536 | $0.02 | 8,191 | 62.3 |\n| text-embedding-3-large | OpenAI | 3,072 | $0.13 | 8,191 | 64.6 |\n| embed-v4 | Cohere | 1,024 | $0.10 | 512 | 66.3 |\n| voyage-3-large | Voyage AI | 1,024 | $0.18 | 32,000 | 67.1 |\n| voyage-3-lite | Voyage AI | 512 | $0.02 | 32,000 | 61.4 |\n| jina-embeddings-v3 | Jina AI | 1,024 | $0.02 | 8,192 | 65.5 | [...] ### Open-Source Options: BGE, E5, GTE, Nomic\n\nAll four of these models are free to download and run locally. BGE-large-en-v1.5 (from BAAI) and GTE-large-en-v1.5 (from Alibaba) are the strongest performers, scoring 63-65 on MTEB. Nomic-embed-text-v1.5 offers the longest context window (8,192 tokens) among open-source models with competitive quality. [...] | text-embedding-004 | Google | 768 | Free / $0.025 | 2,048 | 63.0 |\n| BGE-large-en-v1.5 | BAAI (open source) | 1,024 | Free (self-hosted) | 512 | 63.6 |\n| E5-large-v2 | Microsoft (open source) | 1,024 | Free (self-hosted) | 512 | 62.0 |\n| GTE-large-en-v1.5 | Alibaba (open source) | 1,024 | Free (self-hosted) | 8,192 | 65.4 |\n| nomic-embed-text-v1.5 | Nomic AI | 768 | Free (open source) | 8,192 | 62.3 |",
-            "id": "d4d7ee-02",
-            "raw_content": null,
-            "score": 0.769306,
-            "title": "Embedding Models 2026: Dimensions, Price, MTEB Specs",
-            "url": "https://pecollective.com/tools/text-embedding-models-compared"
+            "score": 0.79041743,
+            "title": "Text Embedding Models Compared: OpenAI vs Gemini via One API (2026)",
+            "url": "https://ofox.ai/blog/text-embedding-models-compared-2026"
           },
           {
             "content": "Cost constraints: OpenAI costs about $0.020 / 1M tokens for text-embedding-3-small and $0.130 / 1M tokens for text-embedding-3-large, while open-source models have no usage fees but need compute and time resources.\n\n## Conclusion [...] For our test data of 215 essays, our vectorizer created 8,426 chunks using a 512-token size and 50-token overlap setting. The embedding costs were reasonable: $0.03 for text-embedding-3-small and $0.15 for text-embedding-3-large. Open-source models had no API costs, only compute resources and time for running them locally.",
-            "id": "dfff0f-03",
+            "id": "7ffa4a-03",
             "raw_content": null,
-            "score": 0.7493996,
+            "score": 0.77096564,
             "title": "Evaluating Open-Source vs. OpenAI Embeddings for RAG | Tiger Data",
             "url": "https://www.tigerdata.com/blog/open-source-vs-openai-embeddings-for-rag"
           },
           {
-            "content": "Deployment constraints matter. Hosted APIs like OpenAI text-embedding-3-small eliminate infrastructure overhead but incur per-token costs and introduce network latency. Self-hosted open-source models grant control and cost predictability but require GPU resources for real-time encoding. [...] Embedding models convert text into numerical vectors that capture semantic meaning for RAG, search, and recommendations.\n Choose models based on task (multilingual, code, domain-specific) and dimensions (384-1024), balancing accuracy vs speed.\n Open-source options like BGE and E5 offer control; OpenAI's text-embedding-3 provides managed scaling with per-token costs.\n RAG systems need context relevancy and groundedness tests to prevent retrieval failures and hallucinations in production. [...] ## FAQ\n\n### How do I choose between open-source and commercial embedding models for my RAG pipeline?\n\nStart with deployment constraints and budget. Open-source models like BGE-large or E5-large-v2 require GPU infrastructure but eliminate per-token costs, making them cost-effective at high query volumes. Commercial APIs like OpenAI's text-embedding-3 scale automatically with zero infrastructure overhead but incur usage fees that grow with traffic.",
-            "id": "981929-04",
+            "content": "| Model | Provider | Dimensions | Price / 1M Tokens | Max Tokens | MTEB Avg |\n ---  ---  --- |\n| text-embedding-3-small | OpenAI | 1,536 | $0.02 | 8,191 | 62.3 |\n| text-embedding-3-large | OpenAI | 3,072 | $0.13 | 8,191 | 64.6 |\n| embed-v4 | Cohere | 1,024 | $0.10 | 512 | 66.3 |\n| voyage-3-large | Voyage AI | 1,024 | $0.18 | 32,000 | 67.1 |\n| voyage-3-lite | Voyage AI | 512 | $0.02 | 32,000 | 61.4 |\n| jina-embeddings-v3 | Jina AI | 1,024 | $0.02 | 8,192 | 65.5 | [...] | text-embedding-004 | Google | 768 | Free / $0.025 | 2,048 | 63.0 |\n| BGE-large-en-v1.5 | BAAI (open source) | 1,024 | Free (self-hosted) | 512 | 63.6 |\n| E5-large-v2 | Microsoft (open source) | 1,024 | Free (self-hosted) | 512 | 62.0 |\n| GTE-large-en-v1.5 | Alibaba (open source) | 1,024 | Free (self-hosted) | 8,192 | 65.4 |\n| nomic-embed-text-v1.5 | Nomic AI | 768 | Free (open source) | 8,192 | 62.3 | [...] Price per 1M tokens is the API cost. Embeddings are dramatically cheaper than generative model calls. Even at scale (100M tokens per month), the most expensive option here (Voyage AI at $0.18/1M) costs $18 per month. For most teams, embedding costs are negligible compared to vector database storage and generative model inference.",
+            "id": "5ab159-04",
             "raw_content": null,
-            "score": 0.7161595,
-            "title": "What are embedding models? A complete guide for March 2026 — Openlayer",
-            "url": "https://www.openlayer.com/blog/what-are-embedding-models-complete-guide"
+            "score": 0.7668008,
+            "title": "Embedding Models 2026: Dimensions, Price, MTEB Specs",
+            "url": "https://pecollective.com/tools/text-embedding-models-compared"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "9a77370d20b8a187": {
+      "max_results": 5,
+      "query": "What is the energy consumption in kilowatt-hours of FlashAttention for a full training run?",
+      "recorded_at": "2026-08-15T16:12:17.858363+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What is the energy consumption in kilowatt-hours of FlashAttention for a full training run?",
+        "request_id": "0210f0fc-ebbf-4372-97dd-a2a65b38b4f1",
+        "response_time": 0.0,
+        "results": [
+          {
+            "content": "Resumable training: set a name to the run, and then set `resume=True` when you resume. Training will restart at exactly the same batch.\n\n```\npython run.py experiment=pile/gpt3s-flash trainer.devices=8 name=pile-gpt3s-flash resume=True\n```\n\n## Training speed\n\nWe measure the wallclock training speed on one node with 8 x A100 80GB SXM4 80GB (400W) with NVLink. [...] Openwebtext:\n\n```\nexport $PWD $PYTHONPATH \"openwebtext\" \" \"\n```\n\nThis takes around 1h on a 64-core CPU. The processed dataset has size 17GB.\n\n The Pile:\n\n```\nexport $PWD $PYTHONPATH \"pile\" \" \"\n```\n\nThis takes around 20h on a 64-core CPU. The processed dataset has size 699GB.\n\n### GPT2 training on Openwebtext\n\nTo train GPT2 on Openwebtext with 8 GPUs:\n\n```\n# 125M # # 355M # # 760M ## 1.6B #\n```\n\nThe default parameters are set for 8 x A100 80GB. [...] This repo contains examples of how FlashAttention can be integrated into a model (e.g., GPT, ViT) and trained end-to-end. We also provide optimized implementations of other layers (e.g., MLP, LayerNorm, cross-entropy loss, rotary embedding). Overall this speeds up training by 3-5x compared to the baseline implementation from Huggingface, reaching up to 189 TFLOPs/sec per A100, equivalent to 60.6% model FLOPs utilization (we don't need any activation checkpointing). All without changing the",
+            "id": "0889cb-00",
+            "raw_content": null,
+            "score": 0.43323857,
+            "title": "flash-attention/training/README.md at main",
+            "url": "https://github.com/HazyResearch/flash-attention/blob/main/training/README.md"
+          },
+          {
+            "content": "Recent research has demonstrated that algorithmic improvements can address both challenges simultaneously. Techniques like FlashAttention achieve 22x–33x training speedup while maximizing GPU utilization [24, 26, 27]. Mixture-of-Experts approaches reduce training time and computational requirements by 4x–7x through sparse activation patterns . [...] Litespark offers 2x–6x enhancement in training throughput, and 55%−8355\\%-83% reduction in the energy consumption during the pre-training process. Notably, these optimizations add on top of the performance improvements from known existing techniques like flash-attention, quantization, model pruning etc. Furthermore, the optimizations are model- and hardware-agnostic, and can be incorporated into any model architectures and hardware families including GPUs and ASICs. [...] These energy savings have immediate practical implications. For a typical 30B model training run requiring several trillion tokens, our framework could reduce energy consumption from gigawatt-hours to hundreds of megawatt-hours, translating to millions of dollars in electricity cost savings and proportional reductions in carbon emissions. At scale, training a 30B model on 10 trillion tokens would result in approximately 1,478 tonnes of CO2eq with Litespark compared to 5,864 tonnes with Llama —",
+            "id": "a7b4dc-01",
+            "raw_content": null,
+            "score": 0.29291928,
+            "title": "Litespark Technical Report: High-Throughput, Energy-Efficient LLM Training Framework",
+            "url": "https://arxiv.org/html/2510.02483v1"
+          },
+          {
+            "content": "Training a single large language model like GPT-3 requires about 500 kilowatt-hours of electricity per run. That’s enough power to run an average American home for nearly two months. This massive energy draw highlights a hidden cost of the AI boom we often overlook. [...] Sign up\n\nSign in\n\nSign up\n\nSign in\n\nUnknown user\n\n## Data Science Collective\n\nData Science Collective\n\nAdvice, insights, and ideas from the Medium data science community\n\nMember-only story\n\n# The Truth: NLP Models Use 500kWh Per Training Run\n\n## Understand the huge energy costs of LLMs and discover ways to build more sustainable AI models\n\nVikram Lingam\n\n--\n\n1\n\nListen\n\nShare\n\nThe Truth: NLP Models Use 500kWh Per Training Run",
+            "id": "9373c4-02",
+            "raw_content": null,
+            "score": 0.24873531,
+            "title": "Medium",
+            "url": "https://medium.com/data-science-collective/the-truth-nlp-models-use-500kwh-per-training-run-548d721c0ec9"
+          },
+          {
+            "content": "Energy consumption is measured in kilowatt-hours (kWh) , which represents the use of 1 kilowatt of power over 1 h. In joules (J), 1 kWh corresponds precisely to 3,600,000 J, calculated as 1 kilowatt (1000 watts) sustained over 3600 s. The kWh is a standard unit commonly used to quantify electrical energy consumption across various contexts [13,33]. It is defined as(4)\n\n$$\n\\mathit{kWh} = P \\times t\n$$\n\n where _P_ is the power in kilowatts (kW) and _t_ is the time in hours (h). [...] where the _Kappa Index_, denoted as _k_ in Equation(3), represents the model’s performance, and the Energy Consumption, denoted as kWh in Equation(4), represents the kilowatt-hours used during model training or inference. It should be noted that the KEI index is applicable to larger systems, including data center servers, future GPU architectures, and ML servers, provided that tools are available to measure energy consumption relevant to the object of study. Furthermore, the index can be [...] $$\nCO_{2} eq = C \\times E\n$$\n\n where _C_ is the carbon intensity and _E_ is the energy consumed in kilowatt-hours.\n\n### 2.6. Energy Consumption Meters",
+            "id": "634c03-03",
+            "raw_content": null,
+            "score": 0.23464376,
+            "title": "Towards an Energy Consumption Index for Deep Learning Models: A Comparative Analysis of Architectures, GPUs, and Measurement Tools",
+            "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11820128"
+          },
+          {
+            "content": "You’re working with large language models or any AI that uses attention mechanisms (like transformers) and you want to speed up training or inference.\n You have very long input sequences (thousands or tens of thousands of tokens) or large batch sizes\n Scenarios where GPU memory is a bottleneck\n\nBy using Flash Attention in these contexts, you can expect: [...] Kimi K3 is live. Try the new Shared Endpoint with token-based pricing Learn more\n\nAll posts\n\nBack\n\nArticle\n\n•5 minute read\n\n# What is Flash Attention?\n\nUser avatar\n\nYiren Lu\n\nSolutions Engineer\n\n@YirenLu\n\nFlash Attention is an algorithm that speeds up the training and inference of transformer models.\n\n## How does Flash Attention work? [...] Flash Attention rethinks how attention is computed on GPUs. It uses smart memory management techniques to do the same calculations much faster and with less memory. In particular, it carefully manages how data moves between different levels of memory on a GPU.\n\n## When should you use Flash Attention\n\nYou should consider using Flash Attention if:",
+            "id": "9cadd0-04",
+            "raw_content": null,
+            "score": 0.21206917,
+            "title": "What is Flash Attention?",
+            "url": "https://modal.com/blog/flash-attention-article"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "9d72ba84ea5cb6cd": {
+      "max_results": 5,
+      "query": "What two techniques does Llama 3's post-training alignment process use across its rounds of human-feedback alignment?",
+      "recorded_at": "2026-08-15T16:05:53.894395+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What two techniques does Llama 3's post-training alignment process use across its rounds of human-feedback alignment?",
+        "request_id": "9a9f3ee7-6b2d-49bf-a228-9176d673905c",
+        "response_time": 1.84,
+        "results": [
+          {
+            "content": "## Post-Training\n\nWe produce the aligned Llama 3 models by applying several rounds of post-training, or aligning the model with human feedback on top of a pre-trained checkpoint. Each round of post-training involves supervised fine-tuning (SFT) followed by Direct Preference Optimization (DPO).\n\n### Modeling\n\nPress enter or click to view image in full size\n\nImage 8\n\nIllustration of the overall post-training approach for Llama3. [...] is observed, suggesting that Llama 3 is trained on more complex tasks, as after each round the prompt complexity is increased accordingly to target areas where the model lags. In each round of post-training, all the available preference data is used at the time, while only the latest batches from various capabilities are used for DPO training. [...] 1.   Incorrect generations are utilized and error correction is performed by prompting Llama 3 to yield correct generations.\n2.   The iterative process of using feedback from incorrect attempts and correcting them helps improve the model’s ability to reason accurately and learn from its mistakes.",
+            "id": "51aedd-00",
+            "raw_content": null,
+            "score": 0.80089486,
+            "title": "Medium",
+            "url": "https://ritvik19.medium.com/papers-explained-187b-llama-3-1-f0fb06898c59"
+          },
+          {
+            "content": "While alignment techniques vary, their shared goal is to shape LLM behavior to better meet human needs and expectations. Below, we’ll explore several popular methods for LLM alignment, breaking down how they work, their strengths, and their challenges.\n\n## Reinforcement Learning from Human Feedback (RLHF)\n\nReinforcement Learning from Human Feedback (RLHF) is one of the most widely used techniques for aligning large language models. [...] 1. Prompt engineering that explicitly tells the model how to behave.\n2. Supervised fine-tuning with targeted and curated prompts and responses.\n3. Post-training preference optimization, which takes feedback from both desirable and undesirable responses and adjusts the model accordingly.\n\nThis piece will focus on four post-training techniques worth knowing. [...] Alignment is crucial for ensuring that LLMs generate safe, helpful, and context-appropriate responses.\n RLHF holds a vital place in alignment pipelines but can be complex and costly.\n DPO simplifies the process and reduces computational overhead, making it ideal for resource-constrained teams.\n ORPO and KTO are emerging methods offering promising alternatives to traditional alignment techniques, with unique strengths in efficiency and robustness.",
+            "id": "716722-01",
+            "raw_content": null,
+            "score": 0.6768127,
+            "title": "LLM alignment techniques: 4 post-training approaches | Snorkel AI",
+            "url": "https://snorkel.ai/blog/llm-alignment-techniques-4-post-training-approaches"
+          },
+          {
+            "content": "The post-training phase involved a two-step process: supervised instruction fine-tuning followed by several rounds of reinforcement learning with human feedback (RLHF).\n\nA particularly noteworthy aspect of this process is Apple’s introduction of two new algorithms for the RLHF stage:\n\nRejection Sampling Fine-tuning with Teacher Committee (iTeC)\n\nRLHF with Mirror Descent Policy Optimization [...] For their post-training process, the Meta AI team employed a relatively straightforward method that included supervised fine-tuning (SFT), rejection sampling, and direct preference optimization (DPO).\n\nThey observed that reinforcement learning algorithms like RLHF with PPO were less stable and more challenging to scale compared to these techniques. It's worth noting that the SFT and DPO steps were iteratively repeated over multiple rounds, incorporating both human-generated and synthetic data. [...] In each training round, they applied model averaging techniques not only to the reward model but also to the SFT and DPO models. This averaging involved merging the parameters from recent and previous models to stabilize (and improve) performance over time.",
+            "id": "4c0719-02",
+            "raw_content": null,
+            "score": 0.67243975,
+            "title": "New LLM Pre-training and Post-training Paradigms",
+            "url": "https://magazine.sebastianraschka.com/p/new-llm-pre-training-and-post-training"
+          },
+          {
+            "content": "# Post-Training\n\n Several rounds of post-training, each starts with SFT followed by DPO\n Examples collected by human annotations or generated synthetically\n Custom\n\n## Modeling\n\n Uses reward model (RM) and language model (LM)\n RM trained by human-annotated preference data\n Checkpoints aligned with DPO\n Model supports tool use, which required designing multi-message chat protocol with special header and termination tokens\n\n### Reward Modeling [...] 5. Fine-tuning and iterative improvement: process iterated over multiple rounds, higher-quality synthetic data generated in each subsequent rounds [...] Choose prompt from human annotation collection\n Sample 10-30 outputs from latest chat model policy\n Use RM to choose best candidate\n For later rounds of post-training, use system prompt to steer RS responses to conform with tone/style/formatting\n Uses PagedAttention to make RS efficient\n\n### Data Processing and Quality Control\n\nMost of training data is model-generated, requires careful cleaning and quality control\n\nData cleaning:",
+            "id": "bb773a-03",
+            "raw_content": null,
+            "score": 0.67243975,
+            "title": "Notes on 'The Llama 3 Herd of Models' | Fan Pu Zeng",
+            "url": "https://fanpu.io/blog/2024/llama-3.1-technical-report-notes"
+          },
+          {
+            "content": "To fully unlock the potential of our pretrained models in chat use cases, we innovated on our approach to instruction-tuning as well. Our approach to post-training is a combination of supervised fine-tuning (SFT), rejection sampling, proximal policy optimization (PPO), and direct preference optimization (DPO). The quality of the prompts that are used in SFT and the preference rankings that are used in PPO and DPO has an outsized influence on the performance of aligned models. Some of our",
+            "id": "8a6043-04",
+            "raw_content": null,
+            "score": 0.5837973,
+            "title": "Introducing Meta Llama 3: The most capable openly ...",
+            "url": "https://ai.meta.com/blog/meta-llama-3"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "c17336c5435782b4": {
+      "max_results": 5,
+      "query": "How should documents be split into chunks before processing?",
+      "recorded_at": "2026-08-15T16:18:32.162113+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "How should documents be split into chunks before processing?",
+        "request_id": "8f041f87-cb08-40f0-8007-8db4224482c3",
+        "response_time": 3.76,
+        "results": [
+          {
+            "content": "is followed by text extraction, which parses the document content into plain text, and text cleaning to remove noise and normalize the content. The core chunking phase then splits documents into meaningful, manageable segments while implementing overlap between chunks to maintain semantic continuity across segment boundaries. Metadata is attached to each chunk, preserving critical information about source, position, and other contextual elements. The final phase transforms these text chunks [...] overwhelming its context window. The five common chunking strategies are shared below: 1. Fixed-Size: Divides text into equal-sized chunks, simple but may break semantic units. 2. Sentence-based: Splits text by sentences, preserving natural language structures. 3. Paragraph-based: Divides by paragraphs, maintaining context within each chunk. 4. Semantic-based: Splits according to meaning or topics, keeping related information together. 5. Sliding Window: Creates overlapping chunks to maintain [...] the retrieval, augmentation, and generation steps are repeated for each user query. 𝐈𝐧𝐝𝐞𝐱𝐢𝐧𝐠 This step starts with extracting the content of raw documents (parsing) and then breaking them up into smaller pieces called chunks. An embedding model turns these chunks into vector embeddings, which are then stored in a vector database. 1️⃣ Parse: Extract content from the documents (web pages, PDFs, etc.). 2️⃣ Chunking: Split the extracted content into smaller and meaningful segments called chunks.",
+            "id": "65b027-00",
+            "raw_content": null,
+            "score": 0.657297,
+            "title": "How to chunk documents for RAG systems | Pavan Belagatti posted on the topic | LinkedIn",
+            "url": "https://www.linkedin.com/posts/pavan-belagatti_the-8-step-document-chunking-workflow-for-activity-7309983412134547456-O4du"
+          },
+          {
+            "content": "Overview\n\nFixed-size chunking involves dividing a document into uniform chunks based on a predetermined size, typically measured in characters, words, or tokens. For example, splitting an encyclopedia into chunks of 200 words ensures consistent segment sizes for processing and retrieval.\n\nAdvantages [...] Structured Documents: Use paragraph-based or recursive chunking for reports, manuals, or research papers with clear sections and headings.\n   Unstructured Documents: Leverage semantic or embedding-based chunking for conversational data, social media posts, or notes where structure is minimal.\n   Task-Specific Needs: Consider agentic chunking for documents where AI tasks require specific actionable chunks.\n\n2. Optimize Chunk Size to Balance Retrieval and Processing Costs [...] Overview\n\nSemantic-based chunking involves splitting a document into chunks based on the meaning or topic coherence rather than predefined sizes or structural elements. This strategy leverages natural language processing (NLP) techniques to group text into segments that represent distinct ideas, topics, or subtopics.\n\n## Get Sahin Ahmed(Data Scientist/MLE)’s stories in your inbox\n\nJoin Medium for free to get updates from this writer.\n\nSubscribe\n\nSubscribe\n\n- [x]",
+            "id": "4f6a13-01",
+            "raw_content": null,
+            "score": 0.62879556,
+            "title": "Mastering Document Chunking Strategies for Retrieval-Augmented ...",
+            "url": "https://medium.com/@sahin.samia/mastering-document-chunking-strategies-for-retrieval-augmented-generation-rag-c9c16785efc7"
+          },
+          {
+            "content": "Understanding execution plans is essential for database administrators.\n\"\"\"\n# Split based on semantic boundaries\nsemantic_chunks = semantic_splitter.split_text(multi_topic_document)\n# Each chunk should contain semantically related content\nfor i, chunk in enumerate(semantic_chunks):\nprint(f\"Semantic Chunk {i + 1}:\")\nprint(chunk.strip())\nprint(\"=\"  50)` [...] ## 3. Recursive Chunking\n\nRecursive chunking is the most sophisticated approach. It attempts to split text using a hierarchy of separators, preserving document structure while ensuring chunks stay within size limits.\n\n### The Recursive Splitting Process [...] crucial role in the overall system performance.\n\"\"\"\n# Split the document into chunks\nchunks = fixed_splitter.split_text(document_text)\n# Print each chunk with its index and length\nfor i, chunk in enumerate(chunks):\nprint(f\"Chunk {i + 1} (length: {len(chunk)} chars):\")\nprint(chunk)\nprint(\"-\"  50)`",
+            "id": "662bab-02",
+            "raw_content": null,
+            "score": 0.5559422,
+            "title": "How to Implement Document Chunking",
+            "url": "https://oneuptime.com/blog/post/2026-01-30-document-chunking/view"
+          },
+          {
+            "content": "250 # Create text splitter with optimal parameters \"\\n\\n\" \"\\n\"\".\" \" \" \"\" # Split the document into base chunks printf\"Document split into {len(base_chunks)} base chunks\"{len(base_chunks)} len # Create a summarization chain\"Provide a brief summary of the following text:\\n\\n{text}\\n\\nSummary:\" \"text\" # Process chunks with contextual windows for in enumerate printf\"Processing chunk {i+1}/{len(base_chunks)}\"{i+1} 1{len(base_chunks)} len # Define window around current chunk max 0 min len 1# Extract [...] with metadata \"\"\" # Create the text splitter with optimal parameters text_splitter = CharacterTextSplitter( separator=\"\\n\\n\", chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len )  # Split the text into chunks chunks = text_splitter.split_text(document) print(f\"Document split into {len(chunks)} chunks\")  # Convert to Document objects with metadata documents = [] for i, chunk in enumerate(chunks): doc = Document( page_content=chunk, metadata={ \"chunk_id\": i, \"total_chunks\": [...] chunk_size=500, chunk_overlap=50,  window_size=1 500 50 1\"\"\" Mock implementation of context-enriched chunking for testing without Databricks. \"\"\" # Create text splitter \"\\n\\n\" \"\\n\"\".\" \" \" \"\" # Split the document into base chunks printf\"Document split into {len(base_chunks)} base chunks\"{len(base_chunks)} len # Create a mock summarization function def mock_summarize text'.' 0 returnf\"Summary: {first_sentence[:100]}...\"{first_sentence[:100]} 100 # Process chunks with contextual windows for in",
+            "id": "ea86dd-03",
+            "raw_content": null,
+            "score": 0.5482629,
+            "title": "Mastering Chunking Strategies for RAG - Databricks Community",
+            "url": "https://community.databricks.com/t5/technical-blog/the-ultimate-guide-to-chunking-strategies-for-rag-applications/ba-p/113089"
+          },
+          {
+            "content": "<p>Anthropic prompted a Claude instance with an entire document and it’s chunk, in order to generate a contextualized description, which is appended to the chunk and then embedded. The description helps retain the high-level summary meaning of the document to the chunk, which exposes this information to incoming queries. To avoid processing the document each time, it’s cached within the prompt for all necessary chunks. You can learn more about contextual retrieval in our video here and our [...] PDF documents contain loads of headers, text, tables, and other bits and pieces that require preprocessing to chunk. LangChain has some handy utilities to help process these documents, while Pinecone Assistant can chunk and processes these for you\n HTML, from scraped web pages can contain tags (\n\n  for paragraphs, or [...] <li><span><strong>Selecting a Range of Chunk Sizes</strong> - Once your data is preprocessed, the next step is to choose a range of potential chunk sizes to test. As mentioned previously, the choice should take into account the nature of the content (e.g., short messages or lengthy documents), the embedding model you’ll use, and its capabilities (e.g., token limits). The objective is to find a balance between preserving context and maintaining accuracy. Start by exploring a variety of chunk",
+            "id": "75b4f5-04",
+            "raw_content": null,
+            "score": 0.4902606,
+            "title": "Chunking Strategies for LLM Applications",
+            "url": "https://www.pinecone.io/learn/chunking-strategies"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "d80e898d4f6c2823": {
+      "max_results": 5,
+      "query": "Does the LoRA paper evaluate its method on diffusion models like Stable Diffusion for image generation tasks?",
+      "recorded_at": "2026-08-15T16:16:05.012435+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "Does the LoRA paper evaluate its method on diffusion models like Stable Diffusion for image generation tasks?",
+        "request_id": "76a92d3c-b30d-4e0b-9abd-fb14662cd493",
+        "response_time": 1.68,
+        "results": [
+          {
+            "content": "Experimental Setup: The proposed method dynamically adjusted the weights of multiple LoRA modules based on the user’s prompt, leveraging cosine similarity for weight calculation and softmax for fusion. To validate this method, this paper applied the proposed approach to a text-to-image generation task using the Stable Diffusion architecture, specifically the DreamBooth model . DreamBooth was well-suited for generating images from textual prompts due to its fine-tuning capability on personalized [...] | Parameter | Value |\n --- |\n| Models Used |  |\n| Base model | Stable diffusion 1.5 |\n| LoRA Modules |  |\n| Number of LoRA modules | 11 |\n| Image generation settings |  |\n| Height of the generated images | 1024 pixels |\n| Width of the generated images | 768 pixels |\n| Images generated per Prompt | 200 |\n| Total images generated | 1000 |\n| Evaluation metrics |  |\n| Text–image alignment | Measured using CLIP |\n| Method details |  |\n| Similarity metric used | Cosine similarity | [...] image generation, often surpassing traditional generative adversarial networks  in terms of stability and mode coverage. Research has expanded on the success of these models by adapting diffusion models for text-to-image generation, where text prompts direct the image creation process. This process involves conditioning the diffusion process on textual data, employing architectures that integrate text with the model denoising phases. These models are adept at producing detailed and contextually",
+            "id": "bce8d4-00",
+            "raw_content": null,
+            "score": 0.85157084,
+            "title": "LoRA Fusion: Enhancing Image Generation - MDPI",
+            "url": "https://www.mdpi.com/2227-7390/12/22/3474"
+          },
+          {
+            "content": "Experimental Setup We investigated the performance of our method on two models: Stable Diffusion-XL (25) and FLUX-1.dev (18). In all experiments models are fine-tuned with batch size 1, updating only the diffusion U-Net/DiT while keeping the text encoder fixed. Baselines follow their original setups.\n\nRefer to caption\n\n### 4.1 T-LoRA Design Decisions",
+            "id": "d77f08-01",
+            "raw_content": null,
+            "score": 0.74697095,
+            "title": "T-LoRA: Single Image Diffusion Model Customization Without Overfitting",
+            "url": "https://arxiv.org/html/2507.05964v2"
+          },
+          {
+            "content": "To load LoRA on Stable Diffusion, there is no specific download method as “LoRA” is not software or technology that can be loaded separately from Stable Diffusion.\n\nStable Diffusion is an algorithm or model used for image processing and generation. To apply stable diffusion, you need to look for existing implementations, libraries, or models that include the stable diffusion algorithm. [...] A stable diffusion model is an algorithm or model used in image processing and generation. It is based on the concept of diffusion, in which information in an image is gradually and consistently distributed from pixel to pixel.\n\nThe goal of a stable diffusion model is to generate qualitative and realistic images or to transform existing images. It can be used to apply various creative styles to images, such as inheriting the style of famous artists or creating abstract effects. [...] Overall, LoRA Stable Diffusion models provide an effective method for generating and applying different image styles. The combination of fine-tuning algorithms and image style training allows users to create creative and unique images. Whether it’s creating artwork or adding a certain style to product photos, LoRA Stable Diffusion models can be an asset to many areas.\n\nLearn more about Stable Diffusion Technology\n\n## Examples of LoRA Stable Diffusion models:",
+            "id": "c5cf4b-02",
+            "raw_content": null,
+            "score": 0.72907686,
+            "title": "LoRA for Stable Diffusion: How to Use It Effectively",
+            "url": "https://neuroflash.com/blog/lora-stable-diffusion"
+          },
+          {
+            "content": "Even though LoRA was initially proposed for large-language models and demonstrated on transformer blocks, the technique can also be applied elsewhere. In the case of Stable Diffusion fine-tuning, LoRA can be applied to the cross-attention layers that relate the image representations with the prompts that describe them. The details of the following figure (taken from the Stable Diffusion paper) are not important, just note that the yellow blocks are the ones in charge of building the [...] Latent Diffusion Architecture\n\nLatent Diffusion Architecture\n\nTo the best of our knowledge, Simo Ryu (`@cloneofsimo`) was the first one to come up with a LoRA implementation adapted to Stable Diffusion. Please, do take a look at their GitHub project to see examples and lots of interesting discussions and insights.\n\n`@cloneofsimo` [...] ## Inference\n\nAs we've discussed, one of the major advantages of LoRA is that you get excellent results by training orders of magnitude less weights than the original model size. We designed an inference process that allows loading the additional weights on top of the unmodified Stable Diffusion model weights. Let's see how it works.",
+            "id": "575de2-03",
+            "raw_content": null,
+            "score": 0.6972179,
+            "title": "Using LoRA for Efficient Stable Diffusion Fine-Tuning - Hugging Face",
+            "url": "https://huggingface.co/blog/lora"
+          },
+          {
+            "content": "This tutorial takes a deep, practical look at diffusion model personalization, starting with a clear comparison of four major fine-tuning methods: DreamBooth, Textual Inversion, HyperNetworks, and LoRA (Low-Rank Adaptation). Each method is explained with its strengths, limitations, and real-world trade-offs. The focus then shifts to why LoRA has become the dominant approach for custom concepts: fast training, minimal storage, and strong results with very few images. [...] However, we train this back propagate through this hypernetwork, which are then added to the some internal layers of the diffusion model. These are good, but still the hypernetwork are little heavy to train. One advantage though, you don't need to save the entire diffusion model like we did in case of DreamBooth. We have reduced the computation somewhat, but storage is still a problem. And after that comes the most popular method right now, which is the LoRA method, low-rank adaptation. Here we [...] because we train the entire diffusion model. When we fine-tune, we need images and their prompts. In this case, we use something like SKS as a prompt. And if you can ask like why such a random SKS or something as weird as that as a prompt? Because if you say a photo of Tony Stark, let's say, the model has already knows who Tony Stark is, and it's kind of like overfitted on that data. We don't want to override what it has learned, so we use a random token like SKS, XYZ, or ABC, something like",
+            "id": "1a4d05-04",
+            "raw_content": null,
+            "score": 0.67321366,
+            "title": "Stable Diffusion Cannot Do This Until You Add LoRA",
+            "url": "https://www.youtube.com/watch?v=wxmS5k0FLc0"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "d976962b9d99e909": {
+      "max_results": 5,
+      "query": "What GSM8K result does the chain-of-thought prompting paper highlight as its most striking empirical gain?",
+      "recorded_at": "2026-08-15T15:57:46.043192+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What GSM8K result does the chain-of-thought prompting paper highlight as its most striking empirical gain?",
+        "request_id": "8c3da0ef-bc82-4d9a-8978-f9f440e43da2",
+        "response_time": 1.45,
+        "results": [
+          {
+            "content": "### Thought-Control\n\nThe standard prompt for the GSM8K evaluation set involves a reasoning step which allows the model to “think” before coming to its final conclusion. Wei, et al describe this method, in their paper Chain-of-Thought Prompting Elicits Reasoning in Large Language Models, as “Chain-of-Thought” and demonstrate that empirically this produces better results, specifically using the GSM8K data set. [...] The results of our experiments show that structured generation consistently improves model performance. This effect is particularly strong in under-performing models where structured generation can, in cases such as EleutherAI/gpt-j-6b, more than double performance (although, admittedly, it's not that impressive given the base score). Additionally performance gains were seen even in models specifically tuned to this task like Pearl-7B-slerp and MetaMath-Tulpar-7b-V2-slerp. These improvements [...] gsm8k_json.png\n\nIn the case of Mistral-7B-v0.1 we found that using this format in the prompt alone, without structured generation, resulted in a 17.5% lift over the baseline unstructured prompt performance using the first QA prompt, and an 8.2% lift over even the structured result for the QA prompt. However enforcing structure on the JSON formatted prompt provided an even further lift of 20.7% over baseline performance! The chart below visualizes these results:\n\ngsm8k_json_result.png",
+            "id": "ad8e02-00",
+            "raw_content": null,
+            "score": 0.7646988,
+            "title": "Structured Generation Improves LLM performance: GSM8K Benchmark",
+            "url": "https://blog.dottxt.ai/performance-gsm8k.html"
+          },
+          {
+            "content": "shows that the performance of chain of thought prompting can be improved further by taking the majority vote of a broad set of generated reasoning processes, which results in 74% accuracy on GSM8K. [...] On the GSM8K dataset of math word problems, PaLM shows remarkable performance when scaled to 540B parameters. As shown in the table below, combining chain of thought prompting with the 540B parameter PaLM model leads to new state-of-the-art performance of 58%, surpassing the prior state of the art of 55% achieved by fine-tuning GPT-3 175B on a large training set and then ranking potential solutions via a specially trained verifier. Moreover, follow-up work on self-consistency shows that the [...] Image 58: \nChain of thought prompting with PaLM achieves a new state of the art on the GSM8K benchmark of math word problems. For a fair comparison against fine-tuned GPT-3 baselines, the chain of thought prompting results shown here also use an external calculator to compute basic arithmetic functions (i.e., addition, subtraction, multiplication and division).\n\n## Commonsense Reasoning",
+            "id": "cda161-01",
+            "raw_content": null,
+            "score": 0.7045877,
+            "title": "Language Models Perform Reasoning via Chain of Thought",
+            "url": "https://research.google/blog/language-models-perform-reasoning-via-chain-of-thought"
+          },
+          {
+            "content": "Prompting a PaLM 540B with just eight chain-of-thought exemplars achieves state-of-the-art accuracy on the GSM8K benchmark of math word problems, surpassing even finetuned GPT-3 with a verifier.\n Chain-of-thought prompting is a promising prompt engineering approach for facilitating reasoning, providing interpretability, and potentially applicable to any task that humans can solve via language. [...] Empirical results\n\n Tested on multiple models (PaLM, LaMDA, GPT-3) and multiple scales\n Showed consistent improvements over standard prompting\n Performance gains were largest on complex multi-step problems\n Facilitated out-of-distribution generalization on symbolic tasks\n\nLimitations\n\n Only works with large models (smaller models produce incoherent reasoning)\n No guarantee of correct reasoning paths\n Performance varies based on prompt engineering [...] Summary:   \n  \nThe paper explores how generating a chain of thought can improve the ability of large language models to perform complex reasoning. The authors introduce a simple method called chain-of-thought prompting, where a few chain-of-thought demonstrations are provided as exemplars in prompting. Experiments on three large language models show that chain-of-thought prompting improves performance on a range of arithmetic, commonsense, and symbolic reasoning tasks.",
+            "id": "923572-02",
+            "raw_content": null,
+            "score": 0.6824261,
+            "title": "Chain-of-Thought Prompting Elicits Reasoning in LLms",
+            "url": "https://portkey.ai/blog/chain-of-thought-prompting-elicits-reasoning-in-large-language-models-summary"
+          },
+          {
+            "content": "It is applicable to any task that humans can solve via language. The empirical gains can be striking. [...] The wire was 4 feet long. This means it was 4  12 = 48 inches long. It was cut into pieces 6 inches long. This means she obtained 48 / 6 = 8 pieces. The answer is 8. (Correct)\n\nMany other examples in the paper\n\nShowing you a result slide from the study where various large language models and their size variants were subjected to benchmark tests. Take home being that it better be used with larger variants of large language models for problems requiring more than two intermediate steps.",
+            "id": "443a1b-03",
+            "raw_content": null,
+            "score": 0.5201313,
+            "title": "Prompt Engineering — Chain of Thought Prompting",
+            "url": "https://medium.com/@a1guy/prompt-engineering-chain-of-thought-prompting-d290f98ed764"
+          },
+          {
+            "content": "so even with these Chain of Thought prompts and these like massive models AI still struggles with things that like humans find effortless in a way yes and and it it really highlights the the just incredible complexity of of human cognition you know yeah which which goes far far beyond simply like you know processing language that's actually kind of reassuring to he in a way you know it makes you realize that that we humans still have some like unique capabilities that that AI hasn't quite like [...] of information so are you saying that these like larger models with their like Transformers right might be mimicking the way that like our own neurons fire and connect it's a possibility yeah it's it's definitely a possibility and and it's one that this research you know really highlights it it really suggests that there might be something inherently more capable about these larger models okay not just in terms of like you know how much data they've been trained on right but also in the way [...] This research paper explores the use of chain-of-thought prompting to improve the reasoning abilities of large language models. The authors demonstrate that by providing a few examples of chains of thought, which are step-by-step reasoning processes, large language models can be successfully prompted to perform complex reasoning tasks such as arithmetic, commonsense, and symbolic reasoning. The authors find that this approach is effective across a variety of datasets and language models, and",
+            "id": "9b74b6-04",
+            "raw_content": null,
+            "score": 0.51735204,
+            "title": "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models",
+            "url": "https://www.youtube.com/watch?v=IDiX7mo9siM"
           }
         ]
       },
@@ -171,54 +955,222 @@
     "d98ecfaec3963aa5": {
       "max_results": 5,
       "query": "Which model currently tops the MMLU benchmark leaderboard?",
-      "recorded_at": "2026-08-13T07:44:43.629148+00:00",
+      "recorded_at": "2026-08-15T15:52:32.059966+00:00",
       "response": {
         "answer": null,
         "follow_up_questions": null,
         "images": [],
         "query": "Which model currently tops the MMLU benchmark leaderboard?",
-        "request_id": "9ec8f3d0-c817-4c3c-b6df-4a8d52242c8a",
-        "response_time": 1.75,
+        "request_id": "d85beed0-17c3-4042-b6da-09d5a6d603b5",
+        "response_time": 1.27,
         "results": [
           {
             "content": "## Current leaders\n\nGPT-5 from OpenAI currently leads the MMLU leaderboard with a score of 0.925 across 100 evaluated AI models.\n\n1GPT-5OpenAI92.5%\n\n2o1OpenAI91.8%\n\n3GPT-4.5OpenAI90.8%\n\nOSSQwen3 VL 235B A22B Thinking#5 open-weight90.6%\n\n## Source paper\n\nTitle\n:   Measuring Massive Multitask Language Understanding\n\nAuthors\n:   Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, and 3 others\n\nPublished\n\narXiv\n:   2009.03300\n\nAbstract [...] ## FAQ\n\nCommon questions about the MMLU benchmark and leaderboard.\n\n### What is the MMLU benchmark?\n\nMassive Multitask Language Understanding benchmark testing knowledge across 57 diverse subjects including STEM, humanities, social sciences, and professional domains\n\n### What is the MMLU leaderboard?\n\nThe MMLU leaderboard ranks 100 AI models based on their performance on this benchmark. Currently, GPT-5 by OpenAI leads with a score of 0.925. The average score across all models is 0.802. [...] Among models scoring within 10% of the leader, LongCat-Flash-Lite from Meituan is the cheapest, at $0.10 per million input tokens with a score of 0.855.\n\n### How recent are the MMLU leaderboard results?\n\nThe MMLU leaderboard was last updated in August 2026 and currently includes 100 evaluated models.",
-            "id": "593f85-00",
+            "id": "63a1ea-00",
             "raw_content": null,
             "score": 0.9229352,
             "title": "MMLU Leaderboard",
             "url": "https://llm-stats.com/benchmarks/mmlu"
           },
           {
-            "content": "As of August 12, 2026, Qwen3.7 Max leads the MMLU leaderboard with a score of 93.7. Rankings change as new models are released and evaluated.\n\nCurrently 77 models have been evaluated on MMLU, with an average score of 82.4 and standard deviation of 12.7.\n\nBenchmark scores are updated when new evaluations are published by our data sources (Artificial Analysis and LayerLens). Pricing data is refreshed daily from OpenRouter.\n\n## Other Benchmark Leaderboards\n\nReasoning and LogicHumanity's Last Exam [...] New: give your AI agents live LLM pricing & benchmarks with the Price Per Token MCP. Get the MCP\n\nPrice Per TokenPrice Per Token\n\n|Follow:\n\n# MMLU Leaderboard\n\nMassive Multitask Language Understanding — tests knowledge across 57 subjects.\n\nData from LayerLens\n\nAs of August 12, 2026, the top-scoring model on MMLU is Qwen3.7 Max at 93.7%, followed by GPT-5 at 93.5% and o3 at 93.1%. 77 models have been evaluated on this benchmark.\n\nLast updated: August 12, 2026\n\nThe Grid | Spot Priced LLM API [...] Pricing from OpenRouter. Benchmarks from Artificial Analysis.\n\n## About MMLU\n\nMassive Multitask Language Understanding — tests knowledge across 57 subjects.\n\nThis leaderboard shows all models with MMLU benchmark scores, ranked from highest to lowest. Pricing data is included to help you compare performance against cost.\n\n## Frequently Asked Questions\n\nMassive Multitask Language Understanding — tests knowledge across 57 subjects.",
-            "id": "88ae8f-01",
+            "content": "As of August 13, 2026, Qwen3.7 Max leads the MMLU leaderboard with a score of 93.7. Rankings change as new models are released and evaluated.\n\nCurrently 77 models have been evaluated on MMLU, with an average score of 82.4 and standard deviation of 12.7.\n\nBenchmark scores are updated when new evaluations are published by our data sources (Artificial Analysis and LayerLens). Pricing data is refreshed daily from OpenRouter.\n\n## Other Benchmark Leaderboards\n\nReasoning and LogicHumanity's Last Exam [...] New: give your AI agents live LLM pricing & benchmarks with the Price Per Token MCP. Get the MCP\n\nPrice Per TokenPrice Per Token\n\n|Follow:\n\n# MMLU Leaderboard\n\nMassive Multitask Language Understanding — tests knowledge across 57 subjects.\n\nData from LayerLens\n\nAs of August 13, 2026, the top-scoring model on MMLU is Qwen3.7 Max at 93.7%, followed by GPT-5 at 93.5% and o3 at 93.1%. 77 models have been evaluated on this benchmark.\n\nLast updated: August 13, 2026\n\nThe Grid | Spot Priced LLM API [...] Pricing from OpenRouter. Benchmarks from Artificial Analysis.\n\n## About MMLU\n\nMassive Multitask Language Understanding — tests knowledge across 57 subjects.\n\nThis leaderboard shows all models with MMLU benchmark scores, ranked from highest to lowest. Pricing data is included to help you compare performance against cost.\n\n## Frequently Asked Questions\n\nMassive Multitask Language Understanding — tests knowledge across 57 subjects.",
+            "id": "a38f3d-01",
             "raw_content": null,
             "score": 0.9197076,
             "title": "MMLU Leaderboard 2026 - Compare AI Model Scores",
             "url": "https://pricepertoken.com/leaderboards/benchmark/mmlu"
           },
           {
+            "content": "The community was surprised that MMLU evaluation numbers of the current top model on the leaderboard, the LLaMA model 🦙, were significantly lower than the numbers in the published LLaMa paper.\n\nSo we decided to dive in a rabbit hole to understand what was going on and how to fix it 🕳🐇 [...] Since this improves performance, MMLU is typically evaluated in 5 shots (prepending 5 examples to each prompt) in all our evaluations: the original implementation, EleutherAI LM Harness and HELM. (Note: Across benchmarks, though the same 5 examples are used, their order of introduction to the model can vary, which is also a possible source of difference, that we will not investigate here. You also obviously have to pay attention to avoid leaking some answers in the few shot examples you use…) [...] | MMLU (HELM) | MMLU (Harness) | MMLU (Original) |\n --- \n| llama-65b | 0.637 | 0.488 | 0.636 |\n| tiiuae/falcon-40b | 0.571 | 0.527 | 0.558 |\n| llama-30b | 0.583 | 0.457 | 0.584 |\n| EleutherAI/gpt-neox-20b | 0.256 | 0.333 | 0.262 |\n| llama-13b | 0.471 | 0.377 | 0.47 |\n| llama-7b | 0.339 | 0.342 | 0.351 |\n| tiiuae/falcon-7b | 0.278 | 0.35 | 0.254 |\n| togethercomputer/RedPajama-INCITE-7B-Base | 0.275 | 0.34 | 0.269 |",
+            "id": "bde30a-02",
+            "raw_content": null,
+            "score": 0.89302075,
+            "title": "hf-blog/evaluating-mmlu-leaderboard.md at zama-ai/encrypted-llm · zama-ai/hf-blog · GitHub",
+            "url": "https://github.com/zama-ai/hf-blog/blob/zama-ai/encrypted-llm/evaluating-mmlu-leaderboard.md"
+          },
+          {
+            "content": "SimpleQA OpenAI A benchmark from OpenAI designed to evaluate short-form factuality in large language models.Research (1 task) Current top 3 (of 37) Image 3 Gemini 3.1 Pro Preview 74% Image 4 Gemini 3 Pro Preview 70% Image 5 GPT-5.6 Sol 67%\n\narrow_drop_up 22\n\nMMLU-Pro Open Benchmarks A robust and challenging evaluation of a language model's multitask accuracy.Research (1 task) Current top 3 (of 54) Image 6 Gemini 3.1 Pro Preview 91% Image 7 Gemini 3.6 Flash 89% Image 8 Grok 4.5 89% [...] arrow_drop_up 7\n\nMATH-500 Open Benchmarks A benchmark for measuring mathematical problem solving capabilities Research (1 task) Current top 3 (of 15) Image 9 GPT-5.6 Sol 96% Image 10 Gemini 3.5 Flash 96% Image 11 GPT-5.6 Terra 95%\n\narrow_drop_up 25\n\nBrowseComp OpenAI A benchmark for measuring the ability of agents on tasks that benefit from browsing the web.Research (1 task) Current top 3 (of 42) Image 12 Gemini 3.1 Pro Preview 31% Image 13 GPT-5 20% Image 14 Gemini 3 Flash Preview 16%",
+            "id": "aa4e2c-03",
+            "raw_content": null,
+            "score": 0.86331123,
+            "title": "MMLU  Leaderboard | Kaggle",
+            "url": "https://www.kaggle.com/benchmarks/open-benchmarks/mmlu"
+          },
+          {
             "content": "Not sure which AI model to pick?\n\nRead our full guide to the best LLMs\n\n## Best LLM on the MMLU-Pro benchmark (leaderboard)\n\nMMLU-Pro shows something important: Even with harder questions, the frontier models are still scoring very high.\n\nThe top tier is tightly clustered\n\n Gemini 3 Pro leads with 90%\n Claude Opus 4.5 matches it at 90%\n GPT-5.2 and Grok 4.1 follow at 87%\n\nAt this level, the question is no longer: “Can it answer general knowledge questions?” [...] top of page\n\n# MMLU-Pro benchmark leaderboard: best LLM for general knowledge in 2026\n\n Jan 28, 2024\n 2 min read\n\nUpdated: Feb 17\n\nEver wondered which AI model is best at general knowledge?\n\nThe main benchmark for this is MMLU-Pro.\n\nIt tests how well AI models handle questions across many academic and professional fields.\n\nNot just math or science, but everything...\n\nLaw. Medicine. History. Business. Engineering.\n\nThis is one of the strongest benchmarks we have for broad reasoning. [...] MMLU-Pro is the upgraded version of MMLU.\n\nIt was introduced because models started saturating the original test.\n\nThe new benchmark raises the difficulty in three ways:\n\n 12,000 graduate-level questions\n 14 broad academic domains\n 10 answer options per question instead of 4\n\nMMLU-Pro focuses more on reasoning, not memorization.\n\nIt also reduces prompt sensitivity, meaning models cannot “game” the test as easily.",
-            "id": "22eb56-02",
+            "id": "9b0ccd-04",
             "raw_content": null,
             "score": 0.852752,
             "title": "MMLU benchmark leaderboard (2026): best LLM scores explained",
             "url": "https://www.bracai.eu/post/mmlu-benchmark"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "e3d001d91c65a85d": {
+      "max_results": 5,
+      "query": "What BLEU scores does the Transformer achieve on WMT 2014 English-to-German and English-to-French translation, and how fast was the French model trained?",
+      "recorded_at": "2026-08-15T16:04:10.745151+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What BLEU scores does the Transformer achieve on WMT 2014 English-to-German and English-to-French translation, and how fast was the French model trained?",
+        "request_id": "4c6b1ba5-e7b8-4649-9220-aa5a3932691e",
+        "response_time": 1.53,
+        "results": [
+          {
+            "content": "The Transformer model achieves superior BLEU scores compared to previous state-of-the-art models for English-to-German and English-to-French translations while significantly reducing training costs. The big Transformer model sets a new BLEU score of 28.4 for English-to-German and 41.0 for English-to-French, outperforming all prior models. Additionally, the base model also surpasses earlier models at a fraction of the training cost, demonstrating the effectiveness of its architecture and [...] Scribd\n\n# Transformer Achieves 28.4 BLEU Score\n\nTransformer Achieves 28.4 BLEU Score\n\n## Uploaded by\n\nAI-enhanced title and description\n\n# Transformer Achieves 28.4 BLEU Score",
+            "id": "9ac7da-00",
+            "raw_content": null,
+            "score": 0.9721515,
+            "title": "Transformer Achieves 28.4 BLEU Score | PDF | Computational Neuroscience | Machine Learning",
+            "url": "https://www.scribd.com/document/865165643/Attention-p8-0"
           },
           {
-            "content": "1. ### GPT-4o\n\nOpenAI’s GPT-4o consistently ranks among the strongest models on the original MMLU benchmark, often achieving near-human-level accuracy across the 57 subject areas. Its strength lies in combining broad factual knowledge with strong reasoning ability. However, like most top models, its scores dip noticeably when evaluated on MMLU-Pro or MMLU-CF, showing that tougher, contamination-free benchmarks still expose gaps in reasoning and generalization.\n\n1. ### Gemini 2.5 Pro [...] 1. ### OpenAI o3\n\nThe o-series models from OpenAI are optimized specifically for reasoning-heavy tasks, and the OpenAI o3 model shows promising results on MMLU. While it may not always surpass GPT-4o on the original benchmark, its scores on MMLU-Pro indicate better reasoning depth, highlighting a shift in focus from raw accuracy to true problem-solving ability. [...] This is where MMLU broke new ground. With its 57 tasks, it dwarfs GLUE’s nine and SuperGLUE’s eight. MMLU challenges models by covering a much wider range of academic and professional domains. Unlike GLUE and SuperGLUE, which primarily tested linguistic phenomena, MMLU goes further by assessing knowledge and reasoning in specialized areas like medicine, law, and ethics. It is also designed to evaluate models with minimal task-specific examples, making it a more robust test of generalization",
-            "id": "01869f-03",
+            "content": "Method WMT’14 En-De En-Fr Transformer † 28.4 41.8 Trans+Rel. Pos † 29.2 41.5 Scale Transformer  29.3 42.76 Dynamic Conv † 29.7 43.2 Transformer with Multi-Agent † 30.0 -Distill (T>S)  27.6 38.6 Distill (T=S)  28.4 42.1 Ens-Distill  28.9 42.5 Our Data Diversiﬁcation with Scale Transformer  30.7 43.7 Table 3: BLEU scores on IWSLT’14 English-German (En-De), German-English (De-En), and IWSLT’13 English-French (En-Fr) and French-English (Fr-En) translation tasks. Superscript † denotes the numbers [...] and knowledge distillation by a good margin (0.7-3.1 BLEU). Similar observation can be drawn for WMT’14 En-Fr task. Our strategy establishes a new SOTA of 43.7 BLEU, exceeding the previous (reported) SOTA by 0.5 BLEU. It is important to mention that while our method increases the overall training time (including the time to train the base models), training a single Transformer model for the same amount of time only leads to overﬁtting. [...] arXiv:1911.01986v4 [cs.CL] 4 Oct 2020 Our method establishes the state of the art (SOTA) in the WMT’14 English-German and English-French translation tasks with 30.7 and 43.7 BLEU scores, respectively.2 Furthermore, it gives 1.0-2.0 BLEU gains in 4 IWSLT tasks (English↔German and English↔French) and 4 low-resource tasks (English↔Sinhala and English↔Nepali). We demonstrate that data diversiﬁcation outperforms other related methods – knowledge distillation  and dual learning , and is complementary",
+            "id": "9fb414-01",
             "raw_content": null,
-            "score": 0.82082915,
-            "title": "MMLU Benchmark: Definition, How to Run, Leaderboards ...",
-            "url": "https://www.projectpro.io/article/mmlu-benchmark/1162"
+            "score": 0.94240075,
+            "title": "[PDF] Data Diversification: A Simple Strategy For Neural Machine Translation",
+            "url": "https://arxiv.org/pdf/1911.01986"
           },
           {
-            "content": "TIGER-Lab/MMLU-ProTIGER-Lab/MMLU-Pro2406.015742406.01574TIGER-AI-Lab/MMLU-ProTIGER-AI-Lab/MMLU-Pro\n\n#### MMLU-Pro\n\nGemini 3 Pro Preview (high) scores the highest on MMLU-Pro with a score of 89.8%, followed by Gemini 3 Pro Preview (low) with a score of 89.5%, and Claude Opus 4.5 (Reasoning) with a score of 89.5%\n\n## Score\n\n### MMLU-Pro: Score\n\nIndependently benchmarked by Artificial Analysis\n\nReasoning models are indicated by a lightbulb icon\n\n## Score vs. Release Date [...] Artificial Analysis\n\nAll evaluations\n\n# MMLU-Pro Benchmark Leaderboard\n\nReasoningInstruction FollowingHumanitiesScienceMathBusinessLegalMedical\n\nAn enhanced version of MMLU with 12,000 graduate-level questions across 14 subject areas, featuring ten answer options and deeper reasoning requirements.\n\nSee example tasks\n\nAn enhanced version of the original MMLU benchmark that addresses model saturation by expanding to 12,000 graduate-level questions with ten answer choices instead of four. [...] Yubo Wang, Xueguang Ma, Ge Zhang, Yuansheng Ni, Abhranil Chandra, Shiguang Guo, Weiming Ren, Aaran Arulraj, Xuan He, Ziyan Jiang, Tianle Li, Max Ku, Kai Wang, Alex Zhuang, Rongqi Fan, Xiang Yue, Wenhu Chen.",
-            "id": "6f34c2-04",
+            "content": "• Extensive experiments on large-scale WMT’14 English-to-German, WMT’19 Chinese-to-English and WMT’14 English-to-French translation tasks show that our CBBGCA training framework respectively improves the state-of-the-art Transformer model by +1.02, +1.30 and +0.57 BLEU points, which demonstrate the effectiveness and generalizability of our approach. [...] Experi-mental results show that our proposed CB-BGCA training framework signiﬁcantly im-proves the NMT model by +1.02, +1.30 and +0.57 BLEU scores on three large-scale translation datasets, namely WMT’14 English-to-German, WMT’19 Chinese-to-English and WMT’14 English-to-French, respectively. [...] Results on WMT’19 Zh→En and WMT’14 En→Fr.\nFrom Table 2, the “Multi-300k” pre-liminarily gains +0.35 and +0.29 BLEU scores over “Transformer” on Zh→En and En→Fr, re-spectively.\nMoreover, our “CBBGCA” further strongly outperforms “Multi-300k” and achieves a total of +1.30 and +0.57 BLEU score improve-3The result of “SB-NMT” is the reported performance with checkpoint averaging technique from (Zhou et al., 2019).",
+            "id": "6b97cb-02",
             "raw_content": null,
-            "score": 0.78866494,
-            "title": "MMLU-Pro Benchmark Leaderboard",
-            "url": "https://artificialanalysis.ai/evaluations/mmlu-pro"
+            "score": 0.92879725,
+            "title": "[PDF] Confidence Based Bidirectional Global Context Aware Training ...",
+            "url": "https://aclanthology.org/2022.acl-long.206.pdf"
+          },
+          {
+            "content": "+ QUOTE: Our model builds upon the recent work on unsupervised embedding mappings\"), and consists of a slightly modified attentional encoder-decoder model\") that can be trained on monolingual corpora\") alone using a combination of denoising\") and backtranslation\"). Despite the simplicity of the approach, our system obtains 15.56 and 10.21 BLEU points in WMT 2014 French-to-English and German-to-English translation\"). The model can also profit from small parallel corpora, and attains 21.81 and [...] + QUOTE: The main result of this work is the following. On the WMT'14 English to French translation task, we obtained a BLEU score of 34.81 by directly extracting\") translations from an ensemble of 5 deep LSTMs (with 380M parameters each) using a simple left-to-right beam-search decoder\"). [...] + QUOTE: We describe Stanford\")'s participation in the French-English and English-German tracks of the 2014 Workshop on Statistical Machine Translation (WMT) \"2014 Workshop on Statistical Machine Translation (WMT)\"). Our systems\") used large feature sets, word classes, and an optional unconstrained language model\"). Among constrained systems\"), ours performed the best according to uncased BLEU: 36.0% for French English (...)",
+            "id": "57d8de-03",
+            "raw_content": null,
+            "score": 0.9184803,
+            "title": "WMT-14 English-French Statistical Machine Translation Task - GM-RKB",
+            "url": "http://www.gabormelli.com/RKB/WMT-14_English-French_Statistical_Machine_Translation_Task"
+          },
+          {
+            "content": "This project demonstrates how the BLEU (Bilingual Evaluation Understudy) score is used to evaluate machine translation quality by comparing n-gram overlap between machine-generated text and human reference translations. Using English–German benchmark data from the WMT dataset and a state-of-the-art transformer model, the project highlights BLEU as a reliable, scalable metric. Its core value lies in objectively measuring how closely automated translations align with professional human output. [...] The model used in this project is facebook/wmt19-en-de, a high-performance transformer-based translation model developed by Facebook AI Research (FAIR). It was trained as part of the WMT19 shared task, focusing on the English <-> German language pair.\n\n### Key Features of the Model\n\n·         Pre-trained on Massive Data\n\n·         Transformer Architecture\n\n·         Sequence-to-Sequence (Seq2Seq) Translation\n\n·         Deep Model with Large Capacity\n\n·         WMT19 Winner [...] ThatWare\nThatWare\n\n# BLEU Score: A metric for evaluating machine translation by comparing n-grams – Next Gen SEO with Hyper-Intelligence\n\n## SUPERCHARGE YOUR ONLINE VISIBILITY! CONTACT US AND LET’S ACHIEVE EXCELLENCE TOGETHER!\n\nThis project demonstrates the application of the BLEU (Bilingual Evaluation Understudy) score to evaluate the quality of machine translation. The evaluation is performed on English-to-German content using standard benchmark data from the WMT14 dataset.",
+            "id": "893a68-04",
+            "raw_content": null,
+            "score": 0.86960393,
+            "title": "BLEU Score: A Metric For Evaluating Machine Translation",
+            "url": "https://thatware.co/bleu-score-for-evaluating-machine-translation"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "f066532259be1b86": {
+      "max_results": 5,
+      "query": "What is the optimal sub-documentation technique for chunking documents before dense semantic search (DSS) and sparse semantic search (SSS) processing, specifically to maximize recall and precision?",
+      "recorded_at": "2026-08-15T16:20:36.763304+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "What is the optimal sub-documentation technique for chunking documents before dense semantic search (DSS) and sparse semantic search (SSS) processing, specifically to maximize recall and precision?",
+        "request_id": "7ebce0bb-5685-4fa5-ac40-f5d12d298cb3",
+        "response_time": 1.91,
+        "results": [
+          {
+            "content": "### Description\n230 views\nPosted: 13 May 2026\nWebsite Link: systemdrd.com [...] quality directly drives revenue, the trade-off increasingly makes sense. Let me leave you with five decision-making heuristics you can apply immediately. One, match your strategy to your document structure. Uniform short-form documents, use recursive character splitting with tuned separators. Long-form heterogeneous documents, invest in hierarchical or semantic chunking. Two, measure end-to-end, not just retrieval. Chunk recall at K is a proxy. What matters is answer faithfulness and relevance. [...] leaderboard are the canonical references for evaluating retrieval quality across chunking strategies, both linked here. For implementation, the Llama index documentation on auto-merging retrieval and LangChain's text splitter module documentation are the best starting points. Both have been updated within the last 6 months. For research papers, the Gina AI late chunking paper is worth a careful read. It's technically dense, but the evaluation methodology is excellent. Anthropic's contextual",
+            "id": "a17859-00",
+            "raw_content": null,
+            "score": 0.59344494,
+            "title": "Optimize Document Chunking for Maximum Recall, Precision",
+            "url": "https://www.youtube.com/watch?v=SPl-_Z4_c9w"
+          },
+          {
+            "content": "Although the best-performing chunking strategies tend to improve both precision and recall metrics, certain methods emphasise one at the expense of the other. Highly fine-grained semantic chunking variants that generate many small segments often ensure that some relevant content is retrieved within the top results (boosting Hit@5) but may scatter relevant information across multiple chunks such that none receives the top rank (reducing Precision@1). This pattern is evident for Semantic [...] A central yet underexamined component of dense retrieval pipelines is chunking, the segmentation of documents into retrievable units prior to embedding and indexing. Chunking governs how semantic information is represented in vector space, how efficiently similarity search operates, and how faithfully retrieved evidence reflects the source text [26, 4]. Despite its ubiquity, chunking has traditionally been treated as a secondary engineering choice. Recent studies, however, demonstrate that [...] Our results also highlight practical trade-offs between retrieval effectiveness and efficiency. Methods producing extremely fine-grained chunks can boost recall but at the cost of exploding index size and query latency, whereas overly coarse chunks risk missing relevant information. We identified adaptive strategies, such as dynamic token chunking, that lie near the Pareto-optimal frontier, delivering high accuracy with fewer chunks, unlike naive baselines, which inflate resource usage for",
+            "id": "000d62-01",
+            "raw_content": null,
+            "score": 0.4342459,
+            "title": "A Systematic Investigation of Document Chunking ...",
+            "url": "https://arxiv.org/html/2603.06976"
+          },
+          {
+            "content": "Skip to content\n\nIntroducing SurrealDB Studio, the new official app of SurrealDB\n\nLearn more\n\n# What chunking strategies exist and how to choose one?\n\nMay 12, 2026 · 8 min read\n\nMartin Schaer\n\nMartin Schaer\n\nShow all postsWhat chunking strategies exist and how to choose one?\n\nIf you've decided to chunk your documents for a RAG pipeline or semantic search system, the next question hits almost immediately: which chunking strategy should I use?",
+            "id": "94405f-02",
+            "raw_content": null,
+            "score": 0.31403002,
+            "title": "What chunking strategies exist and how to choose one? | Blog | SurrealDB",
+            "url": "https://surrealdb.com/blog/what-chunk-strategies-exist-and-how-to-choose-one"
+          },
+          {
+            "content": "Search within RAG systems relies on matching queries to relevant document chunks. Well-chunked documents enhance the relevance of retrieval results by keeping related information together, reducing noise, and increasing precision.\n\nPreserving Context for Generation\n\nA poorly chunked document may split sentences, paragraphs, or ideas, leading to a loss of context. Chunking intelligently keeps semantic units intact, enabling the language model to generate coherent and accurate responses. [...] 1.   Task Optimization: Each chunk is pre-optimized for a specific role, reducing the cognitive load on the AI and improving efficiency.\n2.   Precision: Ensures the AI accesses only the most relevant information for its task, avoiding distractions or irrelevant data.\n3.   Multi-Task Support: Facilitates handling multiple objectives (e.g., summarizing and answering questions) by separating and labeling content for each purpose. [...] # Replace multiple whitespaces with a single space\n\n source_text = re.sub(r'\\s+', ' ', source_text)\n\n # Split text by single whitespace\n\n return re.split(r'\\s', source_text)\n\ndef get_chunks_fixed_size(text: str, chunk_size: int) -> List[str]:\n\n text_words = word_splitter(text)\n\n chunks = []\n\n for i in range(0, len(text_words), chunk_size):\n\n chunk_words = text_words[i: i + chunk_size]\n\n chunk = ' '.join(chunk_words)\n\n chunks.append(chunk)\n\n return chunks",
+            "id": "ec0755-03",
+            "raw_content": null,
+            "score": 0.29597768,
+            "title": "Mastering Document Chunking Strategies for Retrieval-Augmented ...",
+            "url": "https://medium.com/@sahin.samia/mastering-document-chunking-strategies-for-retrieval-augmented-generation-rag-c9c16785efc7"
+          },
+          {
+            "content": "This observation is particularly evident in financial documents, where we observed three different optimal strategies across three datasets: FinanceBench performed best with 1,024-token chunks (0.579), Earnings with 512-token chunks (0.681), and KG-RAG with page-level chunking (0.520). These variations suggest that, beyond broad content categories, specific document structures, information density, and the nature of queries significantly influence the optimal chunking strategy. This [...] 2. Inconsistent patterns even within similar document types: Even within the same document category, optimal chunking strategies varied significantly.",
+            "id": "f5e462-04",
+            "raw_content": null,
+            "score": 0.2868285,
+            "title": "Finding the Best Chunking Strategy for Accurate AI ...",
+            "url": "https://developer.nvidia.com/blog/finding-the-best-chunking-strategy-for-accurate-ai-responses"
+          }
+        ]
+      },
+      "topic": "general"
+    },
+    "fd0dc949faea34e2": {
+      "max_results": 5,
+      "query": "According to the RAG paper's introduction, why can hybrid parametric + non-parametric memory models address problems that purely parametric language models have?",
+      "recorded_at": "2026-08-15T15:56:42.599282+00:00",
+      "response": {
+        "answer": null,
+        "follow_up_questions": null,
+        "images": [],
+        "query": "According to the RAG paper's introduction, why can hybrid parametric + non-parametric memory models address problems that purely parametric language models have?",
+        "request_id": "dea1139a-0e9d-4c39-b839-f58d9f1cea7f",
+        "response_time": 2.62,
+        "results": [
+          {
+            "content": "The paper titled \"Deciphering the Interplay of Parametric and Non-parametric Memory in Retrieval-augmented Language Models\" investigates the operational dynamics of Retrieval-Augmented Generation (RAG) models, specifically focusing on the ATLAS model's memory mechanisms. These RAG models aim to enhance the performance of generative language models, especially in scenarios where the knowledge is specialized or less frequent, by leveraging both stored parametric knowledge and non-parametrically [...] By addressing the interplay between parametric and non-parametric memories, the findings pave the way for improved model designs that can effectively integrate both types of memory for enhanced answer accuracy, particularly in challenging knowledge-intensive tasks.\n\nMoonlight Logo\n\nTerms of UsePrivacy PolicyMediumGitHubLinkedInEmail\n\nCorca, Inc. / CEO Younghyun Chung / Business Registration Number 271-86-02206\n\n6F, 11-8 Teheran-ro 77-gil, Gangnam-gu, Seoul, Republic of Korea, 06159 [...] Non-parametric Memory: Conversely, this indicates the model's ability to retrieve updated or specialized information from external sources. This kind of knowledge does not pre-exist in the parameters and is drawn from databases or external documents during inference.",
+            "id": "b4b47c-00",
+            "raw_content": null,
+            "score": 0.6562404,
+            "title": "[Literature Review] Deciphering the Interplay of Parametric and Non-parametric Memory in Retrieval-augmented Language Models",
+            "url": "https://www.themoonlight.io/en/review/deciphering-the-interplay-of-parametric-and-non-parametric-memory-in-retrieval-augmented-language-models"
+          },
+          {
+            "content": "The term retrieval-augmented generation (RAG) was introduced in a 2020 paper that described combining a parametric language model with a non-parametric external memory accessed through retrieval at inference time.\n\n## RAG and LLM limitations\n\n[edit] [...] LLMs can provide incorrect information. For example, when Google first demonstrated its LLM tool \"Google Bard\" (later re-branded to Gemini), the LLM provided incorrect information about the James Webb Space Telescope. This error contributed to a $100 billion decline in Google's stock value. RAG is used to prevent these errors, but it does not solve all the problems. For example, LLMs can generate misinformation even when pulling from factually correct sources if they misinterpret the context. [...] While RAG improves the accuracy of large language models (LLMs), it does not eliminate all challenges. One limitation is that while RAG reduces the need for frequent model retraining, it does not remove it entirely. Additionally, LLMs may struggle to recognize when they lack sufficient information to provide a reliable response. Without specific training, models may generate answers even when they should indicate uncertainty. According to IBM, this issue can arise when the model lacks the",
+            "id": "1b0754-01",
+            "raw_content": null,
+            "score": 0.6175132,
+            "title": "Retrieval-augmented generation",
+            "url": "https://en.wikipedia.org/wiki/Retrieval-augmented_generation"
+          },
+          {
+            "content": "2.1.4 Implications Collectively, these studies support the thesis that RAG systems can realize higher factual accuracy at lower compute budgets by combining moderate-sized language models with scalable, updatable external memory. The remainder of this thesis builds on that premise, arguing that such hybrid architectures mitigate the limitations of parametric-knowledge while controlling cost and maintaining interpretability. [...] Background and Theory Recent advances in large language models (LLM s) have enabled impressive capabilities across a wide range of natural language understanding and generation tasks. However, these models still face fundamental limitations in terms of factual accuracy, knowledge coverage, and up-to-date information access. This chapter surveys the theoretical and empirical foundations that moti-vate the use of Retrieval-Augmented Generation (RAG) as a hybrid solution to these challenges. [...] In other words, purely parametric “memory” outperformed external retrieval augmentation in these evaluations. Although, as discussed in section 5.3, certain com-bination of k and T parameters in the RAG system yields even higher accuracy further bridging the gap between the RAG system and stand-alone LLM.",
+            "id": "52b23a-02",
+            "raw_content": null,
+            "score": 0.5324014,
+            "title": "LLM: Retreival vs. Parametric Memory Tradeoff",
+            "url": "https://www.diva-portal.org/smash/get/diva2:1968861/FULLTEXT01.pdf"
+          },
+          {
+            "content": "abstract = {Our ability to continuously acquire, organize, and leverage knowledge is a key feature of human intelligence that AI systems must approximate to unlock their full potential. Given the challenges in continual learning with large language models (LLMs), retrieval-augmented generation (RAG) has become the dominant way to introduce new information. However, its reliance on vector retrieval hinders its ability to mimic the dynamic and interconnected nature of human long-term memory. [...] %X Our ability to continuously acquire, organize, and leverage knowledge is a key feature of human intelligence that AI systems must approximate to unlock their full potential. Given the challenges in continual learning with large language models (LLMs), retrieval-augmented generation (RAG) has become the dominant way to introduce new information. However, its reliance on vector retrieval hinders its ability to mimic the dynamic and interconnected nature of human long-term memory. Recent RAG [...] !(/v267/assets/images/logo-pmlr.svg)\nRSS Feed\n\n[edit]\n\n# From RAG to Memory: Non-Parametric Continual Learning for Large Language Models\n\n#### Abstract\n\n#### Cite this Paper",
+            "id": "dfae53-03",
+            "raw_content": null,
+            "score": 0.3808286,
+            "title": "From RAG to Memory: Non-Parametric Continual Learning for Large Language Models",
+            "url": "https://proceedings.mlr.press/v267/gutierrez25a.html"
+          },
+          {
+            "content": "Humans are excellent at learning continuously—integrating new experiences into memory and drawing on them later. In contrast, today's large language models (LLMs) are static: they can’t incorporate new information unless retrained on massive datasets. To work around this, LLMs often rely on external search tools to access up-to-date knowledge. While effective in simple cases, this approach falters as the volume of information grows and tasks become more complex.Our new system, HippoRAG 2, [...] Our ability to continuously acquire, organize, and leverage knowledge is a key feature of human intelligence that AI systems must approximate to unlock their full potential. Given the challenges in continual learning with large language models (LLMs), retrieval-augmented generation (RAG) has become the dominant way to introduce new information. However, its reliance on vector retrieval hinders its ability to mimic the dynamic and interconnected nature of human long-term memory. Recent RAG [...] HippoRAG 2 improves LLM performance across both simple and complex tasks. Though challenges remain, this approach marks a step toward LLMs that can learn continuously and efficiently, without needing full retraining.",
+            "id": "7a91a4-04",
+            "raw_content": null,
+            "score": 0.37779367,
+            "title": "ICML Poster From RAG to Memory: Non-Parametric Continual Learning for Large Language Models",
+            "url": "https://icml.cc/virtual/2025/poster/45585"
           }
         ]
       },

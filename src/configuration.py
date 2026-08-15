@@ -123,6 +123,10 @@ class Config:
             "llm_provider": "",  # anthropic | openai | groq | openrouter | nvidia_nim | vllm -- set via Setup page
             "llm_model": "",
             "llm_api_key": "",
+            # None = provider default (unset in production). eval-only
+            # configs (configs/default.yaml) pin this to 0 -- see
+            # build_llm_client()'s docstring.
+            "temperature": None,
             # Only consulted when llm_provider == "vllm" -- see LLM_PROVIDERS.
             "vllm_base_url": "http://localhost:8000/v1",
             "vision_model": "Qwen/Qwen2.5-VL-7B-Instruct",
@@ -195,6 +199,7 @@ class Config:
             "LLM_PROVIDER": "llm_provider",
             "LLM_MODEL": "llm_model",
             "LLM_API_KEY": "llm_api_key",
+            "TEMPERATURE": ("temperature", float),
             "VLLM_BASE_URL": "vllm_base_url",
             "VISION_MODEL": "vision_model",
 
@@ -270,6 +275,15 @@ def build_llm_client(config: Dict[str, Any]):
     api_key is always passed explicitly (never left to provider SDKs' own
     env-var fallback, e.g. ANTHROPIC_API_KEY/OPENAI_API_KEY) so a stale
     shell-exported key can't silently override a dashboard-entered one.
+
+    `temperature`, when present in config, is passed through explicitly;
+    omitted entirely (provider default applies, unchanged behavior) when
+    not set -- production (app.py/src/api.py, via config_rag() with no
+    overrides) never sets it. eval/harness's configs/default.yaml pins it
+    to 0, per PROJECT_SPEC.md's Phase 3 noise-floor procedure ("Temperature
+    0. Fix every available seed.") -- this also sharply reduces run-to-run
+    variance in query_router/rewrite_query's output text, which is what
+    eval.tavily_cache's replay fixture is keyed on.
     """
     provider = config.get("llm_provider", "")
     if provider not in LLM_PROVIDERS:
@@ -279,13 +293,15 @@ def build_llm_client(config: Dict[str, Any]):
         )
     model = config.get("llm_model") or LLM_PROVIDERS[provider]["default_model"]
     api_key = config.get("llm_api_key", "")
+    temperature = config.get("temperature")
+    extra_kwargs = {"temperature": temperature} if temperature is not None else {}
     if provider == "anthropic":
-        return ChatAnthropic(model=model, api_key=api_key)
+        return ChatAnthropic(model=model, api_key=api_key, **extra_kwargs)
     # vllm's base_url is a runtime override, not a fixed value in
     # LLM_PROVIDERS -- it's whatever tunnel URL that ablation run's vLLM
     # server is exposed on (see LLM_PROVIDERS["vllm"] docstring comment).
     base_url = config.get("vllm_base_url") if provider == "vllm" else LLM_PROVIDERS[provider]["base_url"]
-    return ChatOpenAI(model=model, base_url=base_url, api_key=api_key)
+    return ChatOpenAI(model=model, base_url=base_url, api_key=api_key, **extra_kwargs)
 
 
 def build_reranker(config: Dict[str, Any]):
@@ -397,6 +413,7 @@ def config_rag(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         "llm_provider": c.get("llm_provider"),
         "llm_model": c.get("llm_model"),
         "llm_api_key": c.get("llm_api_key"),
+        "temperature": c.get("temperature"),
         "vllm_base_url": c.get("vllm_base_url"),
         "search_limit": c.get("search_limit"),
         "reranker_top_k": c.get("reranker_top_k"),

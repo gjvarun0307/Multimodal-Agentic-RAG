@@ -21,13 +21,13 @@ deployment, or reproducibility (`PROJECT_SPEC.md` §2.1). Off-topic ideas go in
 
 ## Phase state
 
-**Phase 0 (Unblock) and Phase 1 (golden evaluation set) are complete. Phase 2
-(metrics harness) is starting now.** Full detail in `PROJECT_SPEC.md` §7 Phase 2
-(lines ~956–1084); this section is the working checklist, not a restatement.
+**Phases 0–2 are complete (Unblock, golden evaluation set, metrics harness).
+Phase 3 (noise floor) is starting now.** Full detail in `PROJECT_SPEC.md` §7
+Phase 3; this section is the working checklist, not a restatement.
 
-Full phase list: 0 Unblock (done) → 1 Golden set (done) → **2 Metrics harness (in
-progress)** → 3 Noise floor → 4 Eval-as-CI → 5 Deploy & observability →
-6 Ablations & failure taxonomy → 7 README rewrite.
+Full phase list: 0 Unblock (done) → 1 Golden set (done) → 2 Metrics harness
+(done) → **3 Noise floor (in progress)** → 4 Eval-as-CI → 5 Deploy &
+observability → 6 Ablations & failure taxonomy → 7 README rewrite.
 
 ### Phase 2 — what's already in place (verified against code, 2026-08-12)
 
@@ -72,9 +72,51 @@ Landed and wired together: `configs/default.yaml`, all 5
 `eval/harness.py` (`run_eval()` + `python -m eval.harness`), and
 `eval/judge_calibration.py`. Judge calibration is done (2026-08-14/15,
 30-item stratified sample, `llama-3.3-70b-versatile` judge, see below).
-Still open: a full non-retrieval-only `eval.harness` run (needs live LLM +
-Groq judge API keys/budget — both are set locally now, this just hasn't
-been run for real yet), which is Phase 2's last acceptance criterion.
+A full non-retrieval-only `eval.harness --split fast` run is
+**live-verified** (2026-08-15, `eval/results/20260815T170351Z_fb38c61.json`,
+gitignored) — all 6 metric categories produced real numbers, nothing
+crashed. Phase 2 is functionally done; what's left (noise floor, gated
+baselines) is explicitly Phase 3/4 scope, not a Phase 2 gap.
+
+**Known, accepted limitation — Tavily fixture coverage.** The frozen
+fixture only ever covers literal query text; the `web_search` fallback
+(retrieval exhausts `rewrite_query` attempts → falls through to web
+search with an LLM-rewritten query, not the original question) generates
+query text that varies slightly run-to-run even at `temperature: 0`
+(sampling/hardware-level variance in hosted inference), so some cache
+misses are structurally unavoidable without fuzzy-matching the fixture
+(out of scope). `eval.tavily_cache.record_from_harness_run()`
+(`python -m eval.tavily_cache --record --split fast --config
+configs/default.yaml`) discovers and records whatever queries a real run
+actually needs, generation-only (no judge, so it doesn't touch Groq
+quota) — cut the `web_search_error` rate on the fast split from 25.6%
+(10/39) to 10.3% (4/39) in one real pass. Re-running it (idempotent,
+merges into the existing fixture) narrows this further but won't reach
+zero; that residual is expected, not a bug to keep chasing.
+
+**Groq daily token budget (free tier, 100k TPD) is a real, already-hit
+constraint**, not a hypothetical. Each `eval.harness` full-mode run makes
+several judge calls per item; a handful of consecutive fast-split runs in
+one day is enough to exhaust it, and `JudgeGradingError`'s graceful-skip
+means later items in a run lose more grading coverage than earlier ones
+once the budget runs out mid-run — visible as smaller `n_scored` counts,
+not a quality regression. **This directly constrains Phase 3's
+noise-floor procedure** (5 identical full-set runs) — spec's literal "run
+the full eval set 5 times" is not achievable in a single day on the free
+tier; scope this explicitly with the user before starting (fast split
+instead of full, spread across days, and/or measure judge-free metrics'
+noise floor separately from judge-dependent ones) rather than assuming
+it fits.
+
+**`temperature` promoted to a first-class `config_rag()` field**
+(`src/configuration.py`, `TEMPERATURE` env var) — `None` by default
+(provider default applies; production/`app.py`/`src/api.py` unaffected),
+pinned to `0` in `configs/default.yaml`'s `overrides` (eval-only). Serves
+two purposes at once: PROJECT_SPEC.md's own Phase 3 noise-floor procedure
+("Temperature 0. Fix every available seed.") requires it, and it's what
+makes the Tavily fixture-discovery pass above worth running at all —
+without it, `query_router`/`rewrite_query` output varies enough between
+runs that a recorded fixture entry frequently doesn't match on replay.
 
 **Judge calibration result** (`eval/judge_calibration/calibration_v1_labeled.csv`,
 committed): 30-item stratified sample of `golden_set.jsonl` (never

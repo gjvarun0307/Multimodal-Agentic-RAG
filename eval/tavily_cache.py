@@ -161,6 +161,54 @@ def _load_websearch_questions(golden_path: Path, dev_path: Path) -> list[str]:
     return [item["question"] for item in items if item.get("expected_route") == "websearch"]
 
 
+def record_from_harness_run(*, config_path: Path, split: str, fixture_path: Path = DEFAULT_FIXTURE_PATH) -> int:
+    """Exercises the real graph (generation only, no judge -- grading is
+    irrelevant to what queries reach web_search) over every item in
+    `split`, with a LIVE Tavily tool, so any query that reaches web_search
+    -- whether routed there directly, or via the retrieval-exhausted
+    rewrite_query fallback -- gets discovered and recorded, not just
+    literal `expected_route == "websearch"` question text (which is all
+    the plain --record path above covers). RecordingTavilyTool writes
+    through to the fixture on every call, so nothing further is needed
+    here once the graph run completes. Returns the number of items
+    exercised.
+
+    Uses configs/default.yaml (or whatever `config_path` points to) so
+    temperature=0 applies -- deterministic routing/rewriting means the
+    query text discovered here is far more likely to recur on a real
+    replay run than if generation were sampled at the provider default
+    (2026-08-15: this exact non-determinism was the root cause of the
+    fixture coverage gap this function exists to close).
+
+    Imports eval.harness lazily -- eval.harness imports build_tavily_tool
+    from this module, so a module-level import here would be circular.
+    """
+    from eval.harness import _load_items, load_harness_config
+    from src.agent import build_agent_graph, run_query_with_state
+    from src.runtime import get_runtime
+
+    _doc, resolved_config = load_harness_config(config_path)
+    items = _load_items(split)
+
+    runtime = get_runtime(resolved_config)
+    tavily_tool = build_tavily_tool(resolved_config, mode="live", fixture_path=fixture_path)
+    graph = build_agent_graph(
+        runtime.database,
+        runtime.embedding_model,
+        runtime.rerank_model,
+        runtime.llm,
+        resolved_config,
+        web_search_tool=tavily_tool,
+    )
+
+    for i, item in enumerate(items, start=1):
+        print(f"[{i}/{len(items)}] {item['id']}: {item['question'][:80]!r}", file=sys.stderr)
+        run_query_with_state(graph, item["question"], [])
+
+    print(f"Exercised {len(items)} items from split={split!r} against live Tavily -> {fixture_path}", file=sys.stderr)
+    return len(items)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
@@ -171,6 +219,15 @@ def main() -> None:
     parser.add_argument(
         "--questions", type=str, default=None, help="Comma-separated extra queries to record beyond the golden set's websearch items."
     )
+    parser.add_argument(
+        "--split",
+        choices=["full", "fast", "dev"],
+        default=None,
+        help="Also run the real graph (generation only, no judge) over this split with a live Tavily tool, "
+        "discovering and recording any query that reaches web_search via the rewrite-exhausted fallback "
+        "path -- not just items with expected_route == 'websearch'. Requires --config.",
+    )
+    parser.add_argument("--config", type=Path, default=None, help="Required with --split, e.g. configs/default.yaml.")
     parser.add_argument("--fixture", type=Path, default=DEFAULT_FIXTURE_PATH)
     args = parser.parse_args()
 
@@ -187,16 +244,25 @@ def main() -> None:
     questions = _load_websearch_questions(args.golden, args.dev)
     if args.questions:
         questions += [q.strip() for q in args.questions.split(",") if q.strip()]
-    if not questions:
-        print("No websearch-routed golden items and no --questions given -- nothing to record.", file=sys.stderr)
+
+    if questions:
+        tool = build_tavily_tool(cfg, mode="live", fixture_path=args.fixture)
+        for question in questions:
+            print(f"Recording: {question[:80]!r}", file=sys.stderr)
+            tool.invoke({"query": question})
+        print(f"Recorded {len(questions)} literal websearch questions to {args.fixture}", file=sys.stderr)
+
+    if args.split:
+        if args.config is None:
+            print("--split requires --config (e.g. configs/default.yaml).", file=sys.stderr)
+            sys.exit(1)
+        record_from_harness_run(config_path=args.config, split=args.split, fixture_path=args.fixture)
+    elif not questions:
+        print(
+            "No websearch-routed golden items, no --questions, and no --split given -- nothing to record.",
+            file=sys.stderr,
+        )
         sys.exit(1)
-
-    tool = build_tavily_tool(cfg, mode="live", fixture_path=args.fixture)
-    for question in questions:
-        print(f"Recording: {question[:80]!r}", file=sys.stderr)
-        tool.invoke({"query": question})
-
-    print(f"Recorded {len(questions)} queries to {args.fixture}", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -29,3 +29,22 @@ def test_vllm_base_url_override_flows_into_client():
     assert isinstance(client, ChatOpenAI)
     assert client.openai_api_base == "http://localhost:9999/v1"
     assert client.model_name == "meta-llama/Llama-3.1-8B-Instruct"
+
+
+def test_temperature_omitted_by_default_production_unaffected():
+    # config_rag() with no overrides -- what app.py/src/api.py actually call
+    # -- must never set a temperature the provider wouldn't have defaulted
+    # to itself.
+    resolved = config_rag(overrides={"llm_provider": "openai", "llm_model": "gpt-4o-mini", "llm_api_key": "dummy"})
+    assert resolved["temperature"] is None
+    client = build_llm_client(resolved)
+    # langchain's default sentinel when temperature isn't passed at all
+    assert client.temperature != 0
+
+
+def test_temperature_override_flows_into_client():
+    resolved = config_rag(
+        overrides={"llm_provider": "openai", "llm_model": "gpt-4o-mini", "llm_api_key": "dummy", "temperature": 0}
+    )
+    client = build_llm_client(resolved)
+    assert client.temperature == 0

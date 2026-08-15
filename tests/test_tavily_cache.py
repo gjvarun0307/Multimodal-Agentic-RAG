@@ -5,9 +5,11 @@ real, matching this module's own no-live-call-in-tests intent.
 """
 
 import json
+from types import SimpleNamespace
 
 import pytest
 
+import eval.tavily_cache as tavily_cache_module
 from eval.tavily_cache import (
     DEFAULT_FIXTURE_PATH,
     FIXTURE_VERSION,
@@ -15,6 +17,7 @@ from eval.tavily_cache import (
     TavilyCacheMissError,
     _query_key,
     build_tavily_tool,
+    record_from_harness_run,
 )
 
 
@@ -93,3 +96,31 @@ def test_recording_tool_writes_fixture_replay_can_then_read(monkeypatch, tmp_pat
 
 def test_default_fixture_path_matches_fixture_version():
     assert DEFAULT_FIXTURE_PATH.name == f"tavily_{FIXTURE_VERSION}.json"
+
+
+def test_record_from_harness_run_exercises_every_item_no_judge(monkeypatch, tmp_path):
+    """No judge involved -- discovering web_search queries only needs the
+    graph to run, not grading. Verifies the wiring (config -> items ->
+    graph -> run_query_with_state per item) without any live calls."""
+    import eval.harness as harness_module
+    import src.agent as agent_module
+    import src.runtime as runtime_module
+
+    fake_items = [{"id": "gs_0001", "question": "q1"}, {"id": "gs_0002", "question": "q2"}]
+    monkeypatch.setattr(harness_module, "load_harness_config", lambda path: ({}, {"chunk_size": 1024}))
+    monkeypatch.setattr(harness_module, "_load_items", lambda split: fake_items)
+
+    fake_runtime = SimpleNamespace(database=None, embedding_model=None, rerank_model=None, llm=None)
+    monkeypatch.setattr(runtime_module, "get_runtime", lambda config: fake_runtime)
+    monkeypatch.setattr(tavily_cache_module, "build_tavily_tool", lambda *a, **k: "fake_tavily_tool")
+    monkeypatch.setattr(agent_module, "build_agent_graph", lambda *a, **k: "fake_graph")
+
+    calls = []
+    monkeypatch.setattr(
+        agent_module, "run_query_with_state", lambda graph, question, history: calls.append(question) or ("ans", {}, {})
+    )
+
+    n = record_from_harness_run(config_path=tmp_path / "config.yaml", split="fast")
+
+    assert n == 2
+    assert calls == ["q1", "q2"]
