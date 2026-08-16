@@ -30,6 +30,19 @@ Acceptance criteria this targets (PROJECT_SPEC.md §7 Phase 3):
     threshold_2sigma value per metric; the actual gate table (with written
     justification per metric) is Phase 4's job, using this module's numbers
     as input, not decided here.
+
+Resuming after an interrupted pass (2026-08-15/16: this process has been
+killed mid-run by something outside this codebase -- background-job
+termination with no traceback, same unexplained pattern hit twice before
+during Tavily fixture discovery -- three times now, root cause never
+found on this side). Each run's results JSON is already a complete,
+standalone record (invariant 7) written to disk the moment that run
+finishes, so a kill mid-run-3-of-5 doesn't lose runs 1-2 -- only the
+final aggregated summary, which this module can rebuild from those JSON
+files without re-running them. --existing-results (or
+existing_result_paths= in code) takes those paths, seeds all_run_metrics
+from them, and only runs however many more are needed to reach --runs
+total.
 """
 
 from __future__ import annotations
@@ -121,12 +134,24 @@ def run_noise_floor(
     n_runs: int = DEFAULT_N_RUNS,
     results_dir: Path = DEFAULT_RESULTS_DIR,
     out_dir: Path = DEFAULT_NOISE_FLOOR_DIR,
+    existing_result_paths: Optional[list[Path]] = None,
 ) -> tuple[dict, Path]:
     all_run_metrics: list[dict[str, Optional[float]]] = []
     run_ids: list[str] = []
     result_paths: list[str] = []
 
-    for i in range(1, n_runs + 1):
+    for path in existing_result_paths or []:
+        with open(path, "r", encoding="utf-8") as f:
+            results = json.load(f)
+        print(f"=== Reusing existing run: {path} ===", file=sys.stderr)
+        all_run_metrics.append(flatten_numeric_metrics(results["metrics"]))
+        run_ids.append(results["run_id"])
+        result_paths.append(str(path))
+
+    if len(result_paths) > n_runs:
+        raise ValueError(f"Got {len(result_paths)} existing result paths but only --runs {n_runs} were requested.")
+
+    for i in range(len(result_paths) + 1, n_runs + 1):
         print(f"=== Noise floor run {i}/{n_runs} (split={split!r}) ===", file=sys.stderr)
         results, out_path = run_eval(
             config_path=config_path, split=split, retrieval_only=False, results_dir=results_dir
@@ -163,10 +188,26 @@ def main() -> None:
     parser.add_argument("--runs", type=int, default=DEFAULT_N_RUNS)
     parser.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR)
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_NOISE_FLOOR_DIR)
+    parser.add_argument(
+        "--existing-results",
+        type=str,
+        default=None,
+        help="Comma-separated paths to already-completed run result JSONs (e.g. from a prior pass "
+        "that was interrupted) -- reused instead of re-run, counted toward --runs.",
+    )
     args = parser.parse_args()
 
+    existing_result_paths = (
+        [Path(p.strip()) for p in args.existing_results.split(",") if p.strip()] if args.existing_results else None
+    )
+
     summary, out_path = run_noise_floor(
-        config_path=args.config, split=args.split, n_runs=args.runs, results_dir=args.results_dir, out_dir=args.out_dir
+        config_path=args.config,
+        split=args.split,
+        n_runs=args.runs,
+        results_dir=args.results_dir,
+        out_dir=args.out_dir,
+        existing_result_paths=existing_result_paths,
     )
     print(f"Wrote {out_path}", file=sys.stderr)
     print(json.dumps(summary["stats"], indent=2, default=str))
