@@ -21,13 +21,105 @@ deployment, or reproducibility (`PROJECT_SPEC.md` §2.1). Off-topic ideas go in
 
 ## Phase state
 
-**Phases 0–2 are complete (Unblock, golden evaluation set, metrics harness).
-Phase 3 (noise floor) is starting now.** Full detail in `PROJECT_SPEC.md` §7
-Phase 3; this section is the working checklist, not a restatement.
+**Phases 0–3 are complete (Unblock, golden evaluation set, metrics harness,
+noise floor). Phase 4 (Eval-as-CI) is starting now.** Full detail in
+`PROJECT_SPEC.md` §7 Phase 4; this section is the working checklist, not a
+restatement.
 
 Full phase list: 0 Unblock (done) → 1 Golden set (done) → 2 Metrics harness
-(done) → **3 Noise floor (in progress)** → 4 Eval-as-CI → 5 Deploy &
+(done) → 3 Noise floor (done) → **4 Eval-as-CI (in progress)** → 5 Deploy &
 observability → 6 Ablations & failure taxonomy → 7 README rewrite.
+
+### Phase 4 — prep notes (scoped with user 2026-08-16, before build starts)
+
+Spec §7 Phase 4's own text has two internal conflicts that would have caused
+real build mistakes if not resolved first. Both are now decided, not open:
+
+1. **CI has no corpus/index today — the real Phase 4 blocker.** The corpus
+   (`data/raw_pdfs/*.pdf`, `artifacts/parsed_md/*.md`) is deliberately not
+   committed (`artifacts/SOURCES.md` — arXiv's default license doesn't
+   authorize redistribution; the Milvus paper carries an ACM posting
+   restriction). A fresh Actions runner starts with neither the corpus nor a
+   built `milvus.db`, and `deploy/fetch_corpus.py` /
+   `deploy/build_ingest_artifacts.py` (the spec's intended fix) are Phase 5
+   deliverables that don't exist yet — fast-tier CI cannot run retrieval
+   without solving this first. **Decision: private Hugging Face Dataset.**
+   Upload the local `milvus.db` + `artifacts/parsed_md/` bundle once to a
+   *private* HF Dataset; CI fetches it at job start via an `HF_TOKEN` secret
+   (small corpus, seconds not minutes). Keeps full text out of public
+   git/Action logs — distinct from Phase 5's separate, later decision about
+   what the public-facing Space itself bakes in (§4.1 already sanctions "HF
+   Dataset fetched at boot" as an alternative to Git LFS; this reuses that
+   idea privately, scoped to CI only). Re-upload the bundle whenever the
+   corpus, chunking config, or embedding model changes — it is a build
+   artifact, not source of truth; `artifacts/metadata.jsonl` /
+   `corpus_seed.csv` stay the source of truth as always.
+2. **Fast tier is literally zero-LLM-calls, not "retrieval + structured."**
+   Spec's own tier table says fast = "retrieval + structured, no judge," but
+   its acceptance criteria say fast = "< 3 min, zero LLM calls" — structured-
+   output metrics necessarily call the *generation* LLM, which is not zero
+   calls and risks real per-push quota/cost on a public repo with
+   unlimited-trigger Actions (the same Groq 100k-TPD ceiling already hit
+   twice, Phase 2 + Phase 3). **Decision: fast tier = `eval.harness --split
+   fast --retrieval-only` + `tests/test_chunk_id_determinism.py` only.**
+   True zero LLM calls, zero secrets needed beyond the HF Dataset token,
+   matches the acceptance criterion literally. Structured-output metrics move
+   into the nightly/labeled full tier alongside the judge, where cost is
+   already budgeted and bounded to once a day.
+
+**Gate design — thresholds available now vs. deferred** (from
+`docs/NOISE_FLOOR.md`, fast split, n=4, non-judge metrics only — see Phase 3
+outcome below for why judge metrics aren't gateable yet):
+
+| Metric | Threshold | Action | Source |
+|---|---|---|---|
+| `chunk_id_determinism` | any failure | **block** | structural (invariant 3), not statistical |
+| `retrieval.stage1.recall@10` | drop > 0.045 (4.5 pts) | **block** | noise floor 2σ |
+| `router.accuracy` | drop > 0.03 (3 pts) | warn | noise floor 2σ |
+| `structured.aggregate.validity_rate` | any drop from 1.000 | warn | noise floor (σ=0, full tier only per decision 2) |
+| `correction.fire_rate` | drop > 0.07 | warn | noise floor 2σ (full tier only) |
+| `system.warm_p95_ms` | increase > 20% | warn | spec default (noise-floor figure is a raw ms σ, not a %) |
+| `faithfulness`, `citation_precision`, `refusal_accuracy`, `answer_correctness` | — | **informational only, no gate** | Phase 3 found n=1 or unusable σ (see below) — do not block on these until a dedicated low-volume judge-only noise-floor pass exists |
+
+This deliberately overrides spec's literal gate table, which blocks on
+`faithfulness` and `refusal_accuracy` — a documented, justified deviation
+(Phase 3's own conclusion), not a silent one.
+
+**Already usable, no new build needed:**
+- `eval/harness.py --split fast --retrieval-only` — zero-LLM-call path,
+  live-verified in Phase 2 — is the fast-tier core as-is.
+- `TAVILY_MODE=replay` needs no live API key (reads the committed
+  `eval/fixtures/tavily_v1.json` directly) — moot for the retrieval-only fast
+  tier, matters once structured/full-tier CI exercises `web_search`.
+- `tests/test_chunk_id_determinism.py` (Phase 0) already asserts the exact
+  invariant the determinism gate needs — CI should invoke it as a real pytest
+  job, not reimplement the check.
+
+**Not yet built, first-time Phase 4 work:**
+- One-time: upload `milvus.db` + `artifacts/parsed_md/` to a private HF
+  Dataset; wire the fetch step into both workflows below.
+- `.github/workflows/fast-eval.yml` (every push/PR, retrieval-only +
+  determinism, budget < 3 min, $0)
+- `.github/workflows/full-eval.yml` (nightly + `run-full-eval` label, full
+  metric set including judge, budget < 25 min)
+- `.github/workflows/lint.yml` (`ruff check .` + `pytest`)
+- `.github/workflows/keep-warm.yml` — **defer.** No Space exists until Phase
+  5; there is nothing to ping yet. Do not stub a workflow with no target.
+- A gate-comparison step/script: diff current run vs. `eval/baselines/main.json`
+  against the threshold table above, emit pass/warn/block, render the PR
+  comment diff table (spec §7 Phase 4 example table).
+- `eval/baselines/main.json` — first commit needs a real `eval.harness` run's
+  results JSON (git SHA, config, golden-set/judge/Tavily-fixture versions),
+  never hand-written (invariant 7). Baseline updates after this are PR-only
+  with written justification, never automatic (spec §7 Phase 4).
+- Rate-limit/quota errors must be distinguishable from real regressions in
+  both the gate logic and the PR comment — a Groq 429 must never render as a
+  ❌ FAIL row.
+- A deliberately-broken retrieval config, run through the fast workflow, to
+  prove the gate actually blocks a test PR (acceptance criterion).
+- Repo must be public for unlimited free Actions minutes (spec §7 Phase 4
+  cost-control note) — confirm this before relying on nightly + on-label runs
+  not hitting a minutes cap.
 
 ### Phase 2 — what's already in place (verified against code, 2026-08-12)
 
@@ -272,6 +364,54 @@ caller broke, full suite + ruff verified clean after each):
   work today (trace-derivable alone). Fixing this is a separate, not-yet-
   scoped `GraphState` change.
 
+### Phase 3 outcome (closed 2026-08-16)
+
+`eval/noise_floor.py` built and run for real; full write-up in
+`docs/NOISE_FLOOR.md` (committed). **Deviated from the spec's literal "5
+runs against the full set" on two axes, both documented in that file, not
+silent:** fast split (39 items) instead of full (145) — same Groq
+100k-TPD-budget reasoning as Phase 2 — and **4 completed runs, not 5**. The
+5th run was cut short 4 items in by the same unexplained background-process
+kill (no traceback, hit three separate times across 2026-08-15/16 trying to
+run this pass — root cause never found on the agent-tooling side, not a
+bug in this codebase). Rather than keep re-attempting a clean 5th run
+against a same-day quota ceiling that wouldn't be any less exhausted on a
+6th try, `eval/noise_floor.py` gained an `--existing-results` resume flag
+(seeds the aggregate from already-completed run JSONs, only executes
+however many more are needed) so a kill mid-pass doesn't throw away
+already-spent quota and wall time — this is how 2 runs survived the first
+kill and 4 survived the second.
+
+**Headline metrics (retrieval, router, structured-output, system/latency,
+correction) have full, clean n=4 coverage** — none of these touch the Groq
+judge, so they were never at risk from the quota ceiling. Selected
+results (`docs/NOISE_FLOOR.md` has the full table + proposed
+`threshold_2sigma` CI gates for each): `recall@10`=0.522±0.018,
+`router.accuracy`=0.789±0.013, `structured.aggregate.validity_rate`=
+1.000±0.000, `correction.fire_rate`=0.397±0.033, `warm_p50`=40.6s±10.2s.
+`warm_p99` was excluded from gating — on a 39-item sample p99 is
+effectively one item, and one run's `retrieve_and_rerank` outlier alone
+made σ (696s) exceed the mean (568s); not a stable statistic yet.
+
+**Judge-scored generation metrics are honestly thin, per invariant 16 —
+not gated on yet, not papered over with a fake number either.**
+`answer_correctness.rate` got n=4 but noisy (only ~10/39 items scored per
+run before quota ran out: 0.494±0.174 — usable with a wide gate).
+`refusal_accuracy.rate` got n=4 but off ~2 scored items/run (σ=0.50 on a
+[0,1] metric — not usable). `faithfulness.rate` and
+`citation_precision.mean` got **n=1** — only one of the 4 runs scored any
+items for those dimensions before hitting the daily limit; no variance is
+computable from a single value. **This is the concrete argument for why
+Phase 4 should launch CI gating on the non-judge headline metrics now and
+treat faithfulness/citation-precision/refusal as informational-only until
+a dedicated low-volume judge-only noise-floor pass exists** (fewer items
+per call, likely spread across more than one day).
+
+README line drafted in `docs/NOISE_FLOOR.md`: *"Run-to-run variance ±4.35
+pts recall@10 and ±2.56 pts router accuracy over 4 identical runs (fast
+split, temperature 0, Tavily replay); regression thresholds set at 4.5 pts
+and 3.0 pts respectively."*
+
 ### Phase 1 outcome (closed 2026-08-11)
 
 `eval/golden/golden_set.jsonl` (145 items) + `eval/golden/dev_split.jsonl` (30 items),
@@ -395,11 +535,13 @@ streamlit run app.py
 # eval (golden set; requires corpus locally, see below)
 python -m eval.resolve_passages         # writes eval/golden/resolved/<config_hash>.json
 python -m eval.validate_golden --require-verified
+python -m eval.harness --config configs/default.yaml --split fast   # results -> eval/results/<run_id>.json
+python -m eval.noise_floor --config configs/default.yaml --split fast --runs 5  # add --existing-results a.json,b.json to resume
 ```
 
 Not yet available (later phases — see `PROJECT_SPEC.md` §9 for the full target list):
-`eval/harness.py` and `eval/metrics/` (Phase 2, in progress), `deploy/fetch_corpus.py`,
-`deploy/build_ingest_artifacts.py`, `deploy/record_demo_traces.py`.
+`deploy/fetch_corpus.py`, `deploy/build_ingest_artifacts.py`, `deploy/record_demo_traces.py`
+(all Phase 5), CI workflow wiring the harness as a gate (Phase 4, starting now).
 
 ## Working agreements for this upgrade
 
