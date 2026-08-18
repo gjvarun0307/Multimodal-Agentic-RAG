@@ -89,7 +89,9 @@ computed against exactly this split), document "< 3 min" as an unrealistic
 spec target rather than shrinking the item count.** Cost is still $0 (public
 repo, unlimited Actions minutes) — only PR feedback latency changes, not
 correctness or noise-floor validity. `.github/workflows/fast-eval.yml`'s job
-`timeout-minutes: 15` already reflects this.
+`timeout-minutes: 30` reflects this (bumped from an initial 15 after a real
+Actions run hit ~15m15s total and got killed by the timeout, not a real
+failure — every step through the harness run itself succeeded).
 
 **Build checklist** (check off as each lands; repo confirmed public
 2026-08-18 — unlimited free Actions minutes, no action needed):
@@ -99,9 +101,12 @@ correctness or noise-floor validity. `.github/workflows/fast-eval.yml`'s job
       separate **read-only** fine-grained `HF_TOKEN` scoped to this repo
       (not the write-scoped `upload-bundle-token` used to create it).
 - [x] `.github/workflows/fast-eval.yml` — every push/PR, retrieval-only +
-      determinism. Budget revised to ~12–15 min (see timing finding above),
-      not spec's literal < 3 min; $0 either way. Written 2026-08-18, not yet
-      pushed/verified against a real Actions run.
+      determinism. Budget revised to ~13–15 min (see timing finding above),
+      not spec's literal < 3 min; $0 either way. Every step through the
+      harness run itself has succeeded in real Actions runs (verified
+      2026-08-18); job-level `timeout-minutes` was bumped 15→30 after the
+      first attempt was killed by the tighter cap, not a real failure —
+      re-verify the full job reports success end-to-end with the new cap.
 - [ ] `.github/workflows/full-eval.yml` — nightly + `run-full-eval` label,
       full metric set incl. judge, < 25 min
 - [x] `.github/workflows/lint.yml` — `ruff check .` + `pytest`. Written

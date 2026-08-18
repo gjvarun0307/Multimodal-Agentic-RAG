@@ -20,7 +20,12 @@ on:
 jobs:
   fast-eval:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Live-verified 2026-08-18: harness step alone took ~12-13 min (local
+    # Mac vs. Actions runner), total job ~15m15s -- a 15 min cap clipped a
+    # genuinely successful run (job reported "cancelled" from hitting the
+    # timeout, not a real failure; every step through the harness run itself
+    # succeeded). 30 min gives real headroom for runner-speed variance.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
