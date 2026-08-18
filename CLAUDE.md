@@ -154,6 +154,29 @@ work is the likely trigger).
 **Deferred, not this phase:** `.github/workflows/keep-warm.yml` — no Space
 exists until Phase 5, nothing to ping yet.
 
+**Incident (2026-08-18): the corpus was actually committed to git and public
+on `origin/main` for ~1 week, contradicting the "corpus is not committed"
+claim this whole plan (and the private-HF-Dataset decision above) rests on.**
+All 15 `artifacts/parsed_md/*.md` files were added in `e461362` (part of the
+2026-08-11 reseed, not caused by any Phase 4 work) and were never actually
+gitignored-in-practice — `.gitignore` listing a path doesn't untrack files
+already committed before the rule existed. Found because `lint.yml`'s pytest
+run didn't skip `test_harness_live.py`/`test_resolve_passages.py`'s
+real-corpus tests on a fresh CI checkout, which should have been the tell
+that the corpus was actually present there. **Remediated the same day:**
+full-history scrub via `git filter-repo --path artifacts/parsed_md
+--invert-paths --force` + force-push to `origin/main` (backup bundle taken
+first, `~/Hecker/backups/multimodal-agentic-rag_full_repo_backup_2026-08-18.bundle`,
+covers `main` + the local-only `archive/pre-reseed-2026-08-11` branch, which
+was never on origin and wasn't otherwise touched). Current `main` tree and
+all reachable history are clean (verified via GitHub's tree API). **Known,
+accepted residual exposure, not further fixable from here:** the pre-scrub
+commit SHA is still directly fetchable from GitHub until their scheduled GC
+runs (force-push doesn't instantly purge unreachable objects), and anyone
+who already cloned/forked before today keeps the old content regardless.
+`data/raw_pdfs/*.pdf` was checked and confirmed never committed — this
+incident was scoped to `parsed_md/` only.
+
 ## Facts carried forward from earlier phases
 
 Non-obvious conventions later phases depend on. Full build logs for finished
