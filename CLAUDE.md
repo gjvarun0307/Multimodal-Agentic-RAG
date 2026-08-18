@@ -79,8 +79,10 @@ it as a real pytest job, not reimplement the check.
 **Build checklist** (check off as each lands; repo confirmed public
 2026-08-18 — unlimited free Actions minutes, no action needed):
 
-- [ ] Upload `milvus.db` + `artifacts/parsed_md/` to a private HF Dataset
-      (one-time; `HF_TOKEN` already in `api_keys.json`)
+- [x] Upload `milvus.db` + `artifacts/parsed_md/` to a private HF Dataset —
+      done 2026-08-18, `gjvarun0307/arag-eval-corpus` (private). CI needs a
+      separate **read-only** fine-grained `HF_TOKEN` scoped to this repo
+      (not the write-scoped `upload-bundle-token` used to create it).
 - [ ] `.github/workflows/fast-eval.yml` — every push/PR, retrieval-only +
       determinism, < 3 min, $0
 - [ ] `.github/workflows/full-eval.yml` — nightly + `run-full-eval` label,
