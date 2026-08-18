@@ -43,7 +43,7 @@ overrides:
   # so Stage 1 (pre-rerank) recall@10/20/50 has headroom to measure --
   # post-rerank it can never exceed reranker_top_k regardless (PROJECT_SPEC.md
   # §7 Phase 2, "Set search_limit >= 50 during eval").
-  search_limit: 50
+  search_limit: 1  # DELIBERATELY BROKEN -- test/gate-block-proof, never merge
   reranker_top_k: 5
   reranker_score_threshold: 0.5
   reranker_model: "BAAI/bge-reranker-v2-m3"   # CPU-viable default; ablation rows override this
