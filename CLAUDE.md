@@ -101,16 +101,13 @@ failure — every step through the harness run itself succeeded).
       separate **read-only** fine-grained `HF_TOKEN` scoped to this repo
       (not the write-scoped `upload-bundle-token` used to create it).
 - [x] `.github/workflows/fast-eval.yml` — every push/PR, retrieval-only +
-      determinism. Budget revised to ~13–15 min (see timing finding above),
-      not spec's literal < 3 min; $0 either way. Every step through the
-      harness run itself has succeeded in real Actions runs (verified
-      2026-08-18); job-level `timeout-minutes` was bumped 15→30 after the
-      first attempt was killed by the tighter cap, not a real failure —
-      re-verify the full job reports success end-to-end with the new cap.
+      determinism. Budget ~13–15 min (see timing finding above), not spec's
+      literal < 3 min; $0 either way. **Fully green end-to-end in a real
+      Actions run, 2026-08-18** (run 32119217309, `timeout-minutes: 30`).
 - [ ] `.github/workflows/full-eval.yml` — nightly + `run-full-eval` label,
       full metric set incl. judge, < 25 min
-- [x] `.github/workflows/lint.yml` — `ruff check .` + `pytest`. Written
-      2026-08-18, not yet pushed/verified against a real Actions run.
+- [x] `.github/workflows/lint.yml` — `ruff check .` + `pytest`. **Fully
+      green in a real Actions run, 2026-08-18** (run 32119217301).
 
 **Known defect found while wiring lint.yml (2026-08-18), not fixed —
 `app.py` (Streamlit) cannot be imported.** It still imports the deleted
