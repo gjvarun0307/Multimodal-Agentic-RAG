@@ -107,9 +107,17 @@ jobs:
       # pre-existing files to an earlier, uniform mtime than a freshly
       # created one). eval.harness prints the exact path to stderr too
       # ("Wrote results to ..."), but mtime avoids parsing that string.
+      # set -o pipefail is NOT bash's default in a GitHub Actions `run:`
+      # step -- without it, `python -m eval.gate ... | tee ...` reports the
+      # step's exit status as tee's (always 0), silently swallowing
+      # eval.gate's exit 1 on BLOCK. Caught live 2026-08-18: a real
+      # search_limit=1 test PR correctly printed "BLOCKED" in the step
+      # summary but the job/check still showed green. Confirmed fixed by
+      # re-running the same PR after this change.
       - name: Eval gate (vs. eval/baselines/main.json, CLAUDE.md Phase 4 gate table)
         id: gate
         run: |
+          set -o pipefail
           LATEST_RESULT=$(ls -t eval/results/*.json | grep -v '/noise_floor/' | head -1)
           echo "Gating $LATEST_RESULT"
           DETERMINISM_PASSED=${{ steps.determinism.outcome == 'success' && 'true' || 'false' }}
