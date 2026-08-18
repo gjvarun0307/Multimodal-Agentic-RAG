@@ -76,6 +76,20 @@ noise-floor pass exists):
 needed), `tests/test_chunk_id_determinism.py` (Phase 0) — CI should invoke
 it as a real pytest job, not reimplement the check.
 
+**Real timing finding (2026-08-18), affects the fast-tier "< 3 min" budget:**
+a live `eval.harness --split fast --retrieval-only` run against the real
+39-item split, on CPU (no GPU), took **~12 minutes wall clock** end to end —
+zero LLM calls as designed, but real BGE-M3 dense+sparse query embedding and
+`bge-reranker-v2-m3` cross-encoder scoring per item is genuinely slow on
+CPU. This directly contradicts spec's literal "< 3 min" fast-tier
+acceptance criterion; GitHub-hosted Actions runners have no GPU either, so
+this isn't a local-machine-only artifact. Not yet resolved with the user
+whether to (a) document "< 3 min" as unrealistic and gate on a longer
+budget instead (repo is public, so wall-clock time costs nothing but PR
+feedback latency), or (b) shrink the per-push item count. `.github/workflows/
+fast-eval.yml`'s job `timeout-minutes: 15` already assumes (a) as a safety
+net but this hasn't been confirmed with the user yet.
+
 **Build checklist** (check off as each lands; repo confirmed public
 2026-08-18 — unlimited free Actions minutes, no action needed):
 
