@@ -2,18 +2,18 @@ import asyncio
 import json
 from pathlib import Path
 
+from config import config_parse
 from llama_cloud import AsyncLlamaCloud
 from qwen_vl_utils import process_vision_info
 from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
 
-from config import config_parse
 from helper import clean_json_text
 
 
 async def parse_file(client, file_path):
     print(f"Paring file: {file_path}")
     file_obj = await client.files.create(file=file_path, purpose="parse")
-    
+
     try:
         result = await client.parsing.parse(
             file_id=file_obj.id,
@@ -67,7 +67,7 @@ def run_model(config, model, processor, image, task, device='cuda'):
         user_prompt = config["prompt_metagen"]["user"]
     else:
         raise ValueError(f"Invalid task: {task}. Expected 'image_caption' or 'metadata_gen'.")
-    
+
     messages = [
         {"role": "system", "content": sys_prompt},
         {"role": "user", "content": [
@@ -107,12 +107,12 @@ def save_markdown(parsed_content, config, model, processor):
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(markdown_content)
         f.write("\n\n###### Figure captions")
-    
+
     # process images from the parsed output only figures skip pages
     for figure in parsed_content.images_content_metadata.images:
         if "page" in figure.filename:
             continue
-        
+
         try:
             generated_cap_text = run_model(config, model, processor, figure.presigned_url, task="image_caption", device=config["device"])
         except Exception as e:
@@ -145,11 +145,11 @@ def save_markdown(parsed_content, config, model, processor):
         "markdown_path": str(output_file),
         "metadata": metadata,
     }
-    
+
 
 async def parse_folder(config):
     client = AsyncLlamaCloud(api_key=config["api_key"])
-    
+
     file_folder = Path(config['input_folder'])
     pdf_files = list(file_folder.glob("*.pdf"))
 
@@ -174,7 +174,7 @@ async def parse_folder(config):
         artifact = save_markdown(result, config, model, processor)
         if artifact is not None:
             artifacts.append(artifact)
-    
+
     return results, artifacts
 
 def parse_single_file(config, file_path, model=None, processor=None):
@@ -197,7 +197,7 @@ def parse_single_file(config, file_path, model=None, processor=None):
         "markdown_path": artifact["markdown_path"],
         "metadata": artifact["metadata"],
     }
-        
+
 
 if __name__ == '__main__':
     config = config_parse()

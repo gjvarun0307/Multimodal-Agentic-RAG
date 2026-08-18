@@ -2,23 +2,25 @@ import heapq
 import os
 from pathlib import Path
 from typing import List
-from typing_extensions import TypedDict, Literal
 
 import streamlit as st
-from pydantic import BaseModel, Field
-
+from config import config_parse, config_rag
+from FlagEmbedding import FlagLLMReranker
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_tavily import TavilySearch
 from langgraph.graph import END, START, StateGraph
-from FlagEmbedding import FlagLLMReranker
+from pydantic import BaseModel, Field
+from typing_extensions import Literal, TypedDict
 
-from config import config_parse, config_rag
-from hybrid_database import append_parsed_file_to_database, data_preprocessing, hybrid_search, load_database_and_embedding
-from parse import parse_single_file, load_model
-
-
+from hybrid_database import (
+    append_parsed_file_to_database,
+    data_preprocessing,
+    hybrid_search,
+    load_database_and_embedding,
+)
+from parse import load_model, parse_single_file
 
 DOMAIN_TOPICS = [
     "vLLM",
@@ -544,8 +546,8 @@ def main():
                         }
                     )
                     # st.session_state.rag_history.append(
-                        f"System: New uploaded document indexed: {Path(ingest_result['pdf_path']).name}"
-                    )
+                    #     f"System: New uploaded document indexed: {Path(ingest_result['pdf_path']).name}"
+                    # )
                     st.success(
                         f"Added {Path(ingest_result['pdf_path']).name} with {ingest_result['inserted_chunks']} chunks to RAG context."
                     )

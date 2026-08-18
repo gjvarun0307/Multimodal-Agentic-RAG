@@ -6,6 +6,14 @@ requires-python = ">=3.13"
 [tool.ruff]
 line-length = 120
 target-version = "py313"
+# app.py: pre-src/-refactor Streamlit UI, never updated -- imports the
+# deleted top-level config.py/hybrid_database.py/parse.py and reimplements
+# its own load_runtime()/build_graph() instead of calling
+# src.runtime.get_runtime(), so it can't even be imported right now.
+# Tracked as a known defect (CLAUDE.md Phase 4), not fixed here -- excluded
+# so real issues elsewhere aren't lost in an unrelated file's noise.
+# graph_rag.ipynb: scratch prototyping notebook, not served code.
+exclude = ["app.py", "graph_rag.ipynb"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]

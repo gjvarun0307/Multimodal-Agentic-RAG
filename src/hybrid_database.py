@@ -1,5 +1,4 @@
 import hashlib
-import json
 from pathlib import Path
 
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
@@ -50,7 +49,7 @@ def chunk_content_sha8(text: str) -> str:
 def prepare_input_data(data_folder_path: str, metadata_path: str) -> dict:
     """
     prepare input_data in python dict having pdf file path to its corresponding metadata produced
-    
+
     :param data_folder_path: path of the folder that needs to be input for database
     :type data_folder_path: str
     :return: Python dictionary that has markdown file paths to its corresponding metadata
@@ -105,7 +104,7 @@ def split_data(markdown_document: str, config: dict):
 def data_preprocessing(config: dict):
     # get the input data
     path_to_data_folder = config["input_folder_path"]
-    input_data = prepare_input_data(path_to_data_folder)
+    prepare_input_data(path_to_data_folder)
 
 
 def build_chunks(config: dict) -> list:
@@ -334,7 +333,7 @@ def append_parsed_file_to_database(markdown_path, metadata, config, database, em
     database.flush()
     database.load()
     return len(docs)
-    
+
 if __name__ == "__main__":
     config = config_rag()
     data_preprocessing(config)

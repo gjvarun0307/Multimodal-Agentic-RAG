@@ -106,6 +106,38 @@ correctness or noise-floor validity. `.github/workflows/fast-eval.yml`'s job
       full metric set incl. judge, < 25 min
 - [x] `.github/workflows/lint.yml` — `ruff check .` + `pytest`. Written
       2026-08-18, not yet pushed/verified against a real Actions run.
+
+**Known defect found while wiring lint.yml (2026-08-18), not fixed —
+`app.py` (Streamlit) cannot be imported.** It still imports the deleted
+top-level `config.py`/`hybrid_database.py`/`parse.py` (removed in `381c51d`,
+"move core modules into src/, delete config.py shim") and reimplements its
+own `load_runtime()`/`build_graph()`/`run_query()` instead of calling
+`src.runtime.get_runtime()` — directly contradicting invariant 14 and
+`runtime.py`'s own docstring. It's a partial migration, not just stale: the
+top ~450 lines are the pre-refactor implementation, but further down
+(`main()`) references `runtime.database`/`runtime.embedding_model` and
+`MAX_CHAT_TURNS` as if the migration had already happened — both are
+genuinely undefined names (`ruff` F821, confirmed real bugs not style).
+`src/api.py` (FastAPI) is unaffected and confirmed working (`test_api.py`,
+`test_smoke.py` both pass against the real `get_runtime()` path). Separately,
+this file still has a full upload UI (`st.file_uploader`, `ingest_uploaded_pdf`)
+despite CLAUDE.md's "Repo facts" claiming uploads were rejected and no
+upload UI exists — that claim is stale and needs reconciling once this file
+is actually fixed. **Decided with the user 2026-08-18: excluded from `ruff`
+(`pyproject.toml` `[tool.ruff] exclude`) rather than rewritten now — the
+rewrite (get_runtime()-based, plus resolving the upload-UI question) is
+separate follow-up work, not folded into Phase 4 CI setup.**
+
+**Same disease, different file: `src/parse.py` also imports deleted
+top-level modules** (`from config import config_parse`, `from helper import
+clean_json_text` — should be `.configuration`/`.helper`, matching every
+other file under `src/`). Not caught by `ruff` (no import-resolution rule
+selected) or by the full pytest run (nothing in `tests/` currently imports
+`src.parse` — it's ingest-only, never on the query path per its own module
+docstring, so this has been silently dormant). Not fixed or excluded here
+since it isn't blocking anything today; flagged so it isn't a surprise
+whenever ingest/re-parsing is next touched (Phase 5's `deploy/fetch_corpus.py`
+work is the likely trigger).
 - [ ] Gate-comparison script — diff a run vs. `eval/baselines/main.json`
       against the table above, emit pass/warn/block, render the PR comment
       diff table (spec §7 example)
@@ -218,7 +250,10 @@ a deployed feature), and CPU-viable reranking (deploy target has no GPU).
 - **Module layout:** core modules under `src/` (`runtime.py`, `api.py`,
   `agent.py`, `hybrid_database.py`, `parse.py`, `configuration.py`,
   `helper.py`, `logging_utils.py`); `app.py`/`pages/1_Setup.py` at repo root.
-- **Uploads are rejected** — corpus is frozen, `app.py` has no upload UI.
+- **Uploads are rejected** — corpus is frozen, `app.py` is *intended* to have
+  no upload UI. **Stale as of 2026-08-18: `app.py` still has a full upload
+  flow** (see Phase 4's `app.py` known-defect note) — this line describes
+  the intended end state, not current code, until that file is fixed.
 
 ## Implementation notes for later phases
 
