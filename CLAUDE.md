@@ -123,13 +123,12 @@ failure — every step through the harness run itself succeeded).
       needs `pull-requests: write` and `actions/github-script`, a step up
       in blast radius (visible to any PR viewer, not just Actions-run
       viewers), deliberately held off pending explicit sign-off.
-      **Unverified in real CI as of this edit** — the shell logic
-      (`ls -t` file selection, the `--determinism-passed` boolean
-      plumbing) was dry-run locally against a real committed results file
-      and correctly produced a passing gate report end to end, but this
-      exact workflow hasn't executed inside GitHub Actions yet; the
-      "deliberately-broken config" checklist item below is what will prove
-      it for real.
+      **Verified in real CI, 2026-08-18** — the "deliberately-broken
+      config" checklist item below both proved the wiring and caught a
+      real bug in it (`tee` swallowing `eval.gate`'s exit code without
+      `set -o pipefail`, fixed in `9357eec`); a second real run after the
+      fix shows the job/check correctly going to `failure` on a genuine
+      BLOCK.
 - [ ] `.github/workflows/full-eval.yml` — nightly + `run-full-eval` label,
       full metric set incl. judge, < 25 min
 - [x] `.github/workflows/lint.yml` — `ruff check .` + `pytest`. **Fully
@@ -198,8 +197,24 @@ work is the likely trigger).
       never automatic.
 - [ ] Rate-limit/quota errors rendered distinctly from real regressions, in
       both gate logic and PR comment (a Groq 429 must never show as ❌ FAIL)
-- [ ] A deliberately-broken retrieval config, run through the fast workflow,
-      proving the gate actually blocks a test PR (acceptance criterion)
+- [x] A deliberately-broken retrieval config, run through the fast workflow,
+      proving the gate actually blocks a test PR (acceptance criterion) —
+      done 2026-08-18. Test PR from branch `test/gate-block-proof`
+      (`search_limit: 50 -> 1`, collapsing stage1 recall@10 0.630 -> 0.261,
+      commit `5adc7b2`) against `eval/baselines/main.json`. **First run
+      (`32177680250`) exposed a real bug, not just proved the concept:**
+      the "Eval gate" step's `python -m eval.gate ... | tee gate_comment.md
+      >> $GITHUB_STEP_SUMMARY` reported job conclusion `success` even
+      though the step summary correctly showed "❌ Eval gate: BLOCKED" --
+      GitHub Actions' default `bash` shell for `run:` steps does not set
+      `pipefail`, so the step's exit status was `tee`'s (always 0),
+      silently swallowing `eval.gate`'s exit 1. Fixed on `main`
+      (`9357eec`, `set -o pipefail` added before the pipeline) and merged
+      into the test branch to re-trigger; re-run (`32180138001`)
+      correctly shows job/step conclusion `failure`. Test PR closed
+      without merging, `test/gate-block-proof` branch deleted -- the
+      config change was never meant to land, only the pipefail fix
+      (already on `main`) is real product of this item.
 - [ ] Screenshot a real blocked-merge run for the Phase 7 README
 
 **Deferred, not this phase:** `.github/workflows/keep-warm.yml` — no Space
