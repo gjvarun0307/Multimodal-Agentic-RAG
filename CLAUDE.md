@@ -76,19 +76,20 @@ noise-floor pass exists):
 needed), `tests/test_chunk_id_determinism.py` (Phase 0) — CI should invoke
 it as a real pytest job, not reimplement the check.
 
-**Real timing finding (2026-08-18), affects the fast-tier "< 3 min" budget:**
-a live `eval.harness --split fast --retrieval-only` run against the real
-39-item split, on CPU (no GPU), took **~12 minutes wall clock** end to end —
-zero LLM calls as designed, but real BGE-M3 dense+sparse query embedding and
-`bge-reranker-v2-m3` cross-encoder scoring per item is genuinely slow on
-CPU. This directly contradicts spec's literal "< 3 min" fast-tier
-acceptance criterion; GitHub-hosted Actions runners have no GPU either, so
-this isn't a local-machine-only artifact. Not yet resolved with the user
-whether to (a) document "< 3 min" as unrealistic and gate on a longer
-budget instead (repo is public, so wall-clock time costs nothing but PR
-feedback latency), or (b) shrink the per-push item count. `.github/workflows/
-fast-eval.yml`'s job `timeout-minutes: 15` already assumes (a) as a safety
-net but this hasn't been confirmed with the user yet.
+**Real timing finding (2026-08-18), overrides the fast-tier "< 3 min"
+budget:** a live `eval.harness --split fast --retrieval-only` run against
+the real 39-item split, on CPU (no GPU), took **~12 minutes wall clock** end
+to end — zero LLM calls as designed, but real BGE-M3 dense+sparse query
+embedding and `bge-reranker-v2-m3` cross-encoder scoring per item is
+genuinely slow on CPU. GitHub-hosted Actions runners have no GPU either, so
+this isn't a local-machine-only artifact. **Decided with the user
+2026-08-18: accept ~12–15 min as the real fast-tier budget, keep the full
+39-item split (preserves Phase 3's noise-floor thresholds, which were
+computed against exactly this split), document "< 3 min" as an unrealistic
+spec target rather than shrinking the item count.** Cost is still $0 (public
+repo, unlimited Actions minutes) — only PR feedback latency changes, not
+correctness or noise-floor validity. `.github/workflows/fast-eval.yml`'s job
+`timeout-minutes: 15` already reflects this.
 
 **Build checklist** (check off as each lands; repo confirmed public
 2026-08-18 — unlimited free Actions minutes, no action needed):
@@ -97,11 +98,14 @@ net but this hasn't been confirmed with the user yet.
       done 2026-08-18, `gjvarun0307/arag-eval-corpus` (private). CI needs a
       separate **read-only** fine-grained `HF_TOKEN` scoped to this repo
       (not the write-scoped `upload-bundle-token` used to create it).
-- [ ] `.github/workflows/fast-eval.yml` — every push/PR, retrieval-only +
-      determinism, < 3 min, $0
+- [x] `.github/workflows/fast-eval.yml` — every push/PR, retrieval-only +
+      determinism. Budget revised to ~12–15 min (see timing finding above),
+      not spec's literal < 3 min; $0 either way. Written 2026-08-18, not yet
+      pushed/verified against a real Actions run.
 - [ ] `.github/workflows/full-eval.yml` — nightly + `run-full-eval` label,
       full metric set incl. judge, < 25 min
-- [ ] `.github/workflows/lint.yml` — `ruff check .` + `pytest`
+- [x] `.github/workflows/lint.yml` — `ruff check .` + `pytest`. Written
+      2026-08-18, not yet pushed/verified against a real Actions run.
 - [ ] Gate-comparison script — diff a run vs. `eval/baselines/main.json`
       against the table above, emit pass/warn/block, render the PR comment
       diff table (spec §7 example)

@@ -1,0 +1,35 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: requirements.lock
+
+      - name: Install CPU-only torch/torchvision
+        run: pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install dependencies
+        run: pip install -r requirements.lock
+
+      - name: ruff check
+        run: ruff check .
+
+      # Corpus is not fetched here -- corpus-dependent tests skip cleanly
+      # (pytest.mark.skipif on artifacts/parsed_md/ presence), matching
+      # repo-facts convention (CLAUDE.md). Retrieval/eval coverage lives in
+      # fast-eval.yml, which does fetch the corpus.
+      - name: pytest
+        run: pytest -v

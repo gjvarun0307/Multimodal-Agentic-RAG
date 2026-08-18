@@ -1,0 +1,100 @@
+name: fast-eval
+
+# Fast tier (PROJECT_SPEC.md §7 Phase 4, scoped with the user 2026-08-16,
+# see CLAUDE.md "Phase 4" section for the two decisions this resolves):
+# zero LLM calls, retrieval + chunk-id-determinism only. Every push and PR.
+#
+# Budget: ~12-15 min, $0 -- not spec's literal "< 3 min". A live CPU-only
+# retrieval-only run against the real 39-item fast split took ~12 min
+# wall clock (real BGE-M3 embedding + bge-reranker-v2-m3 cross-encoder
+# scoring per item, genuinely slow with no GPU -- GitHub-hosted runners
+# have none either). Decided with the user 2026-08-18 to accept this
+# budget and keep the full split rather than shrink it, since Phase 3's
+# noise-floor thresholds were computed against exactly this split.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  fast-eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: requirements.lock
+
+      # requirements.lock was frozen on macOS (CLAUDE.md "Repo facts"), so it
+      # carries no CUDA pins -- on a Linux runner, plain `pip install torch`
+      # from PyPI pulls the CUDA build (multi-GB of nvidia-* deps) even
+      # though this runner has no GPU. Force the CPU wheel first so the
+      # later full-lock install sees it already satisfied.
+      - name: Install CPU-only torch/torchvision
+        run: pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install dependencies
+        run: pip install -r requirements.lock
+
+      # Covers both the embedding/reranker model weights (BAAI/bge-m3,
+      # BAAI/bge-reranker-v2-m3, downloaded lazily on first use by
+      # FlagEmbedding/sentence-transformers) and the HF Dataset snapshot
+      # fetched below -- both land under the default hub cache dir.
+      - name: Cache Hugging Face hub cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-hub-cache-v1
+
+      # Corpus is deliberately not committed to this public repo
+      # (artifacts/SOURCES.md -- license restrictions). CI fetches the
+      # milvus.db + artifacts/parsed_md/ bundle from a private HF Dataset
+      # instead (CLAUDE.md Phase 4 decision 1). HF_TOKEN must be a
+      # read-only fine-grained token scoped to just that dataset repo.
+      - name: Fetch eval corpus from private HF Dataset
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -c "
+          import os, shutil
+          from huggingface_hub import snapshot_download
+
+          token = os.environ.get('HF_TOKEN')
+          if not token:
+              raise SystemExit(
+                  'HF_TOKEN secret is not set -- cannot fetch the private eval '
+                  'corpus. Forked-repo PRs do not receive secrets by default; '
+                  'this is expected to fail there, not silently skip.'
+              )
+
+          path = snapshot_download(
+              repo_id='gjvarun0307/arag-eval-corpus',
+              repo_type='dataset',
+              token=token,
+          )
+          shutil.copytree(f'{path}/milvus.db', 'milvus.db', dirs_exist_ok=True)
+          shutil.copytree(f'{path}/parsed_md', 'artifacts/parsed_md', dirs_exist_ok=True)
+          "
+
+      - name: Chunk ID determinism (structural gate, invariant 3)
+        run: pytest tests/test_chunk_id_determinism.py -v
+
+      - name: Fast eval (retrieval-only, zero LLM calls)
+        run: |
+          python -m eval.harness --config configs/default.yaml --split fast --retrieval-only \
+            | tee eval_fast_metrics.json
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fast-eval-results
+          path: |
+            eval/results/*.json
+            eval_fast_metrics.json
+          retention-days: 30
