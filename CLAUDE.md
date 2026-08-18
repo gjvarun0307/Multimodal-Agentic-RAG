@@ -129,8 +129,25 @@ failure — every step through the harness run itself succeeded).
       `set -o pipefail`, fixed in `9357eec`); a second real run after the
       fix shows the job/check correctly going to `failure` on a genuine
       BLOCK.
-- [ ] `.github/workflows/full-eval.yml` — nightly + `run-full-eval` label,
-      full metric set incl. judge, < 25 min
+- [x] `.github/workflows/full-eval.yml` — done 2026-08-18. `run-full-eval`
+      label trigger only for now, **not nightly** — decided with the user:
+      Groq's free-tier budget has already been exhausted twice from manual
+      runs, so an unattended nightly 145-item run shouldn't go live before
+      a single labeled run has actually succeeded in CI. `schedule:` cron
+      is written but commented out, ready to enable once that track record
+      exists. Needs `LLM_API_KEY`/`JUDGE_API_KEY` repo secrets (user
+      confirmed already added) in addition to `fast-eval.yml`'s `HF_TOKEN`
+      — `TAVILY_MODE=replay` is hardcoded and no `TAVILY_API_KEY` secret is
+      set at all (invariant 12, defense in depth). Mirrors
+      `fast-eval.yml`'s setup steps and already includes the
+      `set -o pipefail` fix from the start. Gates against the same
+      `eval/baselines/main.json` (fast/retrieval-only) — recall@10 still
+      diffs for real, every full-tier-only metric reports "no baseline"
+      until a full-tier baseline exists (separate, not-yet-scoped work).
+      **Unverified in real CI** — no labeled PR has triggered it yet;
+      `timeout-minutes: 45` is an unverified guess (spec says < 25 min,
+      but full-tier adds real per-item LLM/judge network latency on top of
+      fast-eval's own ~12-15 min retrieval time for a smaller item count).
 - [x] `.github/workflows/lint.yml` — `ruff check .` + `pytest`. **Fully
       green in a real Actions run, 2026-08-18** (run 32119217301).
 
