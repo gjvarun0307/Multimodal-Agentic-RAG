@@ -140,7 +140,7 @@ def test_run_eval_retrieval_only_writes_results_and_metrics(monkeypatch, tmp_pat
         "find_resolved_cache",
         lambda resolved_dir, **kw: {"items": {"gs_0001": {"gold_chunk_ids_union": ["doc::0001::aaaa"]}}},
     )
-    monkeypatch.setattr(harness_module, "load_or_create_database", lambda config: (None, None))
+    monkeypatch.setattr(harness_module, "load_database_and_embedding", lambda database_path, device: (None, None))
     monkeypatch.setattr(harness_module, "build_reranker", lambda config: None)
     monkeypatch.setattr(
         harness_module,

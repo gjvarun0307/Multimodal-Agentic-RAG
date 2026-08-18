@@ -112,7 +112,9 @@ def build_chunks(config: dict) -> list:
     """Chunk every document and assign deterministic chunk_ids. A pure
     function of (input_folder_path, metadata_path, chunk_size,
     overlap_size) with no embeddings and no Milvus -- separated out so
-    chunk-ID determinism is testable without a real (slow) index build.
+    chunk-ID determinism is testable without a real (slow) index build,
+    and so eval/resolve_passages.py can resolve gold passages to chunk
+    IDs without needing a live index at all.
     """
     path_to_data_folder = config.get("input_folder_path", "artifacts/parsed_md")
     metadata_path = config.get("metadata_path", "artifacts/metadata.jsonl")
@@ -130,15 +132,24 @@ def build_chunks(config: dict) -> list:
         with open(input_path, "r") as f:
             markdown_content = f.read()
         split_markdown_documents = split_data(markdown_content, config)
-        for doc in split_markdown_documents:
+        for chunk_index, doc in enumerate(split_markdown_documents):
             doc.metadata.update(metadata)
+            content_sha8 = chunk_content_sha8(doc.page_content)
+            doc.metadata["chunk_id"] = f"{doc_id}::{chunk_index:04d}::{content_sha8}"
         chunks.extend(split_markdown_documents)
-    
-    chunks_text = []
-    # now that we have chunks of data we input it into database in batches
-    for chunk in chunks:
-        chunks_text.append(chunk.page_content)
-    
+
+    return chunks
+
+
+def embed_and_insert_chunks(chunks: list, config: dict):
+    """Embed `chunks` (as produced by build_chunks()) with BGE-M3 and
+    (re)build the Milvus collection from scratch. DESTRUCTIVE -- drops
+    and recreates COLLECTION_NAME. Split out of build_chunks() so the
+    chunk-ID-determinism invariant (PROJECT_SPEC.md §5.2) is checkable
+    without paying for a real index build every time.
+    """
+    chunks_text = [chunk.page_content for chunk in chunks]
+
     # get embedding model(BGE-M3)
     ef = BGEM3EmbeddingFunction(use_fp16=False, device=config.get("device", "cuda"))
     dense_dim = ef.dim["dense"]
@@ -195,13 +206,13 @@ def build_chunks(config: dict) -> list:
     col.load()
 
     if not docs:
-        print(f"No markdown files found in {path_to_data_folder}. Created empty collection '{COLLECTION_NAME}'.")
+        print(f"No chunks to insert. Created empty collection '{COLLECTION_NAME}'.")
         return col, ef
 
     # Transform the sparse array into a list of {index: value} dicts
     formatted_sparse = [
         {int(k): float(v) for k, v in zip(row.indices, row.data)}
-        for row in docs_embeddings["sparse"].tocsr() 
+        for row in docs_embeddings["sparse"].tocsr()
     ]
 
     for i in range(0, len(docs), 50):
@@ -212,11 +223,14 @@ def build_chunks(config: dict) -> list:
             docs_embeddings["dense"][i : i + 50],
         ]
         col.insert(batched_entities)
-    
+
     print("Number of entities inserted:", col.num_entities)
 
-    _write_back_chunk_counts(metadata_path, n_chunks_by_doc)
-    print(f"Wrote back n_chunks for {len(n_chunks_by_doc)} documents to {metadata_path}")
+    # NOTE: per-doc n_chunks write-back to metadata.jsonl (a documented
+    # bookkeeping field, CLAUDE.md "target schema") is not implemented --
+    # the helper this used to call was never defined anywhere in this
+    # module (pre-existing gap, not introduced by this split). Known
+    # follow-up, not silently faked (invariant 16).
 
     return col, ef
 
@@ -241,10 +255,10 @@ def load_database_and_embedding(database_path, device):
     embedding_model = BGEM3EmbeddingFunction(use_fp16=False, device=device)
     # Connect to Milvus given URI
     connections.connect(uri=database_path)
-    if not utility.has_collection("arag_project"):
-        raise ValueError(f"Collection 'arag_project' does not exist!")
-    
-    col = Collection("arag_project")
+    if not utility.has_collection(COLLECTION_NAME):
+        raise ValueError(f"Collection {COLLECTION_NAME!r} does not exist!")
+
+    col = Collection(COLLECTION_NAME)
     col.load()
     print(f"Collection '{COLLECTION_NAME}' loaded. Entities: {col.num_entities}")
 

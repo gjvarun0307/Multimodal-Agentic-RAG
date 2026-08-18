@@ -6,7 +6,7 @@ the acceptance criteria this module targets.
 
 Retrieval-only mode (--retrieval-only) makes zero LLM calls: no LLM client
 is constructed at all -- only database/embedding_model/reranker via
-src.hybrid_database.load_or_create_database + src.configuration.
+src.hybrid_database.load_database_and_embedding + src.configuration.
 build_reranker, calling src.agent.retrieve_and_rerank_core directly, the
 exact retrieval code path the real graph uses (see that function's
 docstring for why it isn't reimplemented here). Only vectorstore-routed
@@ -79,7 +79,7 @@ from eval.tavily_cache import build_tavily_tool
 from src.agent import build_agent_graph, retrieve_and_rerank_core, run_query_with_state
 from src.configuration import build_reranker, config_rag
 from src.helper import open_jsonl
-from src.hybrid_database import load_or_create_database
+from src.hybrid_database import load_database_and_embedding
 from src.logging_utils import get_logger
 from src.runtime import get_runtime
 
@@ -411,7 +411,9 @@ def run_eval(
     warmup_items = items[:n_warmup]
 
     if retrieval_only:
-        database, embedding_model = load_or_create_database(resolved_config)
+        database, embedding_model = load_database_and_embedding(
+            resolved_config["database_path"], resolved_config["device"]
+        )
         rerank_model = build_reranker(resolved_config)
 
         _run_retrieval_only(

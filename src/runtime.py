@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 from .configuration import build_llm_client, build_reranker, config_rag
-from .hybrid_database import load_or_create_database
+from .hybrid_database import load_database_and_embedding
 from .logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -47,7 +47,7 @@ def get_runtime(config: Optional[Dict[str, Any]] = None) -> Runtime:
 
     logger.info("Constructing runtime")
 
-    database, embedding_model = load_or_create_database(config)
+    database, embedding_model = load_database_and_embedding(config["database_path"], config["device"])
     logger.info(f"Loaded database with {database.num_entities} entities")
 
     rerank_model = build_reranker(config)
