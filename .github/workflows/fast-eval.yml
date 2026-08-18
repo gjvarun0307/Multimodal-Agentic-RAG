@@ -86,13 +86,36 @@ jobs:
           shutil.copytree(f'{path}/parsed_md', 'artifacts/parsed_md', dirs_exist_ok=True)
           "
 
+      # continue-on-error so the harness and gate steps below still run even
+      # on a determinism failure -- eval.gate folds this outcome into the
+      # combined report via --determinism-passed (its own docstring) rather
+      # than the job dying here with no gate report at all. The gate step's
+      # own exit code (BLOCK -> 1) is what actually fails the job.
       - name: Chunk ID determinism (structural gate, invariant 3)
+        id: determinism
+        continue-on-error: true
         run: pytest tests/test_chunk_id_determinism.py -v
 
       - name: Fast eval (retrieval-only, zero LLM calls)
         run: |
           python -m eval.harness --config configs/default.yaml --split fast --retrieval-only \
             | tee eval_fast_metrics.json
+
+      # eval/results/ has pre-existing committed historical runs (CLAUDE.md
+      # Phase 4), so this run's own output isn't the only file in the dir --
+      # `ls -t` picks the just-written one by mtime (checkout sets all
+      # pre-existing files to an earlier, uniform mtime than a freshly
+      # created one). eval.harness prints the exact path to stderr too
+      # ("Wrote results to ..."), but mtime avoids parsing that string.
+      - name: Eval gate (vs. eval/baselines/main.json, CLAUDE.md Phase 4 gate table)
+        id: gate
+        run: |
+          LATEST_RESULT=$(ls -t eval/results/*.json | grep -v '/noise_floor/' | head -1)
+          echo "Gating $LATEST_RESULT"
+          DETERMINISM_PASSED=${{ steps.determinism.outcome == 'success' && 'true' || 'false' }}
+          python -m eval.gate --run "$LATEST_RESULT" --baseline eval/baselines/main.json \
+            --determinism-passed "$DETERMINISM_PASSED" --out gate_report.json \
+            | tee gate_comment.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload results
         if: always()
@@ -102,4 +125,6 @@ jobs:
           path: |
             eval/results/*.json
             eval_fast_metrics.json
+            gate_report.json
+            gate_comment.md
           retention-days: 30

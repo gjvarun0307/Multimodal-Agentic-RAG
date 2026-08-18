@@ -103,7 +103,33 @@ failure — every step through the harness run itself succeeded).
 - [x] `.github/workflows/fast-eval.yml` — every push/PR, retrieval-only +
       determinism. Budget ~13–15 min (see timing finding above), not spec's
       literal < 3 min; $0 either way. **Fully green end-to-end in a real
-      Actions run, 2026-08-18** (run 32119217309, `timeout-minutes: 30`).
+      Actions run, 2026-08-18** (run 32119217309, `timeout-minutes: 30`) —
+      that run predates the `eval.gate` wiring below, i.e. it's proof the
+      harness/determinism steps work in real CI, not the gate step.
+      **`eval.gate` wired in, 2026-08-18** (same day, follow-up commit):
+      determinism step gets `continue-on-error: true` +
+      `id: determinism` so a determinism failure doesn't kill the job
+      before a gate report exists — `eval.gate`'s own exit code (1 on
+      block) is what fails the job now, via `--determinism-passed
+      ${{ steps.determinism.outcome == 'success' && 'true' || 'false'
+      }}`. The harness run's own results JSON is picked out of
+      `eval/results/*.json` by `ls -t` (that dir has 8 pre-existing
+      committed historical runs, so it isn't the only file there — a fresh
+      checkout gives them all an earlier, uniform mtime than the just-written
+      one). Diff table goes to `$GITHUB_STEP_SUMMARY` (visible on the Actions
+      run page, no new permissions needed) and both `gate_report.json` +
+      `gate_comment.md` are uploaded alongside the existing artifacts.
+      **Not yet posting an actual PR-comment via the GitHub API** — that
+      needs `pull-requests: write` and `actions/github-script`, a step up
+      in blast radius (visible to any PR viewer, not just Actions-run
+      viewers), deliberately held off pending explicit sign-off.
+      **Unverified in real CI as of this edit** — the shell logic
+      (`ls -t` file selection, the `--determinism-passed` boolean
+      plumbing) was dry-run locally against a real committed results file
+      and correctly produced a passing gate report end to end, but this
+      exact workflow hasn't executed inside GitHub Actions yet; the
+      "deliberately-broken config" checklist item below is what will prove
+      it for real.
 - [ ] `.github/workflows/full-eval.yml` — nightly + `run-full-eval` label,
       full metric set incl. judge, < 25 min
 - [x] `.github/workflows/lint.yml` — `ruff check .` + `pytest`. **Fully
@@ -140,13 +166,36 @@ docstring, so this has been silently dormant). Not fixed or excluded here
 since it isn't blocking anything today; flagged so it isn't a surprise
 whenever ingest/re-parsing is next touched (Phase 5's `deploy/fetch_corpus.py`
 work is the likely trigger).
-- [ ] Gate-comparison script — diff a run vs. `eval/baselines/main.json`
-      against the table above, emit pass/warn/block, render the PR comment
-      diff table (spec §7 example)
-- [ ] `eval/baselines/main.json` — first commit from a real `eval.harness`
-      run's results JSON (git SHA, config, golden-set/judge/Tavily-fixture
-      versions — invariant 7), never hand-written. Baseline updates after
-      this are PR-only with written justification, never automatic.
+- [x] Gate-comparison script — `eval/gate.py` (`python -m eval.gate --run
+      <results.json> --baseline eval/baselines/main.json
+      [--determinism-passed true|false] [--out report.json]`), done
+      2026-08-18. Diffs a results JSON against the baseline per the gate
+      table above, emits per-metric pass/warn/block, renders the PR-comment
+      diff table (spec §7 example). Reuses `eval.noise_floor.
+      flatten_numeric_metrics` rather than reimplementing flattening.
+      Metrics absent from the *current* run (e.g. every full-tier-only row
+      on a `--retrieval-only` fast run) report "not run this tier", never a
+      fabricated pass (invariant 15); metrics absent from the baseline
+      report "no baseline" rather than crashing -- expected until the next
+      checklist item lands. `chunk_id_determinism` is folded in via
+      `--determinism-passed` since it's pytest's own gate
+      (`tests/test_chunk_id_determinism.py`), not part of the harness JSON.
+      14 unit tests in `tests/test_gate.py`; live-verified against real
+      `eval/results/*.json` files -- a real +0.022 recall@10 delta passes,
+      an injected -0.10 delta blocks with exit 1. Full `pytest` suite (175
+      tests) and `ruff check .` both clean after adding it. Does **not**
+      yet solve rate-limit-vs-regression distinction (next-but-one item
+      below) -- flagged as a known gap in the module's own docstring, not
+      silently handled.
+- [x] `eval/baselines/main.json` — done 2026-08-18. A verbatim copy of a
+      real `eval.harness --config configs/default.yaml --split fast
+      --retrieval-only` run's results JSON, never hand-written (invariant
+      7): `run_id=20260818T184206Z_cf44a44`, `git_sha=cf44a44` (current
+      `main` HEAD at the time), `split=fast`, `backend=retrieval-only`,
+      `n_items=39`, `retrieval.stage1.recall@10=0.6304`. Self-diffed
+      against `eval/gate.py` to confirm a zero-delta pass end to end.
+      Baseline updates after this are PR-only with written justification,
+      never automatic.
 - [ ] Rate-limit/quota errors rendered distinctly from real regressions, in
       both gate logic and PR comment (a Groq 429 must never show as ❌ FAIL)
 - [ ] A deliberately-broken retrieval config, run through the fast workflow,
