@@ -33,25 +33,34 @@ from pydantic import BaseModel, Field
 from src.configuration import build_llm_client
 from src.helper import is_rate_limit_error
 
-JUDGE_VERSION = "v1"
+JUDGE_VERSION = "v2"
 
 # Kept in sync with configs/default.yaml's judge_model -- update both
 # together (module docstring: a prompt or model change forces a
 # re-baseline either way, so there's no cost to keeping them the same edit).
 #
-# NOT a reasoning model, deliberately: openai/gpt-oss-20b (the original
-# placeholder here) was live-tested during judge calibration (2026-08-13)
-# and failed with a hard 400 output_parse_failed from Groq -- it emitted a
-# long chain-of-thought monologue instead of a clean tool call. Separately
-# (also live-tested, same date): Groq's `json_schema` structured-output
-# response format is ONLY supported by the gpt-oss family --
-# every other model, including this one, 400s outright if asked for it.
-# That's why every with_structured_output() call in this module passes
+# v2 (2026-08-19): llama-3.3-70b-versatile (v1's judge) was deprecated by
+# Groq for free/developer-tier usage and now 404s (model_not_found) on
+# every call -- confirmed live, mid-run, in a real full-eval.yml attempt.
+# Replaced with openai/gpt-oss-120b, live-calibrated against all four
+# grading functions (faithfulness/correctness/refusal/citation_precision,
+# method="function_calling") on real golden-set content the same day: 6/6
+# calls returned clean structured output with substantively correct
+# judgments (including correctly flagging a deliberately-flawed answer as
+# incorrect) -- no output_parse_failed, no chain-of-thought leakage. This
+# is NOT the same failure the smaller openai/gpt-oss-20b hit during the
+# original 2026-08-13 calibration (a hard 400 output_parse_failed from
+# Groq, chain-of-thought monologue instead of a clean tool call) -- 120b
+# was verified separately, not assumed to inherit the fix by family
+# resemblance. Separately (also confirmed 2026-08-13): Groq's `json_schema`
+# structured-output response format is ONLY supported by the gpt-oss
+# family -- every other model 400s outright if asked for it. That's why
+# every with_structured_output() call in this module passes
 # method="function_calling" explicitly instead of relying on the
 # provider's default method -- tool/function calling is supported by
 # effectively every model Groq hosts (confirmed via Groq's own tool-use
 # docs), unlike the narrower json_schema mode.
-DEFAULT_JUDGE_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_JUDGE_MODEL = "openai/gpt-oss-120b"
 JUDGE_PROVIDER = "groq"  # fixed by invariant 11, never config-selectable
 
 

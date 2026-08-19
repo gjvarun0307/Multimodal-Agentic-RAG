@@ -15,14 +15,18 @@ tavily_fixture_version: "v1"
 backend: "byok-hosted"          # byok-hosted | vllm-xgrammar -- see PROJECT_SPEC.md §4A
 
 # Judge is pinned to Groq and independent of the generation model
-# (invariant 11). NOT a reasoning model, deliberately: openai/gpt-oss-20b
-# (the original placeholder here) failed live judge calibration
-# (2026-08-13) with a hard 400 output_parse_failed from Groq -- it emitted
-# a chain-of-thought monologue instead of a clean tool call. Kept in sync
-# with eval/judge.py's DEFAULT_JUDGE_MODEL -- update both together, never
-# just one, since a judge prompt or model change invalidates comparability.
-judge_model: "groq/llama-3.3-70b-versatile"
-judge_version: "v1"
+# (invariant 11). v1's judge (llama-3.3-70b-versatile) was deprecated by
+# Groq for free/developer-tier usage and started 404ing (model_not_found)
+# 2026-08-19 -- replaced with openai/gpt-oss-120b, live-calibrated the same
+# day (6/6 clean structured-output calls across all four grading
+# dimensions). NOT the same model as openai/gpt-oss-20b, which failed the
+# original 2026-08-13 calibration with a hard 400 output_parse_failed
+# (chain-of-thought monologue instead of a clean tool call) -- 120b was
+# verified separately, not assumed to inherit the fix. Kept in sync with
+# eval/judge.py's DEFAULT_JUDGE_MODEL -- update both together, never just
+# one, since a judge prompt or model change invalidates comparability.
+judge_model: "openai/gpt-oss-120b"
+judge_version: "v2"
 
 # Value actually served in production (src/configuration.py _get_defaults);
 # recorded here so the eval override below is never silently divergent from
