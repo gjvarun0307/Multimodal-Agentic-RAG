@@ -200,20 +200,46 @@ total realistic wall clock is ~105-110 min. GitHub-hosted `ubuntu-latest`
 jobs allow up to 6 hours, and this is a public repo with unlimited Actions
 minutes, so raising `timeout-minutes` has no real cost.
 
-**Deliberately not re-attempted today (2026-08-19):** two labeled runs
-already burned real Groq judge-quota today (the dead-model run and this
-timed-out one, ~60 items' worth of real judge calls) — running a third,
-full-length (~103 min) attempt today risks hitting the Groq TPD budget
-mid-run before it even finishes, same failure class noted in "Groq
-free-tier 100k TPD..." below. **Deferred to the next fresh session (a new
-day, quota reset):**
-1. Bump `full-eval.yml`'s `timeout-minutes: 45` to **~150 (2.5 hours)** —
-   solid headroom over the ~110 min realistic estimate, not a tight fit.
-2. Trigger a fresh attempt the same way as before: new branch off `main`,
-   trivial commit, PR, `gh pr edit <N> --add-label run-full-eval`.
-3. If it completes clean, close the trigger-vehicle PR without merging
+**`timeout-minutes` bumped to 150, committed directly to `main`
+(2026-08-19, commit `01d4913`)** — done, per the plan below. Unlike the
+judge-model fix, this change was accidentally made only on a throwaway
+verification-PR branch the first time; that branch was closed/deleted
+without merging (same pattern as always) before noticing the fix would be
+lost with it, so it was reapplied and committed straight to `main`
+instead. Lesson: durable code changes go on `main` directly; only the
+trivial trigger commit belongs on the throwaway PR branch.
+
+**Third `full-eval.yml` attempt (2026-08-19, same session): cancelled by
+the user almost immediately — real Groq TPD rate-limiting confirmed, not
+a guess.** PR #4 ("Verify full-eval.yml with corrected 150min timeout",
+branch `ci/verify-full-eval-run-3`, Actions run `32251235113`) was
+triggered right after the timeout bump, then cancelled by the user within
+minutes once rate-limiting was visible in the live log. Confirmed from
+the log before cancellation: Groq's `openai/gpt-oss-120b` TPD limit is
+actually **200,000**, not the 100k this file has assumed elsewhere (see
+"Groq free-tier 100k TPD..." below — that number needs correcting, not
+yet done) — and it was already at ~199,000-199,900 used by item
+`gs_0032` (32/145 items in), i.e. essentially exhausted before this
+attempt even started, from the day's two earlier labeled runs. Every
+judge call from `gs_0032` onward was hitting 429s and skipping gracefully
+(`JudgeRateLimitError`, invariant 15 held, logged not silent) — correct
+behavior, but pointless to let run to completion since the
+judge-scored info metrics for the remaining ~113 items would all land as
+`rate_limited`. PR #4 closed without merging, `ci/verify-full-eval-run-3`
+deleted (remote + local), same pattern as before.
+
+**Deferred to 2026-08-21 (day after tomorrow), per explicit user
+instruction — not tomorrow, to give the Groq TPD budget more room to
+actually reset and stay clear:**
+1. Trigger a fresh attempt the same way as before: new branch off `main`,
+   trivial commit only (no substantive fix bundled in — see lesson
+   above), PR, `gh pr edit <N> --add-label run-full-eval`.
+2. If it completes clean, close the trigger-vehicle PR without merging
    (same pattern each time), record real wall-clock time here, and only
    then mark this checklist item `[x]` done.
+3. Worth fixing in passing: correct "100k TPD" to "200k TPD" wherever
+   this file states the Groq free-tier limit (see below) — confirmed
+   wrong from a real 429 response body this session.
 
 **Deferred, not this phase:** `.github/workflows/keep-warm.yml` — no Space
 exists until Phase 5, nothing to ping yet.
@@ -288,14 +314,19 @@ run-to-run even at `temperature: 0`). `temperature` is a first-class
 `config_rag()` field (`TEMPERATURE` env var), `None` by default (prod
 unaffected), pinned to `0` in `configs/default.yaml` (eval-only).
 
-**Groq free-tier 100k TPD token budget is a real, already-hit constraint**
-(hit twice: Phase 2, Phase 3) — a handful of consecutive full-mode
-`eval.harness` runs in one day exhausts it; `JudgeGradingError` skips
-gracefully rather than crashing, visible as smaller `n_scored`, not a
-quality regression. As of 2026-08-18, generation moved off Groq to
-`nvidia_nim` locally and in CI (`full-eval.yml`) — this budget is now the
-judge's alone (invariant 11 keeps it pinned to Groq regardless), not shared
-with generation anymore.
+**Groq free-tier TPD token budget is a real, already-hit constraint**
+(hit repeatedly: Phase 2, Phase 3, and twice more in one Phase 4 session
+on 2026-08-19) — a handful of consecutive full-mode `eval.harness` runs
+in one day exhausts it; `JudgeGradingError`/`JudgeRateLimitError` skips
+gracefully rather than crashing, visible as smaller `n_scored`
+(`n_rate_limited` specifically), not a quality regression. **Correction
+(2026-08-19): the actual limit is 200,000 TPD, not 100k** — this file
+previously said "100k," which was never verified against a real error
+body; a real Groq 429 during the third `full-eval.yml` attempt quoted
+`Limit 200000` directly for `openai/gpt-oss-120b`. As of 2026-08-18,
+generation moved off Groq to `nvidia_nim` locally and in CI
+(`full-eval.yml`) — this budget is now the judge's alone (invariant 11
+keeps it pinned to Groq regardless), not shared with generation anymore.
 
 **Noise floor** (`eval/noise_floor.py`, Phase 3, closed 2026-08-16, full
 write-up `docs/NOISE_FLOOR.md`): fast split (39 items), n=4 not 5 — same
