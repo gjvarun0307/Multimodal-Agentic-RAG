@@ -148,6 +148,34 @@ failure — every step through the harness run itself succeeded).
       `timeout-minutes: 45` is an unverified guess (spec says < 25 min,
       but full-tier adds real per-item LLM/judge network latency on top of
       fast-eval's own ~12-15 min retrieval time for a smaller item count).
+
+      **Deliberately not yet triggered, 2026-08-18 — user is holding off,
+      budget-sensitive** (same Groq 100k TPD constraint as above). Resume
+      point for a future session: this is the very next thing to do once
+      the user says go. Three ways to trigger, decided but not yet acted
+      on:
+      - **Option A (recommended) — real PR + label.** Push any branch with
+        a real change, open a PR against `main`, add the label
+        `run-full-eval` (create it in the PR sidebar if it doesn't exist
+        yet — a plain label, no special config). The job's
+        `if: github.event.label.name == 'run-full-eval'` guard means only
+        that exact label fires it. Watch at
+        `.../actions/workflows/full-eval.yml`.
+      - **Option B — manual `workflow_dispatch` button.** Not wired in
+        yet — `full-eval.yml` has no `workflow_dispatch:` trigger. A
+        one-line addition if the user wants a no-PR "Run workflow" button
+        instead of Option A.
+      - **Option C — run locally, zero Actions cost, same Groq cost.**
+        `python -m eval.harness --config configs/default.yaml --split
+        full` then `python -m eval.gate --run
+        eval/results/<new_run_id>.json --baseline
+        eval/baselines/main.json`. `--split dev` (30 items, same code
+        path) is the cheap first look before committing to the full
+        145-item `--split full` run.
+      This first run is also what will finally verify (a) real full-tier
+      wall-clock time against the 45-min timeout guess and (b) whether
+      `--split full` actually completes end to end in the CI environment
+      at all — neither has been checked yet.
 - [x] `.github/workflows/lint.yml` — `ruff check .` + `pytest`. **Fully
       green in a real Actions run, 2026-08-18** (run 32119217301).
 
@@ -212,8 +240,39 @@ work is the likely trigger).
       against `eval/gate.py` to confirm a zero-delta pass end to end.
       Baseline updates after this are PR-only with written justification,
       never automatic.
-- [ ] Rate-limit/quota errors rendered distinctly from real regressions, in
+- [x] Rate-limit/quota errors rendered distinctly from real regressions, in
       both gate logic and PR comment (a Groq 429 must never show as ❌ FAIL)
+      -- done 2026-08-18. Every LLM call in this project (generation, judge,
+      router) goes through `langchain_openai.ChatOpenAI` against a
+      provider's OpenAI-compatible endpoint (`src/configuration.py`), so a
+      429 always surfaces as `openai.RateLimitError` regardless of which
+      provider is configured -- `src/helper.py`'s `is_rate_limit_error()`
+      detects it by walking the exception's `__cause__`/`__context__`
+      chain. `src/agent.py`'s top-level graph-exception catch now tags a
+      rate-limited item `"rate_limited"` instead of the generic
+      `"graph_execution_error"`, which flows into
+      `system.error_rate_by_stage.error_rate_by_tag.rate_limited`
+      automatically (no new plumbing -- that aggregation already existed).
+      `eval/judge.py` gained `JudgeRateLimitError(JudgeGradingError)`,
+      raised instead of the base class when `is_rate_limit_error()` is
+      true; `eval/harness.py` counts these per judge dimension
+      (faithfulness/citation_precision/answer_correctness/refusal_accuracy)
+      and merges `n_rate_limited` alongside each dimension's existing
+      `n_scored` in the results JSON. `eval/gate.py` gained a `rate_limited`
+      status (⏳, never counts toward WARN/BLOCK in `overall_verdict`):
+      overrides a would-be WARN/BLOCK on the three LLM-driven full-tier
+      gated metrics (`router.accuracy`, `structured.validity_rate`,
+      `correction.fire_rate` -- marked `rate_limit_sensitive=True`, unlike
+      `recall@10`/`system.warm_p95_ms` which aren't LLM-driven and still
+      gate normally during a rate-limited run) when the run's
+      `error_rate_by_tag.rate_limited` is nonzero; overrides
+      `insufficient_data` on the four judge-scored info metrics with the
+      more specific `rate_limited` reason when that dimension's
+      `n_rate_limited` is nonzero. 7 new unit tests (`tests/test_gate.py`,
+      `tests/test_judge.py`) verify the identical numeric drop renders WARN
+      on a clean run vs `rate_limited` on a quota-constrained one, and that
+      a non-rate_limit_sensitive metric still gates normally either way.
+      Full `pytest` (182 tests) and `ruff check .` both clean.
 - [x] A deliberately-broken retrieval config, run through the fast workflow,
       proving the gate actually blocks a test PR (acceptance criterion) —
       done 2026-08-18. Test PR from branch `test/gate-block-proof`
@@ -232,7 +291,14 @@ work is the likely trigger).
       without merging, `test/gate-block-proof` branch deleted -- the
       config change was never meant to land, only the pipefail fix
       (already on `main`) is real product of this item.
-- [ ] Screenshot a real blocked-merge run for the Phase 7 README
+- [x] Screenshot a real blocked-merge run for the Phase 7 README -- done
+      2026-08-18, `imgs/ci_blocked_merge_run_32180138001.jpg`. Captured
+      from the already-proven gate-block run (`32180138001`, see the item
+      above) rather than triggering a new one -- shows job/step conclusion
+      `Failure` and the "❌ Eval gate: BLOCKED" summary table
+      (`recall@10` 0.630 → 0.261). Saved here now so Phase 7 doesn't need
+      to re-trigger a blocked run just to get the image; not yet placed
+      into an actual README (that's Phase 7's job).
 
 **Deferred, not this phase:** `.github/workflows/keep-warm.yml` — no Space
 exists until Phase 5, nothing to ping yet.
