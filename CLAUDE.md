@@ -174,11 +174,15 @@ failure — every step through the harness run itself succeeded).
       first look to get a real per-call token number before committing to
       a full 145-item run.
 
-      **Deliberately not yet triggered, 2026-08-18 — user is holding off,
-      budget-sensitive** (same Groq 100k TPD constraint as above). Resume
-      point for a future session: this is the very next thing to do once
-      the user says go. Three ways to trigger, decided but not yet acted
-      on:
+      **User said go, 2026-08-18 — triggering via Option A now**, from
+      branch `ci/verify-full-eval-run` (this edit is that branch's "real
+      change" so the PR has a nonzero diff to open against). No `gh` CLI
+      or GitHub token available locally, so the PR-open + label-add steps
+      are manual, not scripted. Resume point if this session ends before
+      the run completes: check `.../actions/workflows/full-eval.yml` for
+      the result, then fold the real wall-clock time and judge
+      token/quota outcome into this section. Three ways to trigger were
+      considered, Option A chosen:
       - **Option A (recommended) — real PR + label.** Push any branch with
         a real change, open a PR against `main`, add the label
         `run-full-eval` (create it in the PR sidebar if it doesn't exist
