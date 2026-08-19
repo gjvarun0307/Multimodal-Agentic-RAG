@@ -119,8 +119,9 @@ unless noted; git history has full build detail per item, not restated here.
 - [x] Screenshot of a real blocked-merge run for the Phase 7 README —
       `imgs/ci_blocked_merge_run_32180138001.jpg`. Not yet placed into an
       actual README (Phase 7's job).
-- [ ] `full-eval.yml` — **in progress, see resume point below. Judge-model
-      defect below is now fixed; next attempt should proceed.**
+- [ ] `full-eval.yml` — **in progress. Judge model is fixed and confirmed
+      working live in CI; the remaining blocker is `timeout-minutes: 45`
+      is way too low — see the second resume point below.**
 
 **`full-eval.yml` resume point (2026-08-19):** written, `run-full-eval`
 label-trigger only (not nightly — `schedule:` cron written but commented
@@ -169,8 +170,50 @@ pass unchanged (none hardcode the old model string or judge version).
 **Not yet done:** no real re-baseline run against the new judge exists
 yet — `eval/baselines/main.json` is a fast/retrieval-only run with
 `judge_version: null`, so it's unaffected by this change, but a future
-full-tier baseline update will need the new judge_version. Next attempt
-at `full-eval.yml` should proceed now that the judge is live again.
+full-tier baseline update will need the new judge_version.
+
+**Second `full-eval.yml` attempt (2026-08-19, same session): judge model
+confirmed working live in CI, but the run timed out on wall clock, not on
+the judge.** PR #3 ("Verify full-eval.yml with fixed judge model", branch
+`ci/verify-full-eval-run-2`, Actions run `32217728998`) hit the hard
+`timeout-minutes: 45` kill mid-run — step 9 ("Full eval, all metrics incl.
+judge") ran exactly 42m28s (05:01:57Z→05:44:25Z) and got through 60/145
+items before being cancelled. Closed/deleted same pattern as before
+(PR #3, branch `ci/verify-full-eval-run-2`, remote + local).
+
+Good news confirmed from the partial log (downloaded via `gh run download`
+before cleanup): the judge fix is real — 59 real generations completed, and
+judge grading calls succeeded for the overwhelming majority of them (only 4
+failures out of the run's judge calls, all the same distinct new failure
+mode: `400 tool_use_failed` / "Tool choice is required, but model did not
+call a tool" on `citation_precision` — a real but occasional
+`openai/gpt-oss-120b` function-calling miss, correctly caught by the
+generic `JudgeGradingError` path same as any other grading failure,
+invariant 15 held, not a new code defect to fix). No `model_not_found` 404s
+recurred anywhere in this run's log — the v2 judge model is solid.
+
+**The real blocker is budget, not the judge:** 60/145 items in 42m28s
+extrapolates to **~103 minutes** for the full split — `timeout-minutes: 45`
+was set from a guess (`< 25 min` per spec, already flagged as optimistic)
+that undershot by roughly 4x. Setup (steps 1-8) only takes ~2.5 min, so
+total realistic wall clock is ~105-110 min. GitHub-hosted `ubuntu-latest`
+jobs allow up to 6 hours, and this is a public repo with unlimited Actions
+minutes, so raising `timeout-minutes` has no real cost.
+
+**Deliberately not re-attempted today (2026-08-19):** two labeled runs
+already burned real Groq judge-quota today (the dead-model run and this
+timed-out one, ~60 items' worth of real judge calls) — running a third,
+full-length (~103 min) attempt today risks hitting the Groq TPD budget
+mid-run before it even finishes, same failure class noted in "Groq
+free-tier 100k TPD..." below. **Deferred to the next fresh session (a new
+day, quota reset):**
+1. Bump `full-eval.yml`'s `timeout-minutes: 45` to **~150 (2.5 hours)** —
+   solid headroom over the ~110 min realistic estimate, not a tight fit.
+2. Trigger a fresh attempt the same way as before: new branch off `main`,
+   trivial commit, PR, `gh pr edit <N> --add-label run-full-eval`.
+3. If it completes clean, close the trigger-vehicle PR without merging
+   (same pattern each time), record real wall-clock time here, and only
+   then mark this checklist item `[x]` done.
 
 **Deferred, not this phase:** `.github/workflows/keep-warm.yml` — no Space
 exists until Phase 5, nothing to ping yet.
