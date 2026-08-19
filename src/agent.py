@@ -18,6 +18,7 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
 from .configuration import config_rag
+from .helper import is_rate_limit_error
 from .hybrid_database import hybrid_search
 from .logging_utils import get_logger
 
@@ -716,7 +717,11 @@ def run_query_with_state(app_graph, question: str, chat_history: List[str]):
     except Exception as e:
         logger.error(f"Error processing query through agent graph: {e}")
         final_state["generation"] = f"I encountered an error processing your request: {e}"
-        fallback_events = final_state.get("fallback_events", []) + ["graph_execution_error"]
+        # Tagged separately from other crashes so eval.gate can tell a
+        # provider quota blip apart from a real regression (CLAUDE.md
+        # Phase 4 checklist) rather than lumping both under one tag.
+        error_tag = "rate_limited" if is_rate_limit_error(e) else "graph_execution_error"
+        fallback_events = final_state.get("fallback_events", []) + [error_tag]
         return final_state["generation"], final_state, {
             "node_sequence": node_sequence,
             "stage_latencies_ms": stage_latencies_ms,

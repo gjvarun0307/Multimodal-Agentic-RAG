@@ -34,10 +34,23 @@ refusal_accuracy, answer_correctness) are always informational-only, per
 docs/NOISE_FLOOR.md's finding that their noise floor isn't measurable yet
 -- shown in the PR comment for visibility, never gated. n_scored is checked
 per informational metric so a Groq-quota-starved run (small n_scored) reads
-as "insufficient data", not a fabricated swing; distinguishing a genuine
-rate-limit failure from a real regression on the *gated* metrics is a
-separate, not-yet-built checklist item (CLAUDE.md Phase 4) -- this script
-does not attempt that yet.
+as "insufficient data" by default; when eval.harness's own
+n_rate_limited count (src.helper.is_rate_limit_error-detected 429s, see
+eval/judge.py's JudgeRateLimitError) shows that quota, not some other
+cause, is why n_scored is low, this reports "rate-limited" instead --
+a more specific reason, not a different meaning.
+
+Rate-limit awareness also covers the *gated* full-tier metrics that are
+themselves LLM-driven (structured.validity_rate, correction.fire_rate,
+router.accuracy): src.agent.run_query_with_state tags a rate-limited item
+with the "rate_limited" fallback_events tag distinctly from the generic
+"graph_execution_error" catch-all (src/agent.py), which flows into
+system.error_rate_by_stage.error_rate_by_tag.rate_limited automatically
+(eval/metrics/system.py's compute_error_rate_by_stage, no gate-specific
+plumbing needed). When that rate is nonzero and a metric would otherwise
+warn/block, this script reports "rate-limited" instead -- a quota blip
+must never render as a red ❌ FAIL (PROJECT_SPEC.md §7 Phase 4 acceptance
+criterion).
 """
 
 from __future__ import annotations
@@ -53,7 +66,7 @@ from eval.noise_floor import flatten_numeric_metrics
 
 DEFAULT_BASELINE_PATH = Path("eval/baselines/main.json")
 
-PASS, WARN, BLOCK, NOT_RUN, NO_BASELINE, INFO, INSUFFICIENT_DATA = (
+PASS, WARN, BLOCK, NOT_RUN, NO_BASELINE, INFO, INSUFFICIENT_DATA, RATE_LIMITED = (
     "pass",
     "warn",
     "block",
@@ -61,6 +74,7 @@ PASS, WARN, BLOCK, NOT_RUN, NO_BASELINE, INFO, INSUFFICIENT_DATA = (
     "no_baseline",
     "info",
     "insufficient_data",
+    "rate_limited",
 )
 
 STATUS_EMOJI = {
@@ -71,7 +85,16 @@ STATUS_EMOJI = {
     NO_BASELINE: "\U0001f195 no baseline",
     INFO: "ℹ️ info",
     INSUFFICIENT_DATA: "ℹ️ insufficient data",
+    RATE_LIMITED: "⏳ rate-limited (not a regression)",
 }
+
+# system.error_rate_by_stage.error_rate_by_tag.rate_limited -- the fraction
+# of full-tier items whose LLM call(s) hit a provider 429 (see module
+# docstring). Any nonzero value is enough to suppress a warn/block verdict
+# on a rate_limit_sensitive metric: a partial-quota run already means that
+# metric's numbers are unreliable, not that a lower-but-nonzero rate should
+# still be trusted as a real signal.
+RATE_LIMITED_TAG_KEY = "system.error_rate_by_stage.error_rate_by_tag.rate_limited"
 
 
 @dataclass(frozen=True)
@@ -84,6 +107,8 @@ class GateMetric:
     action: str  # "block" or "warn" -- what a breach becomes
     tier_note: Optional[str] = None
     n_scored_key: Optional[str] = None  # companion sample-size key, for insufficient-data checks
+    n_rate_limited_key: Optional[str] = None  # companion rate-limited count, for rate-limited checks
+    rate_limit_sensitive: bool = False  # True if this metric's own LLM call can be rate-limited
 
 
 GATE_METRICS: list[GateMetric] = [
@@ -103,6 +128,7 @@ GATE_METRICS: list[GateMetric] = [
         threshold=0.03,
         action=WARN,
         tier_note="full tier only",
+        rate_limit_sensitive=True,
     ),
     GateMetric(
         key="structured.aggregate.validity_rate",
@@ -112,6 +138,7 @@ GATE_METRICS: list[GateMetric] = [
         threshold=0.0,  # "any drop from 1.000"
         action=WARN,
         tier_note="full tier only",
+        rate_limit_sensitive=True,
     ),
     GateMetric(
         key="correction.fire_rate",
@@ -121,6 +148,7 @@ GATE_METRICS: list[GateMetric] = [
         threshold=0.07,
         action=WARN,
         tier_note="full tier only",
+        rate_limit_sensitive=True,
     ),
     GateMetric(
         key="system.warm_p95_ms",
@@ -143,6 +171,7 @@ INFO_METRICS: list[GateMetric] = [
         threshold=0.0,
         action=INFO,
         n_scored_key="generation.faithfulness.n_scored",
+        n_rate_limited_key="generation.faithfulness.n_rate_limited",
     ),
     GateMetric(
         key="generation.citation_precision.mean",
@@ -152,6 +181,7 @@ INFO_METRICS: list[GateMetric] = [
         threshold=0.0,
         action=INFO,
         n_scored_key="generation.citation_precision.n_scored",
+        n_rate_limited_key="generation.citation_precision.n_rate_limited",
     ),
     GateMetric(
         key="generation.refusal_accuracy.rate",
@@ -161,6 +191,7 @@ INFO_METRICS: list[GateMetric] = [
         threshold=0.0,
         action=INFO,
         n_scored_key="generation.refusal_accuracy.n_scored",
+        n_rate_limited_key="generation.refusal_accuracy.n_rate_limited",
     ),
     GateMetric(
         key="generation.answer_correctness.rate",
@@ -170,6 +201,7 @@ INFO_METRICS: list[GateMetric] = [
         threshold=0.0,
         action=INFO,
         n_scored_key="generation.answer_correctness.n_scored",
+        n_rate_limited_key="generation.answer_correctness.n_rate_limited",
     ),
 ]
 
@@ -188,9 +220,18 @@ def load_results(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text())
 
 
-def _evaluate_one(metric: GateMetric, current_flat: dict[str, Any], baseline_flat: dict[str, Any]) -> GateResult:
+def _evaluate_one(
+    metric: GateMetric, current_flat: dict[str, Any], baseline_flat: dict[str, Any], *, rate_limited_frac: float = 0.0
+) -> GateResult:
     current = current_flat.get(metric.key)
     baseline = baseline_flat.get(metric.key)
+
+    # Checked before the n_scored/insufficient-data path: a nonzero
+    # n_rate_limited on the current run means low n_scored (or a skewed
+    # rate/mean) is explained by quota, not some other cause -- a more
+    # specific status than "insufficient data" (module docstring).
+    if metric.n_rate_limited_key is not None and (current_flat.get(metric.n_rate_limited_key) or 0):
+        return GateResult(metric.label, baseline, current, None, RATE_LIMITED, metric.tier_note)
 
     if metric.n_scored_key is not None:
         current_n = current_flat.get(metric.n_scored_key) or 0
@@ -224,6 +265,13 @@ def _evaluate_one(metric: GateMetric, current_flat: dict[str, Any], baseline_fla
     else:
         raise ValueError(f"unknown gate mode: {metric.mode}")
 
+    # A breach on a rate_limit_sensitive metric during a run that shows any
+    # rate-limited items is unreliable, not a proven regression -- the
+    # metric's own numbers may be undercounted by the same quota blip
+    # (module docstring). Report it distinctly rather than as WARN/BLOCK.
+    if breached and metric.rate_limit_sensitive and rate_limited_frac > 0:
+        return GateResult(metric.label, baseline, current, delta, RATE_LIMITED, metric.tier_note)
+
     status = metric.action if breached else PASS
     return GateResult(metric.label, baseline, current, delta, status, metric.tier_note)
 
@@ -238,6 +286,7 @@ def evaluate_gate(
     flattening is idempotent-safe here since we only ever read via .get()."""
     current_flat = flatten_numeric_metrics(current_metrics.get("metrics", current_metrics))
     baseline_flat = flatten_numeric_metrics(baseline_metrics.get("metrics", baseline_metrics))
+    rate_limited_frac = current_flat.get(RATE_LIMITED_TAG_KEY) or 0.0
 
     results: list[GateResult] = []
     if determinism_passed is not None:
@@ -245,9 +294,9 @@ def evaluate_gate(
         results.append(GateResult("chunk_id_determinism", None, None, None, status))
 
     for metric in GATE_METRICS:
-        results.append(_evaluate_one(metric, current_flat, baseline_flat))
+        results.append(_evaluate_one(metric, current_flat, baseline_flat, rate_limited_frac=rate_limited_frac))
     for metric in INFO_METRICS:
-        results.append(_evaluate_one(metric, current_flat, baseline_flat))
+        results.append(_evaluate_one(metric, current_flat, baseline_flat, rate_limited_frac=rate_limited_frac))
 
     return results
 

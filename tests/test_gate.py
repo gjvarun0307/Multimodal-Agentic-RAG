@@ -10,6 +10,7 @@ from eval.gate import (
     NO_BASELINE,
     NOT_RUN,
     PASS,
+    RATE_LIMITED,
     WARN,
     evaluate_gate,
     overall_verdict,
@@ -161,3 +162,64 @@ def test_render_pr_comment_includes_block_header_and_status_emoji():
     assert "BLOCKED" in comment
     assert "recall@10" in comment
     assert "❌ FAIL" in comment
+
+
+def test_router_accuracy_drop_is_rate_limited_not_warn_when_run_was_quota_constrained():
+    # Same -0.10 drop as test_router_accuracy_drop_warns_not_blocks, but this
+    # run's error_rate_by_tag shows real rate-limiting -- the numbers are
+    # unreliable, not a proven regression, so it must not render as WARN.
+    baseline = _run({"retrieval": {"stage1": {"recall@10": 0.50}}, "router": {"accuracy": 0.80}})
+    current = _run(
+        {
+            "retrieval": {"stage1": {"recall@10": 0.50}},
+            "router": {"accuracy": 0.70},
+            "system": {"error_rate_by_stage": {"error_rate_by_tag": {"rate_limited": 0.15}}},
+        }
+    )
+    results = evaluate_gate(current, baseline)
+    router = next(r for r in results if r.label == "router.accuracy")
+    assert router.status == RATE_LIMITED
+    assert overall_verdict(results) == PASS  # a quota blip must never render as a red FAIL
+
+
+def test_metric_not_rate_limit_sensitive_still_warns_during_a_rate_limited_run():
+    # system.warm_p95_ms isn't LLM-driven (rate_limit_sensitive=False) --
+    # a rate-limited run elsewhere shouldn't mask a real latency regression.
+    baseline = _run({"system": {"warm_p95_ms": 100_000}})
+    current = _run(
+        {
+            "system": {
+                "warm_p95_ms": 130_000,  # +30%
+                "error_rate_by_stage": {"error_rate_by_tag": {"rate_limited": 0.15}},
+            }
+        }
+    )
+    results = evaluate_gate(current, baseline)
+    latency = next(r for r in results if r.label == "system.warm_p95_ms")
+    assert latency.status == WARN
+
+
+def test_router_accuracy_drop_still_warns_when_run_was_not_rate_limited():
+    baseline = _run({"router": {"accuracy": 0.80}})
+    current = _run(
+        {"router": {"accuracy": 0.70}, "system": {"error_rate_by_stage": {"error_rate_by_tag": {}}}}
+    )
+    results = evaluate_gate(current, baseline)
+    router = next(r for r in results if r.label == "router.accuracy")
+    assert router.status == WARN
+
+
+def test_info_metric_low_n_scored_from_rate_limiting_reports_rate_limited_not_insufficient_data():
+    baseline = _run({"generation": {"faithfulness": {"rate": 0.96, "n_scored": 10, "n_rate_limited": 0}}})
+    current = _run({"generation": {"faithfulness": {"rate": 0.50, "n_scored": 2, "n_rate_limited": 8}}})
+    results = evaluate_gate(current, baseline)
+    faithfulness = next(r for r in results if r.label == "faithfulness")
+    assert faithfulness.status == RATE_LIMITED
+
+
+def test_info_metric_low_n_scored_without_rate_limiting_stays_insufficient_data():
+    baseline = _run({"generation": {"faithfulness": {"rate": 0.96, "n_scored": 1}}})
+    current = _run({"generation": {"faithfulness": {"rate": None, "n_scored": 0, "n_rate_limited": 0}}})
+    results = evaluate_gate(current, baseline)
+    faithfulness = next(r for r in results if r.label == "faithfulness")
+    assert faithfulness.status == INSUFFICIENT_DATA

@@ -31,6 +31,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 
 from src.configuration import build_llm_client
+from src.helper import is_rate_limit_error
 
 JUDGE_VERSION = "v1"
 
@@ -71,11 +72,21 @@ class JudgeGradingError(Exception):
     entire run."""
 
 
+class JudgeRateLimitError(JudgeGradingError):
+    """A JudgeGradingError whose cause is specifically a Groq/provider
+    quota 429 (see src.helper.is_rate_limit_error), not a real grading
+    failure -- callers (eval.harness) count these separately so
+    eval.gate can report a quota blip distinctly from a real regression
+    (CLAUDE.md Phase 4 checklist) instead of both looking like the same
+    generic skip."""
+
+
 def _invoke_judge_chain(chain, inputs: dict, *, dimension: str):
     try:
         return chain.invoke(inputs)
     except Exception as e:
-        raise JudgeGradingError(f"Judge grading failed for dimension={dimension!r}: {e}") from e
+        error_cls = JudgeRateLimitError if is_rate_limit_error(e) else JudgeGradingError
+        raise error_cls(f"Judge grading failed for dimension={dimension!r}: {e}") from e
 
 
 class FaithfulnessJudgment(BaseModel):

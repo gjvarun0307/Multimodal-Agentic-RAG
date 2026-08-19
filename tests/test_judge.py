@@ -5,12 +5,15 @@ matching this repo's existing reranker/config test conventions (fast,
 network-free).
 """
 
+import httpx
+import openai
 import pytest
 
 from eval.judge import (
     CitationJudgment,
     JudgeConfigError,
     JudgeGradingError,
+    JudgeRateLimitError,
     build_judge_llm,
     citation_precision_score,
     grade_citation_precision,
@@ -67,6 +70,24 @@ class _RaisingJudgeLLM:
         return _RaisingStructuredChain()
 
 
+class _RateLimitedStructuredChain:
+    """Simulates a real Groq 429 -- openai.RateLimitError is what every
+    provider call raises in this project (all routed through
+    langchain_openai.ChatOpenAI, see src.helper.is_rate_limit_error)."""
+
+    def __call__(self, inputs):
+        return self.invoke(inputs)
+
+    def invoke(self, inputs):
+        resp = httpx.Response(429, request=httpx.Request("POST", "https://api.groq.com/x"))
+        raise openai.RateLimitError("rate limit exceeded", response=resp, body=None)
+
+
+class _RateLimitedJudgeLLM:
+    def with_structured_output(self, schema, method=None):
+        return _RateLimitedStructuredChain()
+
+
 def test_build_judge_llm_raises_without_api_key():
     with pytest.raises(JudgeConfigError):
         build_judge_llm({"judge_api_key": ""})
@@ -75,6 +96,19 @@ def test_build_judge_llm_raises_without_api_key():
 def test_grade_faithfulness_wraps_provider_failure_in_judge_grading_error():
     with pytest.raises(JudgeGradingError):
         grade_faithfulness(_RaisingJudgeLLM(), context="ctx", generation="gen")
+
+
+def test_grade_faithfulness_raises_judge_rate_limit_error_on_429():
+    # JudgeRateLimitError is a JudgeGradingError subclass, so callers that
+    # only catch JudgeGradingError keep working -- eval.harness catches it
+    # specifically to count it separately (CLAUDE.md Phase 4 checklist:
+    # rate-limit errors distinguishable from regressions).
+    with pytest.raises(JudgeRateLimitError):
+        grade_faithfulness(_RateLimitedJudgeLLM(), context="ctx", generation="gen")
+
+
+def test_judge_rate_limit_error_is_a_judge_grading_error():
+    assert issubclass(JudgeRateLimitError, JudgeGradingError)
 
 
 def test_build_judge_llm_never_falls_back_to_generation_key(monkeypatch):

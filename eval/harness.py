@@ -57,6 +57,7 @@ from eval.judge import (
     JUDGE_VERSION,
     JudgeConfigError,
     JudgeGradingError,
+    JudgeRateLimitError,
     build_judge_llm,
     citation_precision_score,
     grade_citation_precision,
@@ -214,6 +215,19 @@ def _format_documents(documents: list) -> str:
     return "\n\n".join(str(doc) for doc in documents if str(doc).strip())
 
 
+def _with_rate_limited_counts(generation_metrics: dict, judge_rate_limited_counts: dict[str, int]) -> dict:
+    """Merges each dimension's n_rate_limited count alongside its existing
+    n_scored, without touching eval.metrics.generation's own pure-
+    aggregation contract (its docstring: never calls the judge, doesn't
+    need to know about provider errors). eval.gate reads n_rate_limited to
+    tell "the judge was quota-blocked" apart from "insufficient data for
+    an unrelated reason"."""
+    for dimension, count in judge_rate_limited_counts.items():
+        if dimension in generation_metrics:
+            generation_metrics[dimension]["n_rate_limited"] = count
+    return generation_metrics
+
+
 def _run_retrieval_only(
     items: list[dict], *, database, embedding_model, rerank_model, config: dict, gold_by_item: dict[str, list[str]]
 ) -> list[RetrievalItem]:
@@ -274,6 +288,17 @@ def _run_full(
     generation_items: list[GenerationItem] = []
     misroute_context: list[dict] = []
     per_item_records: list[dict] = []
+    # Per-dimension counts of judge grading failures specifically caused by
+    # a provider 429, keyed to match compute_generation_metrics()'s output
+    # dict -- merged in by run_eval() so a quota blip reads distinctly from
+    # a real regression (CLAUDE.md Phase 4 checklist) instead of both
+    # collapsing into the same low n_scored.
+    judge_rate_limited_counts = {
+        "faithfulness": 0,
+        "citation_precision": 0,
+        "answer_correctness": 0,
+        "refusal_accuracy": 0,
+    }
 
     for item in items:
         events_start = len(recorder.events)
@@ -337,11 +362,17 @@ def _run_full(
                 try:
                     faithfulness = grade_faithfulness(judge_llm, context=context_text, generation=answer)
                     gen_item.is_faithful = faithfulness.is_faithful
+                except JudgeRateLimitError as e:
+                    judge_rate_limited_counts["faithfulness"] += 1
+                    logger.warning(f"{item['id']}: faithfulness grading rate-limited, skipping: {e}")
                 except JudgeGradingError as e:
                     logger.warning(f"{item['id']}: faithfulness grading failed, skipping: {e}")
                 try:
                     citation = grade_citation_precision(judge_llm, context=context_text, generation=answer)
                     gen_item.citation_precision = citation_precision_score(citation)
+                except JudgeRateLimitError as e:
+                    judge_rate_limited_counts["citation_precision"] += 1
+                    logger.warning(f"{item['id']}: citation_precision grading rate-limited, skipping: {e}")
                 except JudgeGradingError as e:
                     logger.warning(f"{item['id']}: citation_precision grading failed, skipping: {e}")
             if item.get("gold_answer"):
@@ -350,6 +381,9 @@ def _run_full(
                         judge_llm, question=item["question"], gold_answer=item["gold_answer"], generation=answer
                     )
                     gen_item.is_correct = correctness.is_correct
+                except JudgeRateLimitError as e:
+                    judge_rate_limited_counts["answer_correctness"] += 1
+                    logger.warning(f"{item['id']}: correctness grading rate-limited, skipping: {e}")
                 except JudgeGradingError as e:
                     logger.warning(f"{item['id']}: correctness grading failed, skipping: {e}")
             if item.get("expected_route") == "refuse":
@@ -357,6 +391,9 @@ def _run_full(
                     refusal = grade_refusal(judge_llm, question=item["question"], generation=answer)
                     gen_item.is_refusal = refusal.is_refusal
                     gen_item.expected_refusal = True
+                except JudgeRateLimitError as e:
+                    judge_rate_limited_counts["refusal_accuracy"] += 1
+                    logger.warning(f"{item['id']}: refusal grading rate-limited, skipping: {e}")
                 except JudgeGradingError as e:
                     logger.warning(f"{item['id']}: refusal grading failed, skipping: {e}")
         generation_items.append(gen_item)
@@ -385,6 +422,7 @@ def _run_full(
         "misroute_context": misroute_context,
         "per_item_records": per_item_records,
         "judge_used": judge_llm is not None,
+        "judge_rate_limited_counts": judge_rate_limited_counts,
     }
 
 
@@ -474,7 +512,9 @@ def run_eval(
             "structured": compute_structured_metrics(
                 run_result["structured_events"], misroute_context=run_result["misroute_context"]
             ),
-            "generation": compute_generation_metrics(run_result["generation_items"]),
+            "generation": _with_rate_limited_counts(
+                compute_generation_metrics(run_result["generation_items"]), run_result["judge_rate_limited_counts"]
+            ),
             "system": {
                 **compute_latency_metrics(run_result["system_items"]),
                 **compute_token_and_cost_metrics(run_result["system_items"]),
