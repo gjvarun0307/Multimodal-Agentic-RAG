@@ -35,14 +35,15 @@ name: full-eval
 # fabricated pass) until a full-tier baseline is added -- not in scope of
 # this workflow, tracked separately.
 #
-# Budget: unverified in real CI as of authoring -- PROJECT_SPEC.md §7 says
-# < 25 min. fast-eval.yml's own retrieval-only run took ~12-15 min for 39
-# items with no LLM calls; this run is ~3.7x the items *plus* real
-# generation+judge network latency per item, so 25 min may be optimistic.
-# timeout-minutes set higher for headroom, following the same lesson
-# fast-eval.yml learned the hard way (its first real run hit a too-tight
-# 15 min cap and was killed mid-success) -- tighten once a real run's
-# actual wall clock is known.
+# Budget: real, not a guess -- PROJECT_SPEC.md §7's "< 25 min" was
+# optimistic by ~4x. A real labeled run (Actions run 32217728998,
+# 2026-08-19) got through 60/145 items in 42m28s before hitting the
+# original 45 min cap, extrapolating to ~103 min for the full split;
+# setup (steps 1-8) adds ~2.5 min, so realistic wall clock is ~105-110
+# min. timeout-minutes set to 150 for solid headroom over that estimate,
+# not a tight fit -- GitHub-hosted ubuntu-latest allows up to 6h and this
+# is a public repo with unlimited Actions minutes, so the extra headroom
+# has no real cost.
 
 on:
   # schedule:
@@ -54,7 +55,7 @@ jobs:
   full-eval:
     if: github.event.label.name == 'run-full-eval'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 150
     env:
       # invariant 12 -- Tavily replays from frozen fixtures in every
       # eval/CI run, never live. Explicit here (harness already defaults
