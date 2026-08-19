@@ -149,6 +149,31 @@ failure — every step through the harness run itself succeeded).
       but full-tier adds real per-item LLM/judge network latency on top of
       fast-eval's own ~12-15 min retrieval time for a smaller item count).
 
+      **`LLM_PROVIDER` switched `groq` -> `nvidia_nim`, 2026-08-18** — the
+      user's local `api_keys.json` was already `nvidia_nim` /
+      `meta/llama-3.1-8b-instruct` for generation (discovered mid-session,
+      not what this workflow originally assumed); CI now matches. The
+      `LLM_API_KEY` secret was reused (its value swapped to an NVIDIA NIM
+      key, same secret name, user confirmed) rather than renamed, so no
+      other workflow change was needed. `JUDGE_API_KEY` is unaffected and
+      stays a Groq key — invariant 11 pins the judge to Groq
+      (`llama-3.3-70b-versatile`) independent of `LLM_PROVIDER`, so this
+      move doesn't touch the judge's own Groq TPD budget, which is now the
+      *only* Groq consumer in this workflow (generation no longer competes
+      with it). Real math from a committed 39-item full run
+      (`eval/results/20260815T054051Z_fb38c61.json`, 76 judge calls total
+      across faithfulness/citation/correctness/refusal) extrapolates to
+      ~283 judge calls for the full 145-item split — plausibly still
+      several times the judge's 100k free-tier TPD in one run (token
+      counts aren't recorded per-call in that file, so this is an
+      order-of-magnitude estimate, not a measured number). If a labeled
+      run does exhaust it mid-run, the rate-limit-distinction work above
+      means the gate reports those judge metrics `rate_limited`, not a
+      fabricated FAIL — but full judge coverage still isn't guaranteed in
+      one shot. `--split dev` (30 items) remains the recommended cheap
+      first look to get a real per-call token number before committing to
+      a full 145-item run.
+
       **Deliberately not yet triggered, 2026-08-18 — user is holding off,
       budget-sensitive** (same Groq 100k TPD constraint as above). Resume
       point for a future session: this is the very next thing to do once

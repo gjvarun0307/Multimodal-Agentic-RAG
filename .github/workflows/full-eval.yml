@@ -6,10 +6,22 @@ name: full-eval
 # --retrieval-only (zero LLM calls). Needs LLM_API_KEY/JUDGE_API_KEY repo
 # secrets that fast-eval.yml doesn't (only HF_TOKEN there).
 #
+# Generation LLM is nvidia_nim (LLM_API_KEY secret, meta/llama-3.1-8b-instruct
+# via LLM_PROVIDERS' default_model -- src/configuration.py), matching the
+# user's local api_keys.json (2026-08-18) -- moved off Groq for this side
+# specifically to stop competing with the judge for the same Groq daily
+# budget. The judge is architecturally exempt from this: invariant 11 pins
+# it to Groq (llama-3.3-70b-versatile) independent of llm_provider, so
+# JUDGE_API_KEY stays a Groq key regardless of what LLM_PROVIDER is set to.
+#
 # Trigger: run-full-eval label only, NOT nightly yet. Decided with the user
 # 2026-08-18: Groq's free-tier 100k TPD budget has already been exhausted
 # twice from just manual eval.harness runs (CLAUDE.md "Groq free-tier..."
-# note) -- an unattended nightly 145-item run risks doing that automatically
+# note). That budget is the judge's alone now (generation no longer
+# contends for it), but a 145-item full run's ~283 judge calls (extrapolated
+# from a real 39-item run's 76 judge calls, eval/results/
+# 20260815T054051Z_fb38c61.json) can plausibly still exceed 100k TPD in a
+# single run -- an unattended nightly run risks doing that automatically
 # every night before there's any track record of a single full run
 # succeeding in CI at all. Once that track record exists, uncomment the
 # `schedule:` block below to add the nightly trigger PROJECT_SPEC.md §7
@@ -50,7 +62,7 @@ jobs:
       # this workflow at all, so even a stray override of TAVILY_MODE
       # couldn't make a live call succeed.
       TAVILY_MODE: replay
-      LLM_PROVIDER: groq
+      LLM_PROVIDER: nvidia_nim
       LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
       JUDGE_API_KEY: ${{ secrets.JUDGE_API_KEY }}
     steps:
@@ -125,13 +137,14 @@ jobs:
         run: pytest tests/test_chunk_id_determinism.py -v
 
       # No --retrieval-only: this calls get_runtime() for real, runs full
-      # generation, and grades with the judge (LLM_API_KEY/JUDGE_API_KEY
-      # above). JudgeGradingError is caught and skipped internally
-      # (eval/harness.py) rather than crashing the run on a quota/rate
-      # limit hit -- visible as a smaller n_scored in the results JSON, not
-      # a hard failure. Distinguishing that from a real quality regression
-      # in the gate output itself is a separate, not-yet-built checklist
-      # item (CLAUDE.md Phase 4).
+      # generation (nvidia_nim, LLM_API_KEY), and grades with the judge
+      # (Groq, JUDGE_API_KEY -- invariant 11, always Groq regardless of
+      # LLM_PROVIDER above). JudgeGradingError/JudgeRateLimitError is
+      # caught and skipped internally (eval/harness.py) rather than
+      # crashing the run on a quota/rate limit hit -- visible as a smaller
+      # n_scored (or n_rate_limited, specifically) in the results JSON, not
+      # a hard failure. eval.gate reports a rate-limited judge metric
+      # distinctly from a real regression (CLAUDE.md Phase 4 checklist).
       - name: Full eval (all metrics incl. judge)
         run: |
           python -m eval.harness --config configs/default.yaml --split full \
