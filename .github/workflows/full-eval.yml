@@ -11,8 +11,9 @@ name: full-eval
 # user's local api_keys.json (2026-08-18) -- moved off Groq for this side
 # specifically to stop competing with the judge for the same Groq daily
 # budget. The judge is architecturally exempt from this: invariant 11 pins
-# it to Groq (llama-3.3-70b-versatile) independent of llm_provider, so
-# JUDGE_API_KEY stays a Groq key regardless of what LLM_PROVIDER is set to.
+# it to Groq (openai/gpt-oss-120b, CLAUDE.md "Defect found and fixed" note
+# 2026-08-19) independent of llm_provider, so JUDGE_API_KEY stays a Groq key
+# regardless of what LLM_PROVIDER is set to.
 #
 # Trigger: run-full-eval label only, NOT nightly yet. Decided with the user
 # 2026-08-18: Groq's free-tier 100k TPD budget has already been exhausted
