@@ -33,8 +33,8 @@ reference — not restated here as narrative.
 
 ## Phase 4 — Eval-as-CI (current)
 
-Spec §7 Phase 4's own text has two internal conflicts, resolved with the user
-2026-08-16 before build started — both decisions, not open questions:
+Two decisions resolving spec §7 Phase 4's internal conflicts (settled with the user
+2026-08-16, not open questions):
 
 1. **Corpus delivery to CI: private Hugging Face Dataset**
    (`gjvarun0307/arag-eval-corpus`) — corpus is deliberately not committed
@@ -72,29 +72,26 @@ than shrinking the item count, since the 39-item split is also what Phase
 3's noise-floor thresholds were computed against. Still $0 (public repo,
 unlimited Actions minutes).
 
-**Status: every build-checklist item is done except final verification of
-`full-eval.yml`.** All workflows/scripts below are live-verified in real CI
-unless noted; git history has full build detail per item, not restated here.
+**Status: every item is done except final verification of `full-eval.yml`.**
+All workflows/scripts below are live-verified in real CI unless noted; git
+history has full build detail per item, not restated here.
 
 - [x] Corpus uploaded to the private HF Dataset.
 - [x] `fast-eval.yml` — every push/PR, retrieval-only + determinism +
       `eval.gate`. Fully green end-to-end (`timeout-minutes: 30`); the
-      gate's block path was proven for real against a deliberately-broken
-      config (`test/gate-block-proof`, closed without merging) — that pass
-      also caught and fixed a real bug (`tee` swallowing `eval.gate`'s
-      exit code without `set -o pipefail`, fixed `9357eec`). Not yet
-      posting an actual PR comment via the GitHub API (`pull-requests:
-      write` + `actions/github-script` — a step up in blast radius,
-      deliberately held off pending explicit sign-off); the diff table
-      goes to `$GITHUB_STEP_SUMMARY` instead.
+      gate's block path is proven against a real deliberately-broken
+      config. Not yet posting an actual PR comment via the GitHub API
+      (`pull-requests: write` + `actions/github-script` — a step up in
+      blast radius, deliberately held off pending explicit sign-off); the
+      diff table goes to `$GITHUB_STEP_SUMMARY` instead.
 - [x] `lint.yml` — `ruff check .` + `pytest`, fully green.
 - [x] `eval/gate.py` (`python -m eval.gate --run <results.json> --baseline
       eval/baselines/main.json [--determinism-passed true|false] [--out
       report.json]`) — diffs a run against the baseline per the gate table,
       renders the PR-comment diff table, reports `rate_limited` instead of
       a false WARN/BLOCK when a run's judge/generation calls hit a
-      provider 429 (see rate-limit item below). 21 unit tests
-      (`tests/test_gate.py`), live-verified against real results JSONs.
+      provider 429. 21 unit tests (`tests/test_gate.py`), live-verified
+      against real results JSONs.
 - [x] `eval/baselines/main.json` — a verbatim copy of a real fast/
       retrieval-only run (`run_id=20260818T184206Z_cf44a44`,
       `recall@10=0.6304`), never hand-written (invariant 7). Updates are
@@ -113,133 +110,62 @@ unless noted; git history has full build detail per item, not restated here.
       full-tier gated metrics (`router.accuracy`, `structured.
       validity_rate`, `correction.fire_rate`) when the run shows any
       rate-limiting, and overrides `insufficient_data` with the same on
-      judge-scored info metrics. 7 tests in `tests/test_gate.py`/
-      `tests/test_judge.py` prove the identical numeric drop renders WARN
-      clean vs. `rate_limited` when quota-constrained.
+      judge-scored info metrics. 7 tests prove the identical numeric drop
+      renders WARN clean vs. `rate_limited` when quota-constrained.
 - [x] Screenshot of a real blocked-merge run for the Phase 7 README —
       `imgs/ci_blocked_merge_run_32180138001.jpg`. Not yet placed into an
       actual README (Phase 7's job).
-- [ ] `full-eval.yml` — **in progress. Judge model is fixed and confirmed
-      working live in CI; the remaining blocker is `timeout-minutes: 45`
-      is way too low — see the second resume point below.**
+- [ ] `full-eval.yml` — **in progress, see resume point below.**
 
 **`full-eval.yml` resume point (2026-08-19):** written, `run-full-eval`
 label-trigger only (not nightly — `schedule:` cron written but commented
-out; still pending one successful labeled run as a track record). Generation
-LLM is `nvidia_nim` (`meta/llama-3.1-8b-instruct`), switched off Groq
-2026-08-18 to stop competing with the judge for quota. PR #2 ("First-full-
-eval", branch `ci/verify-full-eval-run`, Actions run `32213994859`) was
-**cancelled by the user mid-run 2026-08-19** (was on step 9, "Full eval (all
-metrics incl. judge)," ~22 min in against `timeout-minutes: 45`) once the
-judge-model defect below surfaced live in its logs — not a real
-success/failure/timeout signal, so wall-clock time and whether the Groq TPD
-budget would have held for ~283 judge calls are both still unverified.
-PR #2 closed without merging, `ci/verify-full-eval-run` deleted (remote +
-local), same pattern as `test/gate-block-proof`.
+out; pending one successful labeled run as a track record). Generation LLM
+is `nvidia_nim` (`meta/llama-3.1-8b-instruct`), moved off Groq so it stops
+competing with the judge for quota.
 
-**Defect found and fixed this session: the judge model was dead on Groq.**
-`DEFAULT_JUDGE_MODEL` (`eval/judge.py`) and `configs/default.yaml`'s
-`judge_model` were both pinned to `llama-3.3-70b-versatile`, which Groq
-deprecated for free/developer-tier usage — every real call 404'd
-(`model_not_found`), confirmed live mid-run in `full-eval.yml`'s logs. A
-plain 404 doesn't go through `is_rate_limit_error()` / `JudgeRateLimitError`
-(that path only catches 429s), so it fell into the generic
-`JudgeGradingError` skip path — loud and logged (invariant 15 held), but
-**every** judge call failed, not a quota-driven subset, so
-`faithfulness`/`citation_precision`/`correctness` landed at `n_scored≈0`
-on every run since the deprecation (informational-only in the gate table,
-so nothing was silently blocked, but the judge was non-functional).
+Three verification attempts so far, each closed without merging (same
+pattern each time: throwaway branch off `main`, PR, label-trigger, close +
+delete branch once the run's outcome is known):
+1. Surfaced a dead judge model — **fixed**, see below.
+2. Ran clean past the judge but hit `timeout-minutes: 45`, far too low —
+   **fixed**, bumped to 150 (committed directly to `main`, `01d4913`; a
+   partial run — 60/145 items in 42m28s — extrapolates to a realistic
+   ~105-110 min for the full 145-item split on GitHub-hosted CPU runners).
+3. Hit real Groq TPD rate-limiting (**200,000 tokens/day**, confirmed from
+   a real 429 response body — not a code defect, just quota exhausted by
+   two earlier same-day runs).
 
-**Fixed:** live-queried Groq's `/v1/models` with the real `judge_api_key`
-(`llama-3.3-70b-versatile` confirmed absent from the list entirely) and
-live-calibrated `openai/gpt-oss-120b` — Groq's suggested replacement —
-against all four real grading functions (`grade_faithfulness`,
-`grade_correctness`, `grade_refusal`, `grade_citation_precision`,
-`method="function_calling"`) on real golden-set content: 6/6 calls
-returned clean structured output with substantively correct judgments
-(it correctly flagged a deliberately-flawed answer as `is_correct=False`
-for the right reason). This is a different model from `gpt-oss-20b`,
-which failed the original 2026-08-13 calibration with a hard `400
-output_parse_failed` — 120b was verified separately, not assumed to
-inherit the fix. `DEFAULT_JUDGE_MODEL` and `configs/default.yaml`'s
-`judge_model` both updated to `openai/gpt-oss-120b`, `JUDGE_VERSION` and
-`configs/default.yaml`'s `judge_version` both bumped `v1` → `v2` (model
-change invalidates comparability, same as a prompt change). 43 tests in
-`tests/test_judge.py`/`tests/test_harness.py`/`tests/test_gate.py` still
-pass unchanged (none hardcode the old model string or judge version).
-**Not yet done:** no real re-baseline run against the new judge exists
-yet — `eval/baselines/main.json` is a fast/retrieval-only run with
-`judge_version: null`, so it's unaffected by this change, but a future
-full-tier baseline update will need the new judge_version.
+**Judge model fix (done):** `DEFAULT_JUDGE_MODEL` (`eval/judge.py`) and
+`configs/default.yaml`'s `judge_model` were pinned to
+`llama-3.3-70b-versatile`, which Groq deprecated for free/developer-tier
+usage (every call 404'd `model_not_found`, invisible to the rate-limit
+path since that only catches 429s — fell into the generic
+`JudgeGradingError` skip path, loud and logged per invariant 15, but
+**every** judge call failed, so `faithfulness`/`citation_precision`/
+`correctness` landed at `n_scored≈0` on every run since the deprecation).
+Replaced with `openai/gpt-oss-120b` (Groq's suggested replacement),
+live-calibrated against all four grading functions
+(`method="function_calling"`) with correct structured output and correct
+judgments. `DEFAULT_JUDGE_MODEL`/`configs/default.yaml`'s `judge_model`
+updated; `JUDGE_VERSION`/`judge_version` bumped `v1` → `v2` (model change
+invalidates comparability, invariant 11). Confirmed solid across two later
+live CI runs — no `model_not_found` recurrence; only an occasional,
+correctly-handled `400 tool_use_failed` on `citation_precision`.
+**Not yet done:** no re-baseline run against the new judge exists yet —
+`eval/baselines/main.json` is fast/retrieval-only with `judge_version:
+null`, unaffected for now, but a future full-tier baseline update needs
+the new `judge_version`.
 
-**Second `full-eval.yml` attempt (2026-08-19, same session): judge model
-confirmed working live in CI, but the run timed out on wall clock, not on
-the judge.** PR #3 ("Verify full-eval.yml with fixed judge model", branch
-`ci/verify-full-eval-run-2`, Actions run `32217728998`) hit the hard
-`timeout-minutes: 45` kill mid-run — step 9 ("Full eval, all metrics incl.
-judge") ran exactly 42m28s (05:01:57Z→05:44:25Z) and got through 60/145
-items before being cancelled. Closed/deleted same pattern as before
-(PR #3, branch `ci/verify-full-eval-run-2`, remote + local).
-
-Good news confirmed from the partial log (downloaded via `gh run download`
-before cleanup): the judge fix is real — 59 real generations completed, and
-judge grading calls succeeded for the overwhelming majority of them (only 4
-failures out of the run's judge calls, all the same distinct new failure
-mode: `400 tool_use_failed` / "Tool choice is required, but model did not
-call a tool" on `citation_precision` — a real but occasional
-`openai/gpt-oss-120b` function-calling miss, correctly caught by the
-generic `JudgeGradingError` path same as any other grading failure,
-invariant 15 held, not a new code defect to fix). No `model_not_found` 404s
-recurred anywhere in this run's log — the v2 judge model is solid.
-
-**The real blocker is budget, not the judge:** 60/145 items in 42m28s
-extrapolates to **~103 minutes** for the full split — `timeout-minutes: 45`
-was set from a guess (`< 25 min` per spec, already flagged as optimistic)
-that undershot by roughly 4x. Setup (steps 1-8) only takes ~2.5 min, so
-total realistic wall clock is ~105-110 min. GitHub-hosted `ubuntu-latest`
-jobs allow up to 6 hours, and this is a public repo with unlimited Actions
-minutes, so raising `timeout-minutes` has no real cost.
-
-**`timeout-minutes` bumped to 150, committed directly to `main`
-(2026-08-19, commit `01d4913`)** — done, per the plan below. Unlike the
-judge-model fix, this change was accidentally made only on a throwaway
-verification-PR branch the first time; that branch was closed/deleted
-without merging (same pattern as always) before noticing the fix would be
-lost with it, so it was reapplied and committed straight to `main`
-instead. Lesson: durable code changes go on `main` directly; only the
-trivial trigger commit belongs on the throwaway PR branch.
-
-**Third `full-eval.yml` attempt (2026-08-19, same session): cancelled by
-the user almost immediately — real Groq TPD rate-limiting confirmed, not
-a guess.** PR #4 ("Verify full-eval.yml with corrected 150min timeout",
-branch `ci/verify-full-eval-run-3`, Actions run `32251235113`) was
-triggered right after the timeout bump, then cancelled by the user within
-minutes once rate-limiting was visible in the live log. Confirmed from
-the log before cancellation: Groq's `openai/gpt-oss-120b` TPD limit is
-actually **200,000**, not the 100k this file has assumed elsewhere (see
-"Groq free-tier 100k TPD..." below — that number needs correcting, not
-yet done) — and it was already at ~199,000-199,900 used by item
-`gs_0032` (32/145 items in), i.e. essentially exhausted before this
-attempt even started, from the day's two earlier labeled runs. Every
-judge call from `gs_0032` onward was hitting 429s and skipping gracefully
-(`JudgeRateLimitError`, invariant 15 held, logged not silent) — correct
-behavior, but pointless to let run to completion since the
-judge-scored info metrics for the remaining ~113 items would all land as
-`rate_limited`. PR #4 closed without merging, `ci/verify-full-eval-run-3`
-deleted (remote + local), same pattern as before.
-
-**Deferred to 2026-08-21 (day after tomorrow), per explicit user
-instruction — not tomorrow, to give the Groq TPD budget more room to
-actually reset and stay clear:**
+**Deferred to 2026-08-21, per explicit user instruction** — gives the Groq
+TPD budget room to reset after being exhausted twice in one day:
 1. Trigger a fresh attempt the same way as before: new branch off `main`,
-   trivial commit only (no substantive fix bundled in — see lesson
-   above), PR, `gh pr edit <N> --add-label run-full-eval`.
+   trivial commit only (no substantive fix bundled in — durable code
+   changes belong on `main` directly, only the trivial trigger commit goes
+   on the throwaway branch), PR, `gh pr edit <N> --add-label
+   run-full-eval`.
 2. If it completes clean, close the trigger-vehicle PR without merging
    (same pattern each time), record real wall-clock time here, and only
    then mark this checklist item `[x]` done.
-3. Worth fixing in passing: correct "100k TPD" to "200k TPD" wherever
-   this file states the Groq free-tier limit (see below) — confirmed
-   wrong from a real 429 response body this session.
 
 **Deferred, not this phase:** `.github/workflows/keep-warm.yml` — no Space
 exists until Phase 5, nothing to ping yet.
@@ -261,10 +187,10 @@ surprise later):**
   imports it), not caught by `ruff` or `pytest`. Phase 5's
   `deploy/fetch_corpus.py` work is the likely trigger for this to matter.
 
-**Incident (2026-08-18, remediated same day): the corpus was briefly
-committed to git and public on `origin/main` for ~1 week** — `e461362`'s
+**Incident (2026-08-18, remediated same day):** the corpus was briefly
+committed to git and public on `origin/main` for ~1 week (`e461362`'s
 `artifacts/parsed_md/*.md` files predated the `.gitignore` rule and were
-never actually untracked by it. Full-history scrub via `git filter-repo`
+never actually untracked by it). Full-history scrub via `git filter-repo`
 + force-push; current `main` is clean (verified via GitHub's tree API).
 Backup bundle taken first (`~/Hecker/backups/
 multimodal-agentic-rag_full_repo_backup_2026-08-18.bundle`). **Known,
@@ -301,12 +227,13 @@ that returns `None` (not a fake number) when it can't be checked.
 `--retrieval-only` exercise the exact retrieval path the real graph uses.
 `correction_improve_rate`/`degrade_rate` always return `None` — needs a
 `GraphState` change to preserve pre-correction generation text, not yet
-scoped. Judge is pinned to `llama-3.3-70b-versatile` on Groq
-(`DEFAULT_JUDGE_MODEL`, `eval/judge.py`) — every `with_structured_output()`
-call needs `method="function_calling"` (Groq's `json_schema` mode only
-supports the gpt-oss family). `JUDGE_VERSION` (`"v1"`) must move in
-lockstep with `configs/default.yaml`'s `judge_version` on any prompt change
-(invariant 11). `TAVILY_MODE=replay` (default) reads
+scoped. Judge is pinned to `openai/gpt-oss-120b` on Groq (`DEFAULT_JUDGE_MODEL`,
+`eval/judge.py`, `judge_version: v2` — updated in Phase 4 from
+`llama-3.3-70b-versatile`/`v1` after Groq deprecated the old model) — every
+`with_structured_output()` call needs `method="function_calling"` (Groq's
+`json_schema` mode only supports the gpt-oss family). `JUDGE_VERSION` must
+move in lockstep with `configs/default.yaml`'s `judge_version` on any
+prompt or model change (invariant 11). `TAVILY_MODE=replay` (default) reads
 `eval/fixtures/tavily_v1.json`, keyed by sha256 of `(query, max_results,
 topic)`; a residual ~10% miss rate on the fast split's `web_search`
 fallback is expected, not a bug (LLM-rewritten query text varies slightly
@@ -314,19 +241,15 @@ run-to-run even at `temperature: 0`). `temperature` is a first-class
 `config_rag()` field (`TEMPERATURE` env var), `None` by default (prod
 unaffected), pinned to `0` in `configs/default.yaml` (eval-only).
 
-**Groq free-tier TPD token budget is a real, already-hit constraint**
-(hit repeatedly: Phase 2, Phase 3, and twice more in one Phase 4 session
-on 2026-08-19) — a handful of consecutive full-mode `eval.harness` runs
-in one day exhausts it; `JudgeGradingError`/`JudgeRateLimitError` skips
-gracefully rather than crashing, visible as smaller `n_scored`
-(`n_rate_limited` specifically), not a quality regression. **Correction
-(2026-08-19): the actual limit is 200,000 TPD, not 100k** — this file
-previously said "100k," which was never verified against a real error
-body; a real Groq 429 during the third `full-eval.yml` attempt quoted
-`Limit 200000` directly for `openai/gpt-oss-120b`. As of 2026-08-18,
-generation moved off Groq to `nvidia_nim` locally and in CI
-(`full-eval.yml`) — this budget is now the judge's alone (invariant 11
-keeps it pinned to Groq regardless), not shared with generation anymore.
+**Groq free-tier TPD budget is 200,000 tokens/day** (confirmed from a real
+429 response body) — a real, already-hit constraint; a handful of
+consecutive full-mode `eval.harness` runs in one day exhausts it.
+`JudgeGradingError`/`JudgeRateLimitError` skips gracefully rather than
+crashing, visible as smaller `n_scored` (`n_rate_limited` specifically),
+not a quality regression. Generation moved off Groq to `nvidia_nim`
+(2026-08-18, locally and in CI) — this budget is now the judge's alone
+(invariant 11 keeps it pinned to Groq regardless), not shared with
+generation anymore.
 
 **Noise floor** (`eval/noise_floor.py`, Phase 3, closed 2026-08-16, full
 write-up `docs/NOISE_FLOOR.md`): fast split (39 items), n=4 not 5 — same
@@ -448,4 +371,6 @@ Not yet available (later phases — see `PROJECT_SPEC.md` §9 for the full targe
 - **Commit messages describe the change, not the internal planning mechanics used to get
   there** — no "checkpoint N" language, no references to an in-session plan's own
   checkpoint numbering.
+- **Doc-only edits (e.g. this file) don't get a standalone commit** — fold them into the
+  next commit that has real code/config content, combined into one message.
 - Pause for user confirmation between phase milestones before proceeding to the next one.

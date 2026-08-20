@@ -40,10 +40,10 @@ name: full-eval
 # 2026-08-19) got through 60/145 items in 42m28s before hitting the
 # original 45 min cap, extrapolating to ~103 min for the full split;
 # setup (steps 1-8) adds ~2.5 min, so realistic wall clock is ~105-110
-# min. timeout-minutes set to 150 for solid headroom over that estimate,
-# not a tight fit -- GitHub-hosted ubuntu-latest allows up to 6h and this
-# is a public repo with unlimited Actions minutes, so the extra headroom
-# has no real cost.
+# min. timeout-minutes set to 300 for extra headroom over that estimate
+# -- GitHub-hosted ubuntu-latest jobs are hard-capped at 6h (360 min)
+# regardless of this setting, and this is a public repo with unlimited
+# Actions minutes, so the extra headroom has no real cost.
 
 on:
   # schedule:
@@ -55,7 +55,7 @@ jobs:
   full-eval:
     if: github.event.label.name == 'run-full-eval'
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 300
     env:
       # invariant 12 -- Tavily replays from frozen fixtures in every
       # eval/CI run, never live. Explicit here (harness already defaults
