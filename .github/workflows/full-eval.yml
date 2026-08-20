@@ -1,5 +1,9 @@
 name: full-eval
 
+# Trigger vehicle for verification attempt 4 (2026-08-20), >24h after
+# attempt 3's Groq TPD exhaustion (2026-08-19T12:09-12:42Z) -- see
+# CLAUDE.md Phase 4 resume point.
+#
 # Full tier (PROJECT_SPEC.md §7 Phase 4): complete golden set (145 items,
 # eval/golden/golden_set.jsonl) through the real byok-hosted pipeline --
 # generation LLM + judge, every metric family, unlike fast-eval.yml's
