@@ -1,5 +1,10 @@
 name: full-eval
 
+# Trigger vehicle for verification attempt 5 (2026-08-21) -- attempt 4 ran
+# clean end-to-end but eval.gate false-BLOCKed on recall@10 (diffed a
+# full-tier run against the fast-tier baseline); fixed on main in 2adc9d0.
+# See CLAUDE.md Phase 4 resume point.
+#
 # Full tier (PROJECT_SPEC.md §7 Phase 4): complete golden set (145 items,
 # eval/golden/golden_set.jsonl) through the real byok-hosted pipeline --
 # generation LLM + judge, every metric family, unlike fast-eval.yml's
