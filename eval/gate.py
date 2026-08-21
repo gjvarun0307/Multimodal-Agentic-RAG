@@ -22,6 +22,17 @@ eval/baselines/main.json is first committed from a real run (separate,
 not-yet-done checklist item as of 2026-08-18) -- invariant 15, no silent
 fallback to a fabricated pass.
 
+recall@10 is marked split_sensitive: eval/baselines/main.json is a
+fast-split baseline (39 items) and the full split (145 items) scores
+retrieval over a different, larger item population, so a raw numeric diff
+between the two isn't a regression signal -- it's an artifact of comparing
+different populations (found for real: a clean full-tier run reported
+recall@10 0.630 -> 0.494 against the fast-tier baseline, a false BLOCK).
+When the current run's top-level "split" differs from the baseline's,
+split_sensitive metrics report "no baseline" instead of diffing, same as
+the full-tier-only metrics that already have no fast-tier baseline at all.
+A full-tier recall@10 baseline is a future checklist item, not yet done.
+
 chunk_id_determinism is enforced by CI as its own hard pytest step
 (tests/test_chunk_id_determinism.py), not computed by eval.harness, so it
 isn't in any results JSON. --determinism-passed lets a caller (the CI
@@ -109,6 +120,7 @@ class GateMetric:
     n_scored_key: Optional[str] = None  # companion sample-size key, for insufficient-data checks
     n_rate_limited_key: Optional[str] = None  # companion rate-limited count, for rate-limited checks
     rate_limit_sensitive: bool = False  # True if this metric's own LLM call can be rate-limited
+    split_sensitive: bool = False  # True if a baseline from a different split (fast vs. full) isn't comparable
 
 
 GATE_METRICS: list[GateMetric] = [
@@ -119,6 +131,7 @@ GATE_METRICS: list[GateMetric] = [
         mode="abs_drop",
         threshold=0.045,
         action=BLOCK,
+        split_sensitive=True,
     ),
     GateMetric(
         key="router.accuracy",
@@ -221,10 +234,23 @@ def load_results(path: Path) -> dict[str, Any]:
 
 
 def _evaluate_one(
-    metric: GateMetric, current_flat: dict[str, Any], baseline_flat: dict[str, Any], *, rate_limited_frac: float = 0.0
+    metric: GateMetric,
+    current_flat: dict[str, Any],
+    baseline_flat: dict[str, Any],
+    *,
+    rate_limited_frac: float = 0.0,
+    split_mismatch: bool = False,
 ) -> GateResult:
     current = current_flat.get(metric.key)
     baseline = baseline_flat.get(metric.key)
+
+    # Checked before every other path: a baseline scored over a different
+    # split (different item population, e.g. fast's 39 items vs. full's
+    # 145) isn't a comparable number for a split_sensitive metric, so treat
+    # it the same as no baseline existing at all rather than diffing two
+    # unrelated populations (module docstring).
+    if metric.split_sensitive and split_mismatch:
+        return GateResult(metric.label, baseline, current, None, NO_BASELINE, metric.tier_note)
 
     # Checked before the n_scored/insufficient-data path: a nonzero
     # n_rate_limited on the current run means low n_scored (or a skewed
@@ -284,6 +310,10 @@ def evaluate_gate(
     """current_metrics/baseline_metrics: each is a full results-JSON dict
     (with a top-level "metrics" key) OR an already-flattened metrics dict --
     flattening is idempotent-safe here since we only ever read via .get()."""
+    current_split = current_metrics.get("split")
+    baseline_split = baseline_metrics.get("split")
+    split_mismatch = current_split is not None and baseline_split is not None and current_split != baseline_split
+
     current_flat = flatten_numeric_metrics(current_metrics.get("metrics", current_metrics))
     baseline_flat = flatten_numeric_metrics(baseline_metrics.get("metrics", baseline_metrics))
     rate_limited_frac = current_flat.get(RATE_LIMITED_TAG_KEY) or 0.0
@@ -294,9 +324,17 @@ def evaluate_gate(
         results.append(GateResult("chunk_id_determinism", None, None, None, status))
 
     for metric in GATE_METRICS:
-        results.append(_evaluate_one(metric, current_flat, baseline_flat, rate_limited_frac=rate_limited_frac))
+        results.append(
+            _evaluate_one(
+                metric, current_flat, baseline_flat, rate_limited_frac=rate_limited_frac, split_mismatch=split_mismatch
+            )
+        )
     for metric in INFO_METRICS:
-        results.append(_evaluate_one(metric, current_flat, baseline_flat, rate_limited_frac=rate_limited_frac))
+        results.append(
+            _evaluate_one(
+                metric, current_flat, baseline_flat, rate_limited_frac=rate_limited_frac, split_mismatch=split_mismatch
+            )
+        )
 
     return results
 

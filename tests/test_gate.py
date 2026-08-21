@@ -18,8 +18,11 @@ from eval.gate import (
 )
 
 
-def _run(metrics: dict) -> dict:
-    return {"run_id": "test_run", "git_sha": "abc123", "metrics": metrics}
+def _run(metrics: dict, split: str | None = None) -> dict:
+    run = {"run_id": "test_run", "git_sha": "abc123", "metrics": metrics}
+    if split is not None:
+        run["split"] = split
+    return run
 
 
 def test_recall_drop_within_noise_floor_passes():
@@ -223,3 +226,34 @@ def test_info_metric_low_n_scored_without_rate_limiting_stays_insufficient_data(
     results = evaluate_gate(current, baseline)
     faithfulness = next(r for r in results if r.label == "faithfulness")
     assert faithfulness.status == INSUFFICIENT_DATA
+
+
+def test_recall_drop_across_different_splits_is_no_baseline_not_a_false_block():
+    # Real incident (2026-08-21): a clean full-tier run (145 items) gated
+    # against the fast-tier baseline (39 items) reported recall@10
+    # 0.630 -> 0.494 as a BLOCK -- a false regression from comparing two
+    # different item populations, not an actual drop.
+    baseline = _run({"retrieval": {"stage1": {"recall@10": 0.6304}}}, split="fast")
+    current = _run({"retrieval": {"stage1": {"recall@10": 0.4943}}}, split="full")
+    results = evaluate_gate(current, baseline)
+    recall = next(r for r in results if r.label == "recall@10")
+    assert recall.status == NO_BASELINE
+    assert overall_verdict(results) != BLOCK
+
+
+def test_recall_drop_within_same_split_still_gates_normally():
+    baseline = _run({"retrieval": {"stage1": {"recall@10": 0.50}}}, split="fast")
+    current = _run({"retrieval": {"stage1": {"recall@10": 0.40}}}, split="fast")  # -0.10, over 0.045
+    results = evaluate_gate(current, baseline)
+    recall = next(r for r in results if r.label == "recall@10")
+    assert recall.status == BLOCK
+
+
+def test_recall_gates_normally_when_split_is_absent_from_either_run():
+    # Older results JSONs / synthetic fixtures without a "split" field
+    # (like every other test in this file) must keep gating as before.
+    baseline = _run({"retrieval": {"stage1": {"recall@10": 0.50}}})
+    current = _run({"retrieval": {"stage1": {"recall@10": 0.40}}})
+    results = evaluate_gate(current, baseline)
+    recall = next(r for r in results if r.label == "recall@10")
+    assert recall.status == BLOCK
